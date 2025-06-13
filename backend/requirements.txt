@@ -1,0 +1,74 @@
+# Trading System Requirements - Complete Edition
+# Core API Framework
+fastapi==0.110.1
+uvicorn==0.25.0
+gunicorn==21.2.0
+pydantic>=2.6.4
+pydantic-settings==2.1.0
+python-jose==3.3.0
+python-multipart>=0.0.9
+passlib[bcrypt]==1.7.4
+PyJWT==2.8.0
+jinja2==3.1.2
+
+# Database & Caching
+motor==3.3.1
+pymongo==4.5.0
+redis>=5.0.0
+psycopg2-binary==2.9.10
+sqlalchemy==1.4.50
+alembic==1.13.1
+asyncpg>=0.29.0
+
+# HTTP & WebSocket
+httpx==0.25.2
+aiohttp>=3.9.0
+websockets>=12.0
+aiofiles==23.2.1
+requests>=2.31.0
+
+# Data Processing & ML
+pandas>=2.2.0
+numpy>=1.24.0
+scikit-learn==1.3.2
+scipy>=1.15.0
+
+# Trading APIs
+kiteconnect>=4.1.0
+
+# Monitoring & Metrics
+prometheus-client==0.19.0
+psutil==5.9.6
+
+# Development & Monitoring
+python-dotenv>=1.0.1
+structlog==23.2.0
+rich==13.7.0
+pyyaml==6.0.1
+
+# Authentication & Security
+bcrypt==4.0.1
+cryptography>=42.0.8
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+# Email and SMS (optional)
+aiosmtplib==3.0.1
+twilio==8.11.0
+
+# Additional utilities
+python-slugify==8.0.1
+pillow==10.1.0
+yfinance==0.2.28
+
+# Scheduling
+apscheduler>=3.10.0
+
+# OTP and Security
+pyotp>=2.9.0
+
+# Trading specific
+dataclasses-json>=0.6.3
+websocket-client>=1.8.0
