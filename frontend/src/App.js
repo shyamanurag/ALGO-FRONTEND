@@ -333,71 +333,69 @@ function App() {
             />
             
             {/* Admin Routes */}
-            <>
-              <Route 
-                path="/" 
-                element={<LiveAutonomousStatus />}
-              />
-              <Route 
-                path="/admin" 
-                element={
-                  <AdminDashboard 
-                    systemStatus={systemStatus}
-                    connectedAccounts={connectedAccounts}
-                    realTimeData={realTimeData}
-                    onTrueDataConnect={handleTrueDataConnect}
-                    onTrueDataDisconnect={handleTrueDataDisconnect}
-                  />
-                } 
-              />
-              <Route 
-                path="/accounts" 
-                element={
-                  <AccountManagement 
-                    connectedAccounts={connectedAccounts}
-                    setConnectedAccounts={setConnectedAccounts}
-                  />
-                } 
-              />
-              <Route 
-                path="/user/:userId" 
-                element={
-                  <UserDashboard 
-                    connectedAccounts={connectedAccounts}
-                    realTimeData={realTimeData}
-                  />
-                } 
-              />
-              <Route 
-                path="/reports/:userId" 
-                element={
-                  <UserReports 
-                    connectedAccounts={connectedAccounts}
-                    realTimeData={realTimeData}
-                  />
-                } 
-              />
-              <Route 
-                path="/autonomous-monitoring" 
-                element={
-                  <AutonomousMonitoring 
-                    systemStatus={systemStatus}
-                    connectedAccounts={connectedAccounts}
-                    realTimeData={realTimeData}
-                  />
-                } 
-              />
-              <Route 
-                path="/elite-recommendations" 
-                element={
-                  <EliteRecommendations />
-                } 
-              />
-              <Route 
-                path="/live-status" 
-                element={<LiveAutonomousStatus />}
-              />
-            </>
+            <Route 
+              path="/" 
+              element={<LiveAutonomousStatus />}
+            />
+            <Route 
+              path="/live-status" 
+              element={<LiveAutonomousStatus />}
+            />
+            <Route 
+              path="/admin" 
+              element={
+                <AdminDashboard 
+                  systemStatus={systemStatus}
+                  connectedAccounts={connectedAccounts}
+                  realTimeData={realTimeData}
+                  onTrueDataConnect={handleTrueDataConnect}
+                  onTrueDataDisconnect={handleTrueDataDisconnect}
+                />
+              } 
+            />
+            <Route 
+              path="/accounts" 
+              element={
+                <AccountManagement 
+                  connectedAccounts={connectedAccounts}
+                  setConnectedAccounts={setConnectedAccounts}
+                />
+              } 
+            />
+            <Route 
+              path="/user/:userId" 
+              element={
+                <UserDashboard 
+                  connectedAccounts={connectedAccounts}
+                  realTimeData={realTimeData}
+                />
+              } 
+            />
+            <Route 
+              path="/reports/:userId" 
+              element={
+                <UserReports 
+                  connectedAccounts={connectedAccounts}
+                  realTimeData={realTimeData}
+                />
+              } 
+            />
+            <Route 
+              path="/autonomous-monitoring" 
+              element={
+                <AutonomousMonitoring 
+                  systemStatus={systemStatus}
+                  connectedAccounts={connectedAccounts}
+                  realTimeData={realTimeData}
+                />
+              } 
+            />
+            <Route 
+              path="/elite-recommendations" 
+              element={
+                <EliteRecommendations />
+              } 
+            />
             
             {/* Redirect to trading dashboard by default */}
             <Route path="*" element={<Navigate to="/trading" replace />} />
