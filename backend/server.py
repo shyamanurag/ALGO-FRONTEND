@@ -5,6 +5,7 @@ Integrates all existing sophisticated strategies with real broker execution
 """
 
 from fastapi import FastAPI, APIRouter, HTTPException, WebSocket, WebSocketDisconnect, Request
+from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
