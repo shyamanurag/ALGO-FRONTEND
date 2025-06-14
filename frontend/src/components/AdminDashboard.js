@@ -6,21 +6,96 @@ import LiveIndicesHeader from './LiveIndicesHeader';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
-function AdminDashboard({ systemStatus, connectedAccounts, realTimeData }) {
+function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueDataConnect, onTrueDataDisconnect }) {
   const [overallMetrics, setOverallMetrics] = useState({});
   const [recentTrades, setRecentTrades] = useState([]);
   const [topPerformers, setTopPerformers] = useState([]);
   const [currentSystemStatus, setCurrentSystemStatus] = useState({});
+  const [zerodhaStatus, setZerodhaStatus] = useState({ connected: false, status: 'disconnected' });
 
   useEffect(() => {
     fetchOverallMetrics();
     fetchRecentTrades();
     fetchSystemStatus();
+    fetchZerodhaStatus();
     
     // Update system status every 10 seconds
-    const interval = setInterval(fetchSystemStatus, 10000);
+    const interval = setInterval(() => {
+      fetchSystemStatus();
+      fetchZerodhaStatus();
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  const fetchZerodhaStatus = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/zerodha/status`);
+      const data = await response.json();
+      if (data.success) {
+        setZerodhaStatus(data);
+      }
+    } catch (error) {
+      console.error('Error fetching Zerodha status:', error);
+      setZerodhaStatus({ connected: false, status: 'error' });
+    }
+  };
+
+  const handleZerodhaAuth = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/zerodha/auth-url`);
+      const data = await response.json();
+      
+      if (data.success && data.login_url) {
+        // Open Zerodha OAuth in popup window
+        const popup = window.open(
+          data.login_url, 
+          'zerodha-auth', 
+          'width=500,height=700,scrollbars=yes,resizable=yes'
+        );
+        
+        // Check if popup was blocked
+        if (!popup) {
+          alert('❌ Popup blocked! Please allow popups and try again.');
+          return;
+        }
+        
+        // Monitor popup closure
+        const checkClosed = setInterval(() => {
+          if (popup.closed) {
+            clearInterval(checkClosed);
+            // Refresh Zerodha status after auth
+            setTimeout(fetchZerodhaStatus, 1000);
+          }
+        }, 1000);
+        
+      } else {
+        alert(`❌ ${data.message}`);
+      }
+    } catch (error) {
+      console.error('Error initiating Zerodha auth:', error);
+      alert('❌ Error connecting to Zerodha. Please try again.');
+    }
+  };
+
+  const handleZerodhaDisconnect = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/zerodha/disconnect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        alert('✅ Zerodha disconnected successfully');
+        setZerodhaStatus({ connected: false, status: 'disconnected' });
+      } else {
+        alert(`❌ ${data.message}`);
+      }
+    } catch (error) {
+      console.error('Error disconnecting Zerodha:', error);
+      alert('❌ Error disconnecting Zerodha. Please try again.');
+    }
+  };
 
   const fetchSystemStatus = async () => {
     try {
