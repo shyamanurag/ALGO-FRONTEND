@@ -20,6 +20,17 @@ This test suite tests the following key features:
    - POST /api/system/zerodha-authenticate - Authenticate Zerodha
 5. WebSocket Connection:
    - WS /api/ws/autonomous-data - WebSocket for real-time data
+6. Strategy Management:
+   - GET /api/strategies/metrics - Strategy performance metrics
+   - GET /api/strategies/performance - Detailed strategy performance data
+   - GET /api/strategies/{name}/details - Individual strategy analysis
+7. Trading Operations:
+   - POST /api/trading/place-order - Real order placement functionality
+   - GET /api/trading/orders - Order history and management
+   - POST /api/trading/cancel-order/{order_id} - Cancel order
+   - POST /api/trading/square-off/{symbol} - Position square-off functionality
+   - POST /api/trading/square-off-all - Emergency position closure
+   - GET /api/positions - Live position tracking
 """
 
 import requests
