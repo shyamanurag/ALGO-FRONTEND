@@ -430,6 +430,74 @@ class AlgoFrontendBackendTest(unittest.TestCase):
         except Exception as e:
             self.fail(f"❌ Security headers verification failed: {str(e)}")
 
+    def test_16_truedata_connection(self):
+        """Test TrueData connect/disconnect functionality"""
+        try:
+            # First check current status
+            status_response = requests.get(f"{self.api_url}/system/status")
+            self.assertEqual(status_response.status_code, 200)
+            status_data = status_response.json()
+            initial_connection_status = status_data.get("status", {}).get("truedata_connected", False)
+            
+            # Test connect endpoint
+            connect_response = requests.post(f"{self.api_url}/truedata/connect")
+            self.assertEqual(connect_response.status_code, 200)
+            connect_data = connect_response.json()
+            self.assertIn("success", connect_data)
+            
+            # Check if connection status changed
+            status_response = requests.get(f"{self.api_url}/system/status")
+            status_data = status_response.json()
+            after_connect_status = status_data.get("status", {}).get("truedata_connected", False)
+            
+            # Test disconnect endpoint
+            disconnect_response = requests.post(f"{self.api_url}/truedata/disconnect")
+            self.assertEqual(disconnect_response.status_code, 200)
+            disconnect_data = disconnect_response.json()
+            self.assertIn("success", disconnect_data)
+            
+            # Check if connection status changed back
+            status_response = requests.get(f"{self.api_url}/system/status")
+            status_data = status_response.json()
+            after_disconnect_status = status_data.get("status", {}).get("truedata_connected", False)
+            
+            print(f"✅ TrueData connection functionality verification:")
+            print(f"  Initial status: {initial_connection_status}")
+            print(f"  After connect: {after_connect_status}")
+            print(f"  After disconnect: {after_disconnect_status}")
+            print(f"  Connect response: {connect_data.get('message', 'No message')}")
+            print(f"  Disconnect response: {disconnect_data.get('message', 'No message')}")
+            
+        except Exception as e:
+            self.fail(f"❌ TrueData connection functionality failed: {str(e)}")
+
+    def test_17_websocket_reconnect(self):
+        """Test WebSocket reconnect functionality (simulated)"""
+        try:
+            # We can't directly test WebSocket reconnection with requests
+            # But we can check if the WebSocket endpoints are available
+            
+            ws_endpoints = [
+                "/ws/trading-data",
+                "/ws/autonomous-data"
+            ]
+            
+            for endpoint in ws_endpoints:
+                ws_url = f"{self.api_url}{endpoint}"
+                
+                # Try to connect with a GET request (should return 400 or similar if endpoint exists)
+                response = requests.get(ws_url)
+                
+                # If status code is 404, the endpoint doesn't exist
+                self.assertNotEqual(response.status_code, 404, f"WebSocket endpoint {endpoint} not found")
+            
+            print(f"✅ WebSocket reconnect functionality verification:")
+            print(f"  All WebSocket endpoints are available")
+            print(f"  Note: Actual reconnect functionality requires WebSocket client testing")
+            
+        except Exception as e:
+            self.fail(f"❌ WebSocket reconnect functionality failed: {str(e)}")
+
 def run_tests():
     """Run all tests and return results"""
     print(f"🚀 Starting ALGO-FRONTEND Backend API Production Readiness Tests")
