@@ -89,72 +89,46 @@ cd frontend && yarn start
 sudo supervisorctl start all
 ```
 
-## 🚀 Quick Start
+## 🔧 **Configuration**
 
-### Prerequisites
-- **Python 3.8+** with pip
-- **Node.js 16+** with yarn
-- **PostgreSQL** database
-- **Real Data Accounts**:
-  - TrueData account for market data
-  - Zerodha account for trading (optional for paper trading)
+### **Required Environment Variables**
+```env
+# Database (choose one)
+DATABASE_URL=postgresql://user:pass@host:port/db  # Production
+# OR use SQLite (default): trading_system.db
 
-### Installation
+# TrueData (for real market data)
+TRUEDATA_USERNAME=your_username
+TRUEDATA_PASSWORD=your_password
 
-1. **Clone and Setup**
-```bash
-git clone https://github.com/shyamanurag/ALGO-FRONTEND.git
-cd ALGO-FRONTEND
+# Zerodha (for live trading)
+ZERODHA_API_KEY=your_api_key
+ZERODHA_API_SECRET=your_secret
+ZERODHA_CLIENT_ID=your_client_id
+
+# Redis (optional)
+REDIS_URL=redis://localhost:6379
 ```
 
-2. **Backend Setup**
-```bash
-cd backend
-pip install -r requirements.txt
+## 🎮 **Usage Guide**
 
-# Configure real data sources in .env
-cp .env.example .env
-# Edit .env with your TrueData and Zerodha credentials
-```
+### **Navigation**
+- **🤖 Live Status**: Real-time autonomous trading monitoring
+- **💰 Live Trading**: Active trading dashboard with market data
+- **⭐ Elite Advisory**: 10/10 quality signal recommendations
+- **⚙️ Admin**: System administration and configuration
+- **📊 Account Management**: Multi-account connection management
+- **🔍 Autonomous Monitor**: Strategy performance and health tracking
 
-3. **Frontend Setup**
-```bash
-cd frontend
-yarn install
+### **Trading Modes**
+1. **Paper Trading**: Safe mode for testing strategies (default)
+2. **Live Trading**: Real money trading with risk management
+3. **Autonomous Mode**: Fully automated trading with human oversight
 
-# Configure backend URL in .env
-# REACT_APP_BACKEND_URL should point to your backend
-```
-
-4. **Database Setup**
-```bash
-# Ensure PostgreSQL is running
-# Database tables will be created automatically
-```
-
-### Running the Application
-
-**Using Supervisor (Recommended)**
-```bash
-# Start all services
-sudo supervisorctl start all
-
-# Services available:
-# - backend: http://localhost:8001
-# - frontend: http://localhost:3000
-# - mongodb: Database service
-```
-
-**Manual Development**
-```bash
-# Terminal 1 - Backend
-cd backend
-python server.py
-
-# Terminal 2 - Frontend  
-cd frontend
-yarn start
-```
+### **Signal Quality System**
+- **7.0-9.9**: Regular trading signals for automated execution
+- **10.0**: Elite recommendations for manual review (rare, 1-2 per week)
+- **Intraday 10.0**: Elite intraday signals eligible for auto-execution
 
 ## 📡 Data Sources & Configuration
 
