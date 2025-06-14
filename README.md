@@ -196,54 +196,37 @@ yarn test
 python backend_test.py
 ```
 
-## 🏃‍♂️ Development
+## 🚀 **Deployment**
 
-### Environment Variables
-
-**Backend (.env)**
-```env
-# Database
-MONGO_URL=mongodb://localhost:27017/trading_db
-
-# Real Data Sources (Required)
-TRUEDATA_USERNAME=your_username
-TRUEDATA_PASSWORD=your_password
-DATA_PROVIDER_ENABLED=true
-
-# Trading Configuration
-PAPER_TRADING=true
-AUTONOMOUS_TRADING_ENABLED=true
-ZERODHA_API_KEY=your_key
-```
-
-**Frontend (.env)**
-```env
-# Backend API URL
-REACT_APP_BACKEND_URL=http://localhost:8001
-```
-
-### Development Guidelines
-
-1. **No Mock Data**: Never add fallback or simulated data
-2. **Real Data Only**: All features must work with actual data sources
-3. **Graceful Degradation**: Handle empty states when real data unavailable
-4. **Transparent Status**: Always show actual connection/data status
-5. **Live Updates**: Implement real-time refresh for live data components
-
-### Testing
-
+### **Docker Deployment**
 ```bash
-# Backend API Testing
-cd backend
-python -m pytest tests/
-
-# Frontend Testing
-cd frontend
-yarn test
-
-# End-to-End Testing (with real data)
-yarn test:e2e
+# Build and run with Docker
+docker-compose up -d
 ```
+
+### **DigitalOcean App Platform**
+- Uses `.do/app.yaml` for automatic deployment
+- GitHub Actions CI/CD pipeline included
+- Production-ready configuration with health checks
+
+### **Manual Deployment**
+- See `DEPLOYMENT_GUIDE.md` for detailed instructions
+- Supervisor configuration included for process management
+- SSL/HTTPS setup with Let's Encrypt
+
+## 🔗 **API Documentation**
+
+### **Core Endpoints**
+- `GET /api/health` - System health and component status
+- `GET /api/trading-signals/active` - Current trading signals
+- `GET /api/elite-recommendations` - 10/10 quality recommendations
+- `POST /api/truedata/connect` - Connect to market data feed
+- `WebSocket /api/ws/autonomous-data` - Real-time system updates
+
+### **Authentication Required**
+- Admin endpoints require proper authentication
+- API keys for external service integration
+- Session management for web interface
 
 ## 📊 Data Integrity
 
