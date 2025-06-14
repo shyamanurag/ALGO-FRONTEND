@@ -32,7 +32,7 @@ import threading
 from datetime import datetime
 
 # Backend URL from frontend .env
-BACKEND_URL = "https://50da0ed4-e9ce-42e7-8c8a-d11c27e08d6f.preview.emergentagent.com"
+BACKEND_URL = "https://0880b436-2c26-46a5-94e2-507e0663832d.preview.emergentagent.com"
 
 class AlgoFrontendBackendTest(unittest.TestCase):
     """Comprehensive test suite for ALGO-FRONTEND backend API endpoints - Production Readiness"""
