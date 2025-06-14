@@ -3546,6 +3546,51 @@ async def disconnect_zerodha():
             "message": f"Error disconnecting Zerodha: {str(e)}"
         }
 
+@api_router.get("/data-sources/status")
+async def get_data_sources_status():
+    """Get comprehensive data sources status with fallback information"""
+    try:
+        return {
+            "success": True,
+            "primary_source": system_state.get('primary_data_source', 'truedata'),
+            "active_source": system_state.get('active_data_source'),
+            "fallback_active": system_state.get('data_source_fallback_active', False),
+            "last_switch": system_state.get('last_data_source_switch'),
+            "sources": {
+                "truedata": {
+                    "connected": system_state.get('truedata_connected', False),
+                    "configured": bool(TRUEDATA_USERNAME and TRUEDATA_PASSWORD),
+                    "url": TRUEDATA_URL,
+                    "port": TRUEDATA_PORT,
+                    "health": system_state.get('data_source_health', {}).get('truedata', {})
+                },
+                "zerodha": {
+                    "connected": system_state.get('zerodha_connected', False),
+                    "configured": bool(ZERODHA_API_KEY and ZERODHA_API_SECRET),
+                    "has_token": bool(system_state.get('zerodha_request_token')),
+                    "health": system_state.get('data_source_health', {}).get('zerodha', {})
+                }
+            },
+            "redundancy_status": {
+                "primary_available": system_state.get('truedata_connected', False),
+                "backup_available": system_state.get('zerodha_connected', False),
+                "total_sources": sum([
+                    system_state.get('truedata_connected', False),
+                    system_state.get('zerodha_connected', False)
+                ]),
+                "fallback_capable": system_state.get('zerodha_connected', False)
+            },
+            "message": f"Active data source: {system_state.get('active_data_source', 'none').title()}"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting data sources status: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "message": "Error retrieving data sources status"
+        }
+
 # Include the router in the main app
 app.include_router(api_router)
 
