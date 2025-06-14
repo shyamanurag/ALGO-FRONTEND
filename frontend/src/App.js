@@ -12,6 +12,8 @@ import AdminLogin from './components/AdminLogin';
 import RealTradingDashboard from './components/RealTradingDashboard';
 import LiveIndicesHeader from './components/LiveIndicesHeader';
 import LiveAutonomousStatus from './components/LiveAutonomousStatus';
+import OrderManagement from './components/OrderManagement';
+import StrategyMonitoring from './components/StrategyMonitoring';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
