@@ -130,37 +130,35 @@ REDIS_URL=redis://localhost:6379
 - **10.0**: Elite recommendations for manual review (rare, 1-2 per week)
 - **Intraday 10.0**: Elite intraday signals eligible for auto-execution
 
-## 📡 Data Sources & Configuration
+## 🛡️ **Security Features**
 
-### 🔴 **IMPORTANT: Real Data Required**
-This application **no longer provides mock data**. You must configure real data sources:
+- **Production Security Headers**: XSS protection, CSRF prevention, CSP
+- **Rate Limiting**: API protection against abuse
+- **Input Validation**: Comprehensive data sanitization
+- **Error Handling**: Graceful failure management with user feedback
+- **Database Security**: Triggers prevent mock data contamination
+- **WebSocket Security**: Secure real-time connections
 
-### TrueData Configuration
-```env
-# backend/.env
-TRUEDATA_USERNAME=your_username
-TRUEDATA_PASSWORD=your_password
-TRUEDATA_URL=push.truedata.in
-TRUEDATA_PORT=8086
-DATA_PROVIDER_ENABLED=true
+## 📁 **Project Structure**
+
 ```
-
-### Zerodha Configuration (Optional)
-```env
-# backend/.env
-ZERODHA_API_KEY=your_api_key
-ZERODHA_API_SECRET=your_secret
-ZERODHA_ACCOUNT_NAME=your_account
-PAPER_TRADING=true  # Set false for live trading
+ALGO-FRONTEND/
+├── backend/                 # FastAPI backend
+│   ├── server.py           # Main application
+│   ├── requirements.txt    # Python dependencies
+│   └── .env               # Environment configuration
+├── frontend/               # React frontend
+│   ├── src/
+│   │   ├── App.js         # Main application
+│   │   ├── components/    # 18+ React components
+│   │   └── App.css        # Professional styling
+│   ├── package.json       # Node dependencies
+│   └── .env              # Frontend configuration
+├── database/              # Database schemas
+├── .github/workflows/     # CI/CD pipeline
+├── docker-compose.yml     # Container setup
+└── README.md             # This file
 ```
-
-### Expected Behavior Without Real Data
-When real data sources are not configured or unavailable:
-- ✅ **Live Indices Header**: Shows "CONNECTING" status with 🟡 indicators
-- ✅ **Market Data**: Shows "No Market Data Available" with retry options
-- ✅ **Recommendations**: Shows "No Elite Recommendations" with refresh controls
-- ✅ **Trading Metrics**: Shows actual zero values from database
-- ✅ **System Status**: Shows real connection states (OPERATIONAL when services running)
 
 ## 🔧 API Documentation
 
