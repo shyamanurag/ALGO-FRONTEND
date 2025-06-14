@@ -397,8 +397,8 @@ function App() {
               } 
             />
             
-            {/* Redirect to trading dashboard by default */}
-            <Route path="*" element={<Navigate to="/trading" replace />} />
+            {/* Default redirect */}
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>
       </BrowserRouter>
