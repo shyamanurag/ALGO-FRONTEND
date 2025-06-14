@@ -3931,6 +3931,139 @@ async def get_trading_orders():
         logger.error(f"Error getting orders: {e}")
         return {"success": False, "orders": [], "error": str(e)}
 
+# ================================
+# ZERODHA ADMIN ENDPOINTS
+# ================================
+
+from zerodha_integration import zerodha_manager
+
+@api_router.get("/admin/zerodha/status")
+async def get_zerodha_status():
+    """Get Zerodha connection status for admin panel"""
+    try:
+        status = await zerodha_manager.get_connection_status()
+        return {
+            "success": True,
+            "zerodha": status
+        }
+    except Exception as e:
+        logger.error(f"Error getting Zerodha status: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "zerodha": {
+                "connected": False,
+                "status": "ERROR",
+                "message": f"Error getting status: {str(e)}"
+            }
+        }
+
+@api_router.get("/admin/zerodha/login-url")
+async def get_zerodha_login_url():
+    """Get Zerodha login URL for authentication"""
+    try:
+        login_url = zerodha_manager.get_login_url()
+        
+        if login_url:
+            return {
+                "success": True,
+                "login_url": login_url,
+                "message": "Please visit this URL to authorize the application"
+            }
+        else:
+            return {
+                "success": False,
+                "error": "Unable to generate login URL. Check API credentials."
+            }
+            
+    except Exception as e:
+        logger.error(f"Error generating Zerodha login URL: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+@api_router.post("/admin/zerodha/connect")
+async def connect_zerodha(request_data: dict):
+    """Connect to Zerodha using request token"""
+    try:
+        request_token = request_data.get("request_token")
+        
+        if not request_token:
+            return {
+                "success": False,
+                "error": "Request token is required"
+            }
+        
+        result = await zerodha_manager.connect_with_request_token(request_token)
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error connecting to Zerodha: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+@api_router.post("/admin/zerodha/disconnect")
+async def disconnect_zerodha():
+    """Disconnect from Zerodha"""
+    try:
+        result = await zerodha_manager.disconnect()
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error disconnecting from Zerodha: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+@api_router.get("/admin/zerodha/funds")
+async def get_zerodha_funds():
+    """Get account funds and margins from Zerodha"""
+    try:
+        result = await zerodha_manager.get_funds()
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error getting Zerodha funds: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "funds": {}
+        }
+
+@api_router.get("/admin/zerodha/positions")
+async def get_zerodha_positions():
+    """Get current positions from Zerodha"""
+    try:
+        result = await zerodha_manager.get_positions()
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error getting Zerodha positions: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "positions": []
+        }
+
+@api_router.get("/admin/zerodha/orders")
+async def get_zerodha_orders():
+    """Get orders from Zerodha"""
+    try:
+        result = await zerodha_manager.get_orders()
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error getting Zerodha orders: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "orders": []
+        }
+
 # Include the router in the main app
 app.include_router(api_router)
 
