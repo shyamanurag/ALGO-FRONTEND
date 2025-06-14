@@ -228,120 +228,45 @@ docker-compose up -d
 - API keys for external service integration
 - Session management for web interface
 
-## 📊 Data Integrity
+## 📊 **Monitoring & Metrics**
 
-### Version 2.1.0 Guarantees
-- ✅ **0% Mock Data**: No simulated prices, volumes, or trading statistics
-- ✅ **Live Data Visibility**: Real-time indices header on all pages
-- ✅ **Real System Status**: Actual connection states and health metrics (OPERATIONAL)
-- ✅ **Authentic Metrics**: Only real database counts and trading results
-- ✅ **Transparent Operations**: Clear messaging when data unavailable
-- ✅ **Connection Monitoring**: Visual status indicators for all data sources
+- **System Health**: Continuous monitoring of all components
+- **Trading Performance**: Real-time P&L and strategy metrics
+- **Database Monitoring**: Connection status and query performance
+- **WebSocket Connections**: Active connection tracking
+- **Error Tracking**: Comprehensive logging and error reporting
 
-### Current System Status
-- **✅ System Health**: OPERATIONAL
-- **✅ Autonomous Trading**: ACTIVE
-- **✅ Paper Trading**: ON
-- **✅ Data Source**: TRUEDATA_LIVE (attempting connection)
-- **✅ Market Status**: Real market hours detection
-- **✅ Live Indices**: CONNECTING status with visual indicators
+## 🆘 **Support & Troubleshooting**
 
-### Verification
-Run the verification script to confirm no mock data exists:
-```bash
-cd backend
-python verify_no_mock_data.py
-```
+### **Common Issues**
+1. **TrueData Connection**: Ensure credentials are configured in `.env`
+2. **WebSocket Errors**: Check network connectivity and firewall settings
+3. **Database Issues**: Verify connection strings and permissions
+4. **Frontend Build Errors**: Run `yarn install` to update dependencies
 
-## 🛠️ Technology Stack
+### **Logs Location**
+- Backend: `/var/log/supervisor/backend.out.log`
+- Frontend: `/var/log/supervisor/frontend.out.log`
+- System: `/var/log/algo-trading/`
 
-### Backend
-- **FastAPI**: High-performance Python web framework
-- **PostgreSQL**: Primary database for trading data
-- **TrueData**: Real-time market data provider
-- **Zerodha**: Brokerage integration
-- **WebSockets**: Real-time data streaming
-- **Event System**: Asynchronous component communication
+## 📝 **License**
 
-### Frontend
-- **React 18**: Modern JavaScript framework
-- **Tailwind CSS**: Utility-first CSS framework
-- **Real-time Updates**: Live indices header with 2-second refresh
-- **WebSocket Integration**: Live data streaming
-- **Responsive Design**: Professional trading interface
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-### Infrastructure
-- **Supervisor**: Process management
-- **Docker**: Containerization (optional)
-- **Nginx**: Reverse proxy (production)
+## 🤝 **Contributing**
 
-## 📈 Performance
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes (no mock data allowed)
+4. Test thoroughly with real data
+5. Submit a pull request
 
-- **Real-time Data**: Sub-second market data updates via live header
-- **Low Latency**: Direct TrueData WebSocket connections
-- **Scalable**: Handles multiple concurrent trading strategies
-- **Reliable**: Automatic reconnection and error handling
-- **Live Monitoring**: 2-second refresh cycle for market data visibility
+## ⚠️ **Disclaimer**
 
-## ⚠️ Important Notes
-
-### Data Dependencies
-This application requires real data sources to function properly:
-- **TrueData**: For live market data (subscription required)
-- **Zerodha**: For live trading (account required)
-- **Database**: PostgreSQL for data persistence
-
-### No Demo Mode
-Unlike previous versions, **version 2.1.0 does not provide demo or simulated data**. This ensures:
-- Complete transparency about data availability
-- No misleading information to users
-- Authentic trading environment experience
-- Live data streaming visibility
-
-### Live Data Features
-New in version 2.1.0:
-- **Live Indices Header**: Visible on all pages with real-time updates
-- **Connection Status**: Visual indicators for TrueData connection state
-- **Auto-Refresh**: 2-second update cycle for live market data
-- **Manual Controls**: Refresh buttons for instant updates
-
-### Troubleshooting Empty States
-If you see "No data available" messages:
-1. ✅ Check TrueData connection configuration
-2. ✅ Verify market hours (9:15 AM - 3:30 PM IST)
-3. ✅ Confirm database connectivity
-4. ✅ Review logs for connection errors
-5. ✅ Use manual refresh buttons in live header
-
-## 📞 Support
-
-### Real Data Setup Issues
-- Check TrueData account status and credentials
-- Verify network connectivity to data providers
-- Review API logs for authentication errors
-- Monitor live indices header for connection status
-
-### Technical Support
-- Review application logs: `/var/log/supervisor/`
-- Check database connectivity
-- Verify environment configuration
-- Monitor live data header status
-
-## 📝 License
-
-Private Repository - All Rights Reserved
-
-## 🔄 Changelog
-
-See [CHANGELOG.md](./CHANGELOG.md) for detailed version history including the complete mock data removal documentation and live indices implementation.
+This software is for educational and research purposes. Trading in financial markets carries significant risk. Always test thoroughly in paper trading mode before using real capital. The developers are not responsible for any financial losses.
 
 ---
 
-**⚡ Ready for Production Trading with Complete Data Integrity & Live Market Data Streaming**
+**Built with ❤️ for serious traders who demand excellence.**
 
-### 🚀 What's New in v2.1.0
-- **Live Indices Header**: Real-time market data visible on all pages
-- **System Status**: Now shows OPERATIONAL instead of error states  
-- **Zero Mock Data**: Complete elimination of all simulated/fallback data
-- **Professional UI**: Clean empty states when real data unavailable
-- **Connection Monitoring**: Visual status indicators for all data sources
+*Elite Autonomous Trading Platform - Where Technology Meets Profit*
