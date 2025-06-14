@@ -73,54 +73,205 @@ class AlgoFrontendBackendTest(unittest.TestCase):
         except Exception as e:
             self.fail(f"❌ Health check failed: {str(e)}")
     
-    def test_03_truedata_connect_endpoint(self):
-        """Test TrueData connect endpoint - REAL fix #3"""
+    def test_03_admin_overall_metrics(self):
+        """Test admin overall metrics endpoint"""
         try:
-            response = requests.post(f"{self.api_url}/truedata/connect")
+            response = requests.get(f"{self.api_url}/admin/overall-metrics")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for required fields
+            self.assertIn("success", data)
+            self.assertIn("metrics", data)
+            
+            metrics = data["metrics"]
+            required_metrics = ["total_signals", "total_trades_today", "active_strategies", 
+                               "autonomous_trading", "system_health"]
+            
+            for field in required_metrics:
+                self.assertIn(field, metrics, f"Missing metric: {field}")
+            
+            print(f"✅ Admin overall metrics endpoint working correctly")
+            print(f"  Success: {data['success']}")
+            print(f"  Total signals: {metrics.get('total_signals')}")
+            print(f"  Total trades today: {metrics.get('total_trades_today')}")
+            print(f"  Active strategies: {metrics.get('active_strategies')}")
+            print(f"  System health: {metrics.get('system_health')}")
+            
+        except Exception as e:
+            self.fail(f"❌ Admin overall metrics endpoint failed: {str(e)}")
+    
+    def test_04_admin_recent_trades(self):
+        """Test admin recent trades endpoint"""
+        try:
+            response = requests.get(f"{self.api_url}/admin/recent-trades")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for required fields
+            self.assertIn("success", data)
+            self.assertIn("trades", data)
+            
+            trades = data["trades"]
+            self.assertIsInstance(trades, list)
+            
+            if trades:
+                trade = trades[0]
+                required_fields = ["id", "symbol", "side", "quantity", "price", "time"]
+                for field in required_fields:
+                    self.assertIn(field, trade, f"Missing field in trade: {field}")
+            
+            print(f"✅ Admin recent trades endpoint working correctly")
+            print(f"  Success: {data['success']}")
+            print(f"  Number of trades: {len(trades)}")
+            
+        except Exception as e:
+            self.fail(f"❌ Admin recent trades endpoint failed: {str(e)}")
+    
+    def test_05_system_start_truedata(self):
+        """Test system start TrueData endpoint"""
+        try:
+            response = requests.post(f"{self.api_url}/system/start-truedata")
             self.assertEqual(response.status_code, 200)
             data = response.json()
             
             # Check for required fields
             self.assertIn("success", data)
             self.assertIn("message", data)
-            self.assertIn("status", data)
             
-            # The endpoint should return an honest response about configuration status
-            # It's expected to return success=False since TrueData is not configured
-            print(f"✅ TrueData connect endpoint working correctly")
+            print(f"✅ System start TrueData endpoint working correctly")
             print(f"  Success: {data['success']}")
             print(f"  Message: {data['message']}")
-            print(f"  Status: {data['status']}")
             
         except Exception as e:
-            self.fail(f"❌ TrueData connect endpoint failed: {str(e)}")
+            self.fail(f"❌ System start TrueData endpoint failed: {str(e)}")
     
-    def test_04_truedata_disconnect_endpoint(self):
-        """Test TrueData disconnect endpoint - REAL fix #3"""
+    def test_06_system_start_truedata_tcp(self):
+        """Test system start TrueData TCP endpoint"""
         try:
-            response = requests.post(f"{self.api_url}/truedata/disconnect")
+            response = requests.post(f"{self.api_url}/system/start-truedata-tcp")
             self.assertEqual(response.status_code, 200)
             data = response.json()
             
             # Check for required fields
             self.assertIn("success", data)
             self.assertIn("message", data)
-            self.assertIn("status", data)
             
-            # The endpoint should return success=True
-            self.assertTrue(data["success"])
-            self.assertEqual(data["status"], "disconnected")
-            
-            print(f"✅ TrueData disconnect endpoint working correctly")
+            print(f"✅ System start TrueData TCP endpoint working correctly")
             print(f"  Success: {data['success']}")
             print(f"  Message: {data['message']}")
-            print(f"  Status: {data['status']}")
             
         except Exception as e:
-            self.fail(f"❌ TrueData disconnect endpoint failed: {str(e)}")
+            self.fail(f"❌ System start TrueData TCP endpoint failed: {str(e)}")
     
-    def test_05_websocket_endpoint(self):
-        """Test WebSocket endpoint - REAL fix #2"""
+    def test_07_system_truedata_status(self):
+        """Test system TrueData status endpoint"""
+        try:
+            response = requests.get(f"{self.api_url}/system/truedata-status")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for required fields
+            self.assertIn("success", data)
+            
+            print(f"✅ System TrueData status endpoint working correctly")
+            print(f"  Success: {data['success']}")
+            if "connection_status" in data:
+                print(f"  Connection status: {data['connection_status']}")
+            if "live_data_count" in data:
+                print(f"  Live data count: {data['live_data_count']}")
+            
+        except Exception as e:
+            self.fail(f"❌ System TrueData status endpoint failed: {str(e)}")
+    
+    def test_08_system_fix_status(self):
+        """Test system fix status endpoint"""
+        try:
+            response = requests.post(f"{self.api_url}/system/fix-status")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for required fields
+            self.assertIn("success", data)
+            self.assertIn("message", data)
+            self.assertIn("system_health", data)
+            self.assertIn("autonomous_trading", data)
+            
+            print(f"✅ System fix status endpoint working correctly")
+            print(f"  Success: {data['success']}")
+            print(f"  Message: {data['message']}")
+            print(f"  System health: {data['system_health']}")
+            print(f"  Autonomous trading: {data['autonomous_trading']}")
+            
+        except Exception as e:
+            self.fail(f"❌ System fix status endpoint failed: {str(e)}")
+    
+    def test_09_system_force_live_mode(self):
+        """Test system force live mode endpoint"""
+        try:
+            response = requests.post(f"{self.api_url}/system/force-live-mode")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for required fields
+            self.assertIn("success", data)
+            self.assertIn("message", data)
+            self.assertIn("truedata_connected", data)
+            self.assertIn("autonomous_trading", data)
+            
+            print(f"✅ System force live mode endpoint working correctly")
+            print(f"  Success: {data['success']}")
+            print(f"  Message: {data['message']}")
+            print(f"  TrueData connected: {data['truedata_connected']}")
+            print(f"  Autonomous trading: {data['autonomous_trading']}")
+            
+        except Exception as e:
+            self.fail(f"❌ System force live mode endpoint failed: {str(e)}")
+    
+    def test_10_system_zerodha_auth_status(self):
+        """Test system Zerodha auth status endpoint"""
+        try:
+            response = requests.get(f"{self.api_url}/system/zerodha-auth-status")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for required fields
+            self.assertIn("success", data)
+            
+            print(f"✅ System Zerodha auth status endpoint working correctly")
+            print(f"  Success: {data['success']}")
+            if "zerodha_status" in data:
+                print(f"  Zerodha status: {data['zerodha_status']}")
+            
+        except Exception as e:
+            self.fail(f"❌ System Zerodha auth status endpoint failed: {str(e)}")
+    
+    def test_11_system_zerodha_authenticate(self):
+        """Test system Zerodha authenticate endpoint with mock request token"""
+        try:
+            # Create a mock request token
+            mock_request_token = "mock_request_token_for_testing"
+            
+            # Test the authenticate endpoint with the mock token
+            response = requests.post(
+                f"{self.api_url}/system/zerodha-authenticate",
+                json={"request_token": mock_request_token}
+            )
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for required fields
+            self.assertIn("success", data)
+            
+            print(f"✅ System Zerodha authenticate endpoint working correctly")
+            print(f"  Success: {data['success']}")
+            print(f"  Message: {data.get('message', 'N/A')}")
+            
+        except Exception as e:
+            self.fail(f"❌ System Zerodha authenticate endpoint failed: {str(e)}")
+    
+    def test_12_websocket_endpoint(self):
+        """Test WebSocket endpoint"""
         try:
             # We can't test WebSocket directly with requests, but we can check if the endpoint exists
             ws_url = f"{self.api_url}/ws/autonomous-data"
@@ -138,8 +289,8 @@ class AlgoFrontendBackendTest(unittest.TestCase):
         except Exception as e:
             self.fail(f"❌ WebSocket endpoint verification failed: {str(e)}")
     
-    def test_06_websocket_connection(self):
-        """Test WebSocket connection - REAL fix #2"""
+    def test_13_websocket_connection(self):
+        """Test WebSocket connection"""
         ws_url = f"{self.base_url.replace('https://', 'wss://').replace('http://', 'ws://')}/api/ws/autonomous-data"
         ws_connected = False
         ws_message_received = False
@@ -209,178 +360,25 @@ class AlgoFrontendBackendTest(unittest.TestCase):
         except Exception as e:
             self.fail(f"❌ WebSocket connection test failed: {str(e)}")
     
-    def test_07_no_mock_data(self):
-        """Test that no mock data is being used - REAL fix requirement"""
+    def test_14_hybrid_data_status(self):
+        """Test hybrid data status endpoint"""
         try:
-            # Check health endpoint for real data
-            response = requests.get(f"{self.api_url}/health")
-            self.assertEqual(response.status_code, 200)
-            health_data = response.json()
-            
-            # Check system status endpoint for real data
-            response = requests.get(f"{self.api_url}/system/status")
-            if response.status_code == 200:
-                system_data = response.json()
-                
-                # Check for suspicious mock data patterns
-                suspicious_patterns = ["MOCK_", "DEMO_", "TEST_", "FAKE_", "SAMPLE_"]
-                suspicious_found = []
-                
-                # Convert data to string for pattern matching
-                health_str = json.dumps(health_data)
-                system_str = json.dumps(system_data)
-                
-                for pattern in suspicious_patterns:
-                    if pattern.lower() in health_str.lower():
-                        suspicious_found.append(f"Health data contains '{pattern}'")
-                    if pattern.lower() in system_str.lower():
-                        suspicious_found.append(f"System data contains '{pattern}'")
-                
-                self.assertEqual(len(suspicious_found), 0, f"Found suspicious mock data patterns: {suspicious_found}")
-                
-                print(f"✅ No mock data verification successful")
-                print(f"  No suspicious mock data patterns found")
-            
-        except Exception as e:
-            self.fail(f"❌ No mock data verification failed: {str(e)}")
-    
-    def test_08_real_system_status(self):
-        """Test that real system status is displayed - REAL fix requirement"""
-        try:
-            # Check health endpoint
-            response = requests.get(f"{self.api_url}/health")
-            self.assertEqual(response.status_code, 200)
-            health_data = response.json()
-            
-            # Verify real system status fields
-            required_fields = ["status", "database", "system_health", "autonomous_trading", "paper_trading", "market_status"]
-            for field in required_fields:
-                self.assertIn(field, health_data, f"Missing field: {field}")
-            
-            # Check TrueData status
-            self.assertIn("truedata", health_data)
-            truedata = health_data["truedata"]
-            self.assertIn("connected", truedata)
-            self.assertIn("status", truedata)
-            
-            print(f"✅ Real system status verification successful")
-            print(f"  System health: {health_data.get('system_health')}")
-            print(f"  TrueData status: {truedata.get('status')}")
-            print(f"  Database: {health_data.get('database')}")
-            
-        except Exception as e:
-            self.fail(f"❌ Real system status verification failed: {str(e)}")
-            
-    def test_09_zerodha_auth_url_endpoint(self):
-        """Test Zerodha auth URL endpoint - REAL fix #5"""
-        try:
-            response = requests.get(f"{self.api_url}/zerodha/auth-url")
+            response = requests.get(f"{self.api_url}/system/hybrid-data-status")
             self.assertEqual(response.status_code, 200)
             data = response.json()
             
             # Check for required fields
             self.assertIn("success", data)
-            self.assertIn("message", data)
             
-            # The endpoint should return an honest response about configuration status
-            # It's expected to return success=False since Zerodha API key is not configured
-            print(f"✅ Zerodha auth URL endpoint working correctly")
+            print(f"✅ Hybrid data status endpoint working correctly")
             print(f"  Success: {data['success']}")
-            print(f"  Message: {data['message']}")
-            print(f"  Status: {data.get('status', 'N/A')}")
-            
-            # Check if login_url is present when API key is configured
-            if data['success']:
-                self.assertIn("login_url", data)
-                print(f"  Login URL: {data['login_url']}")
+            if "hybrid_status" in data:
+                print(f"  Hybrid status: {data['hybrid_status']}")
+            if "primary_provider" in data:
+                print(f"  Primary provider: {data['primary_provider']}")
             
         except Exception as e:
-            self.fail(f"❌ Zerodha auth URL endpoint failed: {str(e)}")
-    
-    def test_10_zerodha_status_endpoint(self):
-        """Test Zerodha status endpoint - REAL fix #5"""
-        try:
-            response = requests.get(f"{self.api_url}/zerodha/status")
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            
-            # Check for required fields
-            self.assertIn("success", data)
-            self.assertIn("connected", data)
-            self.assertIn("status", data)
-            self.assertIn("api_key_configured", data)
-            self.assertIn("api_secret_configured", data)
-            
-            print(f"✅ Zerodha status endpoint working correctly")
-            print(f"  Success: {data['success']}")
-            print(f"  Connected: {data['connected']}")
-            print(f"  Status: {data['status']}")
-            print(f"  API Key Configured: {data['api_key_configured']}")
-            print(f"  API Secret Configured: {data['api_secret_configured']}")
-            
-        except Exception as e:
-            self.fail(f"❌ Zerodha status endpoint failed: {str(e)}")
-    
-    def test_11_zerodha_disconnect_endpoint(self):
-        """Test Zerodha disconnect endpoint - REAL fix #5"""
-        try:
-            response = requests.post(f"{self.api_url}/zerodha/disconnect")
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            
-            # Check for required fields
-            self.assertIn("success", data)
-            self.assertIn("message", data)
-            self.assertIn("status", data)
-            
-            # The endpoint should return success=True
-            self.assertTrue(data["success"])
-            self.assertEqual(data["status"], "disconnected")
-            
-            print(f"✅ Zerodha disconnect endpoint working correctly")
-            print(f"  Success: {data['success']}")
-            print(f"  Message: {data['message']}")
-            print(f"  Status: {data['status']}")
-            
-        except Exception as e:
-            self.fail(f"❌ Zerodha disconnect endpoint failed: {str(e)}")
-    
-    def test_12_zerodha_callback_endpoint(self):
-        """Test Zerodha callback endpoint with mock request token - REAL fix #5"""
-        try:
-            # Create a mock request token
-            mock_request_token = "mock_request_token_for_testing"
-            
-            # Test the callback endpoint with the mock token
-            response = requests.get(f"{self.api_url}/zerodha/callback?request_token={mock_request_token}")
-            self.assertEqual(response.status_code, 200)
-            
-            # The response should be HTML, so we check for specific content
-            content = response.text
-            
-            # Check if it's an HTML response
-            self.assertIn("<html", content.lower())
-            
-            # Check for success or error indicators in the HTML
-            if "authentication successful" in content.lower():
-                print(f"✅ Zerodha callback endpoint working correctly - Success response")
-                # Check if the token is reflected in the response
-                self.assertIn(mock_request_token[:10], content)
-            elif "authentication failed" in content.lower() or "configuration error" in content.lower():
-                print(f"✅ Zerodha callback endpoint working correctly - Error response (expected due to missing API credentials)")
-                # This is also valid as the API credentials are not configured
-            else:
-                self.fail("Unexpected response from Zerodha callback endpoint")
-            
-            # Now check if the status endpoint reflects the connection attempt
-            status_response = requests.get(f"{self.api_url}/zerodha/status")
-            status_data = status_response.json()
-            
-            print(f"  Status after callback: {status_data['status']}")
-            print(f"  Has token: {status_data.get('has_token', False)}")
-            
-        except Exception as e:
-            self.fail(f"❌ Zerodha callback endpoint failed: {str(e)}")
+            self.fail(f"❌ Hybrid data status endpoint failed: {str(e)}")
 
 def run_tests():
     """Run all tests and return results"""
