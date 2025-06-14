@@ -505,10 +505,34 @@ def run_tests():
     print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("-" * 80)
     
-    # Run tests
-    unittest.main(argv=['first-arg-is-ignored'], exit=False)
+    # Create a test suite
+    loader = unittest.TestLoader()
+    suite = loader.loadTestsFromTestCase(AlgoFrontendBackendTest)
     
-    return True
+    # Run the tests with a text test runner
+    runner = unittest.TextTestRunner(verbosity=2)
+    result = runner.run(suite)
+    
+    # Print summary
+    print("-" * 80)
+    print(f"Tests run: {result.testsRun}")
+    print(f"Failures: {len(result.failures)}")
+    print(f"Errors: {len(result.errors)}")
+    
+    # Print failures and errors
+    if result.failures:
+        print("\nFAILURES:")
+        for test, error in result.failures:
+            print(f"- {test}")
+            print(error)
+    
+    if result.errors:
+        print("\nERRORS:")
+        for test, error in result.errors:
+            print(f"- {test}")
+            print(error)
+    
+    return len(result.failures) == 0 and len(result.errors) == 0
 
 if __name__ == "__main__":
     success = run_tests()
