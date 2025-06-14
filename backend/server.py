@@ -1985,43 +1985,54 @@ async def get_system_status():
 
 @api_router.get("/elite-recommendations")
 async def get_elite_recommendations():
-    """Get current elite trade recommendations (10/10 only)"""
+    """Get current elite trade recommendations (10/10 signals only)"""
     try:
-        if not elite_engine:
-            raise HTTPException(503, "Elite recommendation engine not available")
+        if not db_pool:
+            raise HTTPException(400, "Database not connected")
         
-        # Scan for elite trades
-        elite_trades = await elite_engine.scan_for_elite_trades()
+        # Get elite recommendations from database (10/10 signals)
+        recommendations_data = await execute_db_query("""
+            SELECT recommendation_id, symbol, strategy, direction, entry_price,
+                   stop_loss, primary_target, confidence_score, timeframe,
+                   valid_until, scan_timestamp, status, metadata
+            FROM elite_recommendations 
+            WHERE status = 'ACTIVE' 
+            AND valid_until > datetime('now')
+            ORDER BY scan_timestamp DESC 
+            LIMIT 20
+        """)
         
-        # Convert to JSON serializable format
         recommendations = []
-        for trade in elite_trades:
-            recommendations.append({
-                "recommendation_id": trade.recommendation_id,
-                "timestamp": trade.timestamp.isoformat(),
-                "symbol": trade.symbol,
-                "strategy": trade.strategy,
-                "direction": trade.direction,
-                "entry_price": trade.entry_price,
-                "stop_loss": trade.stop_loss,
-                "primary_target": trade.primary_target,
-                "secondary_target": trade.secondary_target,
-                "tertiary_target": trade.tertiary_target,
-                "confidence_score": trade.confidence_score,
-                "timeframe": trade.timeframe,
-                "valid_until": trade.valid_until.isoformat(),
-                "confluence_factors": trade.confluence_factors[:5],  # Top 5
-                "entry_conditions": trade.entry_conditions,
-                "risk_metrics": trade.risk_metrics,
-                "position_sizing": trade.position_sizing,
-                "summary": trade.generate_summary()
-            })
+        if recommendations_data:
+            for row in recommendations_data:
+                try:
+                    metadata = json.loads(row[12]) if row[12] else {}
+                    recommendations.append({
+                        "recommendation_id": row[0],
+                        "symbol": row[1],
+                        "strategy": row[2],
+                        "direction": row[3],
+                        "entry_price": row[4],
+                        "stop_loss": row[5],
+                        "primary_target": row[6],
+                        "confidence_score": row[7],
+                        "timeframe": row[8],
+                        "valid_until": row[9],
+                        "scan_timestamp": row[10],
+                        "status": row[11],
+                        "quality_score": metadata.get('quality_score', 10.0),
+                        "setup_type": metadata.get('setup_type', 'ELITE'),
+                        "summary": f"Elite {row[3]} signal for {row[1]} - Quality: {metadata.get('quality_score', 10.0)}/10"
+                    })
+                except Exception as e:
+                    logger.error(f"Error processing recommendation row: {e}")
         
         return {
             "status": "success",
             "count": len(recommendations),
             "recommendations": recommendations,
-            "scan_timestamp": datetime.utcnow().isoformat()
+            "scan_timestamp": datetime.utcnow().isoformat(),
+            "message": f"Found {len(recommendations)} elite recommendations (10/10 signals)"
         }
         
     except Exception as e:
