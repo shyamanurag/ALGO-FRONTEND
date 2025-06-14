@@ -209,6 +209,82 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
           </div>
         </div>
 
+        {/* Data Connections Panel */}
+        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">🔌 Data Connections</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* TrueData Connection */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-bold text-gray-900">📡 TrueData</h3>
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                  currentSystemStatus.truedata_connected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }`}>
+                  {currentSystemStatus.truedata_connected ? '🟢 Connected' : '🔴 Disconnected'}
+                </span>
+              </div>
+              <p className="text-gray-600 text-sm mb-4">Real-time market data feed</p>
+              <div className="flex space-x-2">
+                {!currentSystemStatus.truedata_connected ? (
+                  <button
+                    onClick={onTrueDataConnect}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm transition duration-200"
+                  >
+                    🚀 Connect TrueData
+                  </button>
+                ) : (
+                  <button
+                    onClick={onTrueDataDisconnect}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition duration-200"
+                  >
+                    🔌 Disconnect
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Zerodha Connection */}
+            <div className="bg-gradient-to-r from-orange-50 to-red-50 p-4 rounded-lg border">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-bold text-gray-900">🔐 Zerodha</h3>
+                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                  zerodhaStatus.connected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                }`}>
+                  {zerodhaStatus.connected ? '🟢 Connected' : '🔴 Disconnected'}
+                </span>
+              </div>
+              <p className="text-gray-600 text-sm mb-2">Trading broker authentication</p>
+              {zerodhaStatus.token_preview && (
+                <p className="text-xs text-gray-500 mb-3">Token: {zerodhaStatus.token_preview}</p>
+              )}
+              <div className="flex space-x-2">
+                {!zerodhaStatus.connected ? (
+                  <button
+                    onClick={handleZerodhaAuth}
+                    className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded text-sm transition duration-200"
+                  >
+                    🚀 Authenticate Zerodha
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleZerodhaDisconnect}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition duration-200"
+                  >
+                    🔌 Disconnect
+                  </button>
+                )}
+              </div>
+              
+              {/* Configuration Status */}
+              <div className="mt-3 text-xs text-gray-500">
+                <div>API Key: {zerodhaStatus.api_key_configured ? '✅ Configured' : '❌ Not Set'}</div>
+                <div>API Secret: {zerodhaStatus.api_secret_configured ? '✅ Configured' : '❌ Not Set'}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Live Market Data Status */}
         <LiveMarketDataStatus />
 
