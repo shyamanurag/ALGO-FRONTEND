@@ -30,30 +30,27 @@ A sophisticated, enterprise-grade autonomous trading platform with real-time mon
 - **Professional Design**: Dark theme with advanced styling and animations
 - **Responsive Layout**: Mobile-optimized interface for trading on the go
 
-## 🎯 Core Features
+## 🎯 **Core Features**
 
-### 💹 **Autonomous Trading Engine**
-- **Real Market Analysis**: Live NIFTY, BANKNIFTY, FINNIFTY data processing
-- **Strategy Execution**: 7 sophisticated algorithms with real signal generation
-- **Risk Management**: Advanced position sizing, stop-loss, target management
-- **Order Management**: Ready for live order placement and execution
-- **Paper Trading**: Safe environment with real market prices
+### **🤖 Autonomous Trading**
+- **Elite Signal Generation**: Only 10/10 quality signals become recommendations
+- **Intraday Trading**: Automatic execution for qualified intraday signals
+- **Paper Trading Mode**: Safe testing environment for strategy validation
+- **Risk Management**: Automated stop-loss and position sizing
+- **Strategy Monitoring**: Real-time performance tracking for all algorithms
 
-### 🧠 **Elite Strategy Suite (All ACTIVE)**
-1. **MomentumSurfer**: VWAP and momentum analysis
-2. **NewsImpactScalper**: Volatility-based scalping
-3. **VolatilityExplosion**: Volume and volatility spike detection
-4. **ConfluenceAmplifier**: Multi-signal confluence analysis
-5. **PatternHunter**: Advanced pattern recognition
-6. **LiquidityMagnet**: Liquidity-based trading signals
-7. **VolumeProfileScalper**: Volume profile analysis
+### **📊 Advanced Dashboards**
+- **Live Trading Dashboard**: Real-time market monitoring and trade execution
+- **Admin Dashboard**: Comprehensive system administration and user management
+- **Autonomous Monitoring**: Strategy performance and algorithm health tracking
+- **Elite Recommendations**: Curated 10/10 quality signals for manual review
+- **Account Management**: Multi-account support with connection status tracking
 
-### 📊 **Real-Time Dashboard**
-- **Live Market Data**: Real prices from PAID Zerodha subscription
-- **System Health**: Actual component status monitoring
-- **Trading Signals**: Live signal generation and quality scores
-- **Performance Tracking**: Real P&L and execution statistics
-- **Autonomous Status**: Live strategy execution monitoring
+### **🔄 Real-Time Features**
+- **WebSocket Connections**: Live system status and trading updates
+- **Market Data Streaming**: Real-time price feeds (TrueData integration)
+- **System Health Monitoring**: Continuous monitoring of all components
+- **Live Indices Display**: NIFTY, BANKNIFTY, FINNIFTY real-time data
 
 ### 🔐 **Production Infrastructure**
 - **Authentication**: Complete Zerodha OAuth implementation
