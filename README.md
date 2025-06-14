@@ -13,19 +13,22 @@ A sophisticated, enterprise-grade autonomous trading platform with real-time mon
 - **🛡️ Enterprise Security**: Production-grade security with comprehensive error handling
 - **📱 Professional UI**: Dark theme with responsive design and intuitive navigation
 
-### 🤖 **FULLY AUTONOMOUS TRADING**
-- ✅ **7 Strategies ACTIVE**: All sophisticated algorithms running with real data
-- ✅ **Signal Generation**: Live market analysis and trade signal creation
-- ✅ **Risk Management**: Real-time position monitoring and risk controls
-- ✅ **Auto Execution**: Ready for autonomous trade placement
-- ✅ **Paper Trading**: Safe testing with real market prices
+## 🏗️ **System Architecture**
 
-### ⚡ **REAL-TIME CAPABILITIES**
-- ✅ **Live Market Data**: Hybrid provider (TrueData + Zerodha)
-- ✅ **System Monitoring**: Real health checks and performance tracking
-- ✅ **Database Persistence**: SQLite with real trading data
-- ✅ **WebSocket Connections**: Real-time data streaming
-- ✅ **Scheduler Active**: Background job processing operational
+### **Backend (FastAPI)**
+- **Real-Time API**: Lightning-fast endpoints with comprehensive health monitoring
+- **WebSocket Integration**: Live data streaming for autonomous trading updates
+- **Database Management**: SQLite with PostgreSQL-ready schema for scalability
+- **Strategy Engine**: 7 sophisticated algorithms with quality-based signal generation
+- **Risk Management**: Advanced position tracking and automated risk controls
+- **TrueData Integration**: Real market data connection (credentials required)
+
+### **Frontend (React)**
+- **18+ Components**: Modular architecture with specialized dashboards
+- **React Router**: Seamless navigation between admin, trading, and monitoring views
+- **Real-Time UI**: Live updates via WebSocket connections
+- **Professional Design**: Dark theme with advanced styling and animations
+- **Responsive Layout**: Mobile-optimized interface for trading on the go
 
 ## 🎯 Core Features
 
