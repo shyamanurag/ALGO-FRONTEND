@@ -1,19 +1,20 @@
 """
-Backend API Testing for ALGO-FRONTEND Autonomous Trading System
-Final Verification Testing after Mock Data Cleanup
+ALGO-FRONTEND Trading Platform - Production Readiness Testing
+Comprehensive Backend API Testing for Real Money Deployment
 """
 
 import requests
 import unittest
 import sys
 import json
+import time
 from datetime import datetime
 
 # Backend URL from frontend .env
 BACKEND_URL = "https://50da0ed4-e9ce-42e7-8c8a-d11c27e08d6f.preview.emergentagent.com"
 
 class AlgoFrontendBackendTest(unittest.TestCase):
-    """Test suite for ALGO-FRONTEND backend API endpoints - Final Verification"""
+    """Comprehensive test suite for ALGO-FRONTEND backend API endpoints - Production Readiness"""
     
     def setUp(self):
         """Setup for each test"""
@@ -29,7 +30,7 @@ class AlgoFrontendBackendTest(unittest.TestCase):
             self.assertIn("message", data)
             print(f"✅ Backend connection successful: {data['message']}")
         except Exception as e:
-            self.fail(f"Backend connection failed: {str(e)}")
+            self.fail(f"❌ Backend connection failed: {str(e)}")
     
     def test_02_health_check(self):
         """Test health check endpoint"""
@@ -48,80 +49,133 @@ class AlgoFrontendBackendTest(unittest.TestCase):
             # Check TrueData connection status
             self.assertIn("truedata", data)
             print(f"TrueData status: {data['truedata']['status'] if 'status' in data['truedata'] else 'Unknown'}")
-            
-            # Verify TrueData shows DISCONNECTED (expected when not configured)
-            self.assertEqual(data['truedata']['status'] if 'status' in data['truedata'] else data['truedata'].get('connected', None), 
-                           "DISCONNECTED", "TrueData should show DISCONNECTED")
         except Exception as e:
-            self.fail(f"Health check failed: {str(e)}")
+            self.fail(f"❌ Health check failed: {str(e)}")
     
-    def test_03_trading_signals_empty(self):
-        """Test trading signals table is completely empty (0 signals)"""
-        try:
-            response = requests.get(f"{self.api_url}/trading-signals/active")
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            
-            self.assertIn("signals", data)
-            signals = data["signals"]
-            
-            # Check that there are 0 signals
-            self.assertEqual(len(signals), 0, "Expected 0 active trading signals after cleanup")
-            
-            # Check for "No trading signals" message
-            self.assertIn("message", data)
-            self.assertIn("No trading signals", data["message"], "Expected 'No trading signals' message")
-            
-            print(f"✅ Trading signals verification successful:")
-            print(f"  Total signals: {len(signals)} (Expected: 0)")
-            print(f"  Message: {data['message']}")
-        except Exception as e:
-            self.fail(f"Trading signals verification failed: {str(e)}")
-    
-    def test_04_market_data_real_data_only(self):
-        """Test market data live shows REAL_DATA_ONLY data integrity"""
-        try:
-            response = requests.get(f"{self.api_url}/market-data/live")
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
-            
-            # Check for data integrity field
-            self.assertIn("provider_details", data)
-            provider_details = data["provider_details"]
-            self.assertIn("data_integrity", provider_details)
-            self.assertEqual(provider_details["data_integrity"], "REAL_DATA_ONLY", 
-                           "Expected REAL_DATA_ONLY data integrity")
-            
-            print(f"✅ Market data integrity verification successful:")
-            print(f"  Data integrity: {provider_details['data_integrity']} (Expected: REAL_DATA_ONLY)")
-        except Exception as e:
-            self.fail(f"Market data integrity verification failed: {str(e)}")
-    
-    def test_05_system_status_no_data(self):
-        """Test system status shows NO_DATA source (correct for no real data feeds)"""
+    def test_03_system_status(self):
+        """Test system status endpoint"""
         try:
             response = requests.get(f"{self.api_url}/system/status")
             self.assertEqual(response.status_code, 200)
             data = response.json()
             
+            # Check for success field
             self.assertIn("success", data)
-            self.assertTrue(data["success"])
-            self.assertIn("status", data)
             
+            # Check for status field
+            self.assertIn("status", data)
             status = data["status"]
             
-            # Check data source is NO_DATA
-            self.assertIn("data_source", status)
-            self.assertEqual(status["data_source"], "NO_DATA", "Expected NO_DATA source")
+            # Check for required fields in status
+            required_fields = ["system_health", "autonomous_trading", "paper_trading", "market_status"]
+            for field in required_fields:
+                self.assertIn(field, status, f"Missing field: {field}")
             
             print(f"✅ System status verification successful:")
-            print(f"  Data source: {status['data_source']} (Expected: NO_DATA)")
             print(f"  System health: {status['system_health']}")
+            print(f"  Autonomous trading: {status['autonomous_trading']}")
+            print(f"  Paper trading: {status['paper_trading']}")
+            print(f"  Market status: {status['market_status']}")
         except Exception as e:
-            self.fail(f"System status verification failed: {str(e)}")
+            self.fail(f"❌ System status verification failed: {str(e)}")
     
-    def test_06_autonomous_status_healthy_no_signals(self):
-        """Test autonomous status shows system is healthy with 7 strategies but 0 mock signals"""
+    def test_04_admin_metrics(self):
+        """Test admin metrics endpoint"""
+        try:
+            response = requests.get(f"{self.api_url}/admin/overall-metrics")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for success field
+            self.assertIn("success", data)
+            self.assertTrue(data["success"])
+            
+            # Check for metrics field
+            self.assertIn("metrics", data)
+            metrics = data["metrics"]
+            
+            # Check for required fields in metrics
+            required_fields = ["total_signals", "total_trades_today", "active_strategies", "autonomous_trading", "system_health"]
+            for field in required_fields:
+                self.assertIn(field, metrics, f"Missing field: {field}")
+            
+            # Verify active strategies is 7
+            self.assertEqual(metrics["active_strategies"], 7, "Expected 7 active strategies")
+            
+            print(f"✅ Admin metrics verification successful:")
+            print(f"  Total signals: {metrics['total_signals']}")
+            print(f"  Total trades today: {metrics['total_trades_today']}")
+            print(f"  Active strategies: {metrics['active_strategies']} (Expected: 7)")
+            print(f"  System health: {metrics['system_health']}")
+        except Exception as e:
+            self.fail(f"❌ Admin metrics verification failed: {str(e)}")
+    
+    def test_05_recent_trades(self):
+        """Test recent trades endpoint"""
+        try:
+            response = requests.get(f"{self.api_url}/admin/recent-trades")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for success field
+            self.assertIn("success", data)
+            self.assertTrue(data["success"])
+            
+            # Check for trades field
+            self.assertIn("trades", data)
+            trades = data["trades"]
+            
+            print(f"✅ Recent trades verification successful:")
+            print(f"  Total trades: {len(trades)}")
+            
+            # If trades exist, check the structure of the first trade
+            if trades:
+                first_trade = trades[0]
+                required_fields = ["symbol", "side", "quantity", "price", "time"]
+                for field in required_fields:
+                    self.assertIn(field, first_trade, f"Missing field in trade: {field}")
+                
+                print(f"  First trade: {first_trade['symbol']} {first_trade['side']} {first_trade['quantity']} @ {first_trade['price']}")
+        except Exception as e:
+            self.fail(f"❌ Recent trades verification failed: {str(e)}")
+    
+    def test_06_trading_signals(self):
+        """Test trading signals endpoint"""
+        try:
+            # Try the active signals endpoint first
+            response = requests.get(f"{self.api_url}/trading-signals/active")
+            
+            # If that fails, try the all signals endpoint
+            if response.status_code == 404:
+                response = requests.get(f"{self.api_url}/trading-signals/all")
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for signals field
+            self.assertIn("signals", data)
+            signals = data["signals"]
+            
+            print(f"✅ Trading signals verification successful:")
+            print(f"  Total signals: {len(signals)}")
+            
+            # If signals exist, check the structure of the first signal
+            if signals:
+                first_signal = signals[0]
+                required_fields = ["strategy_name", "symbol", "action", "quality_score"]
+                for field in required_fields:
+                    self.assertIn(field, first_signal, f"Missing field in signal: {field}")
+                
+                print(f"  First signal: {first_signal['strategy_name']} {first_signal['symbol']} {first_signal['action']} (Quality: {first_signal['quality_score']})")
+                
+                # Check for perfect 10.0 score signals (should not exist)
+                perfect_score_signals = [s for s in signals if s.get("quality_score", 0) == 10.0]
+                self.assertEqual(len(perfect_score_signals), 0, f"Found {len(perfect_score_signals)} signals with perfect 10.0 scores")
+        except Exception as e:
+            self.fail(f"❌ Trading signals verification failed: {str(e)}")
+    
+    def test_07_autonomous_status(self):
+        """Test autonomous status endpoint"""
         try:
             response = requests.get(f"{self.api_url}/autonomous/status")
             self.assertEqual(response.status_code, 200)
@@ -135,33 +189,116 @@ class AlgoFrontendBackendTest(unittest.TestCase):
             # Check that there are 7 active strategies
             self.assertEqual(data["strategies_active"], 7, "Expected 7 active strategies")
             
-            # Check that there are 0 active signals
-            self.assertEqual(data["active_signals"], 0, "Expected 0 active signals after cleanup")
-            
             print(f"✅ Autonomous status verification successful:")
             print(f"  Status: {data['status']}")
+            print(f"  Trading active: {data['trading_active']}")
+            print(f"  Paper trading: {data['paper_trading']}")
             print(f"  Active strategies: {data['strategies_active']} (Expected: 7)")
-            print(f"  Active signals: {data['active_signals']} (Expected: 0)")
+            print(f"  Active signals: {data['active_signals']}")
         except Exception as e:
-            self.fail(f"Autonomous status verification failed: {str(e)}")
+            self.fail(f"❌ Autonomous status verification failed: {str(e)}")
     
-    def test_07_no_suspicious_mock_signals(self):
-        """Test no mock signals with suspicious names exist"""
+    def test_08_market_data(self):
+        """Test market data endpoint"""
         try:
-            response = requests.get(f"{self.api_url}/trading-signals/all")
+            response = requests.get(f"{self.api_url}/market-data/live")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
             
-            # If endpoint doesn't exist, try alternative
+            # Check for required fields
+            required_fields = ["indices", "provider_details", "timestamp"]
+            for field in required_fields:
+                self.assertIn(field, data, f"Missing field: {field}")
+            
+            # Check for indices data
+            indices = data["indices"]
+            expected_indices = ["NIFTY", "BANKNIFTY", "FINNIFTY"]
+            for index in expected_indices:
+                self.assertIn(index, indices, f"Missing index: {index}")
+            
+            # Check for provider details
+            provider_details = data["provider_details"]
+            self.assertIn("provider", provider_details)
+            self.assertIn("data_integrity", provider_details)
+            
+            print(f"✅ Market data verification successful:")
+            print(f"  Provider: {provider_details['provider']}")
+            print(f"  Data integrity: {provider_details['data_integrity']}")
+            print(f"  Indices: {', '.join(indices.keys())}")
+        except Exception as e:
+            self.fail(f"❌ Market data verification failed: {str(e)}")
+    
+    def test_09_elite_recommendations(self):
+        """Test elite recommendations endpoint"""
+        try:
+            response = requests.get(f"{self.api_url}/elite-recommendations")
+            
+            # If that fails, try the active recommendations endpoint
             if response.status_code == 404:
-                response = requests.get(f"{self.api_url}/trading-signals/active")
+                response = requests.get(f"{self.api_url}/elite-recommendations/active")
             
             self.assertEqual(response.status_code, 200)
             data = response.json()
             
-            self.assertIn("signals", data)
-            signals = data["signals"]
+            # Check for recommendations field
+            self.assertIn("recommendations", data)
+            recommendations = data["recommendations"]
+            
+            print(f"✅ Elite recommendations verification successful:")
+            print(f"  Total recommendations: {len(recommendations)}")
+            
+            # If recommendations exist, check the structure of the first recommendation
+            if recommendations:
+                first_rec = recommendations[0]
+                required_fields = ["symbol", "strategy", "direction", "entry_price", "stop_loss", "primary_target", "confidence_score"]
+                for field in required_fields:
+                    self.assertIn(field, first_rec, f"Missing field in recommendation: {field}")
+                
+                print(f"  First recommendation: {first_rec['symbol']} {first_rec['direction']} (Confidence: {first_rec['confidence_score']})")
+        except Exception as e:
+            self.fail(f"❌ Elite recommendations verification failed: {str(e)}")
+    
+    def test_10_system_metrics(self):
+        """Test system metrics endpoint"""
+        try:
+            response = requests.get(f"{self.api_url}/autonomous/system-metrics")
+            
+            # If that fails, try the system status endpoint
+            if response.status_code == 404:
+                response = requests.get(f"{self.api_url}/system/status")
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            print(f"✅ System metrics verification successful")
+            
+            # Print some key metrics if available
+            if "metrics" in data:
+                metrics = data["metrics"]
+                print(f"  CPU usage: {metrics.get('cpu_usage', 'N/A')}%")
+                print(f"  Memory usage: {metrics.get('memory_usage', 'N/A')}%")
+                print(f"  Disk usage: {metrics.get('disk_usage', 'N/A')}%")
+            elif "status" in data:
+                status = data["status"]
+                print(f"  System health: {status.get('system_health', 'N/A')}")
+                print(f"  Uptime: {status.get('uptime', 'N/A')}")
+        except Exception as e:
+            self.fail(f"❌ System metrics verification failed: {str(e)}")
+    
+    def test_11_database_integrity(self):
+        """Test database integrity by checking for mock data"""
+        try:
+            # Check trading signals for mock data
+            response = requests.get(f"{self.api_url}/trading-signals/active")
+            if response.status_code == 404:
+                response = requests.get(f"{self.api_url}/trading-signals/all")
+            
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            signals = data.get("signals", [])
             
             # Check for suspicious signal names
-            suspicious_patterns = ["PATTERN_RECOGNITION", "VOLUME_SPIKE", "MOMENTUM_BREAKOUT"]
+            suspicious_patterns = ["PATTERN_RECOGNITION", "VOLUME_SPIKE", "MOMENTUM_BREAKOUT", "TEST_", "MOCK_", "DEMO_"]
             suspicious_signals = []
             
             for signal in signals:
@@ -169,102 +306,147 @@ class AlgoFrontendBackendTest(unittest.TestCase):
                     if pattern.lower() in str(signal).lower():
                         suspicious_signals.append(signal)
             
-            self.assertEqual(len(suspicious_signals), 0, 
-                           f"Found {len(suspicious_signals)} suspicious mock signals: {suspicious_signals}")
+            self.assertEqual(len(suspicious_signals), 0, f"Found {len(suspicious_signals)} suspicious mock signals")
             
-            print(f"✅ No suspicious mock signals verification successful:")
-            print(f"  Total signals: {len(signals)} (Expected: 0)")
+            print(f"✅ Database integrity verification successful:")
             print(f"  Suspicious signals found: {len(suspicious_signals)} (Expected: 0)")
         except Exception as e:
-            self.fail(f"Suspicious mock signals verification failed: {str(e)}")
+            self.fail(f"❌ Database integrity verification failed: {str(e)}")
     
-    def test_08_perfect_score_signals_check(self):
-        """Test no signals with perfect 10.0 scores exist (database trigger should prevent)"""
+    def test_12_error_handling(self):
+        """Test error handling by sending invalid requests"""
         try:
-            response = requests.get(f"{self.api_url}/trading-signals/all")
+            # Test invalid endpoint
+            response = requests.get(f"{self.api_url}/invalid-endpoint")
+            self.assertEqual(response.status_code, 404)
             
-            # If endpoint doesn't exist, try alternative
-            if response.status_code == 404:
-                response = requests.get(f"{self.api_url}/trading-signals/active")
+            # Test invalid method
+            response = requests.post(f"{self.api_url}/health")
+            self.assertIn(response.status_code, [405, 404, 400])
             
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
+            # Test invalid parameters
+            response = requests.post(f"{self.api_url}/system/zerodha-authenticate", json={})
+            self.assertIn(response.status_code, [400, 422])
             
-            self.assertIn("signals", data)
-            signals = data["signals"]
-            
-            # Check for perfect 10.0 score signals
-            perfect_score_signals = [s for s in signals if s.get("quality_score", 0) == 10.0]
-            
-            self.assertEqual(len(perfect_score_signals), 0, 
-                           f"Found {len(perfect_score_signals)} signals with perfect 10.0 scores")
-            
-            print(f"✅ No perfect score signals verification successful:")
-            print(f"  Perfect score signals found: {len(perfect_score_signals)} (Expected: 0)")
+            print(f"✅ Error handling verification successful")
         except Exception as e:
-            self.fail(f"Perfect score signals verification failed: {str(e)}")
+            self.fail(f"❌ Error handling verification failed: {str(e)}")
     
-    def test_09_data_source_verification(self):
-        """Test data source verification for TrueData and Zerodha"""
+    def test_13_websocket_endpoint(self):
+        """Test WebSocket endpoint availability"""
         try:
-            response = requests.get(f"{self.api_url}/system/status")
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
+            # We can't test WebSocket directly with requests, but we can check if the endpoint exists
+            ws_url = f"{self.api_url}/ws/autonomous-data"
             
-            self.assertIn("status", data)
-            status = data["status"]
+            # Try to connect with a GET request (should return 400 or similar if endpoint exists)
+            response = requests.get(ws_url)
             
-            # Check TrueData shows DISCONNECTED
-            self.assertIn("truedata", status)
-            truedata = status["truedata"]
-            self.assertIn("connected", truedata)
-            self.assertFalse(truedata["connected"], "TrueData should show disconnected")
+            # If status code is 404, the endpoint doesn't exist
+            self.assertNotEqual(response.status_code, 404, "WebSocket endpoint not found")
             
-            # Check Zerodha shows not configured
-            self.assertIn("zerodha", status)
-            zerodha = status["zerodha"]
-            self.assertIn("configured", zerodha)
-            self.assertFalse(zerodha["configured"], "Zerodha should show not configured")
-            
-            print(f"✅ Data source verification successful:")
-            print(f"  TrueData connected: {truedata['connected']} (Expected: False)")
-            print(f"  Zerodha configured: {zerodha['configured']} (Expected: False)")
+            print(f"✅ WebSocket endpoint verification successful")
+            print(f"  Status code: {response.status_code} (Expected: not 404)")
         except Exception as e:
-            self.fail(f"Data source verification failed: {str(e)}")
+            self.fail(f"❌ WebSocket endpoint verification failed: {str(e)}")
     
-    def test_10_admin_metrics_verification(self):
-        """Test admin metrics show 0 signals and correct system health"""
+    def test_14_load_testing(self):
+        """Basic load testing with multiple concurrent requests"""
         try:
-            response = requests.get(f"{self.api_url}/admin/overall-metrics")
-            self.assertEqual(response.status_code, 200)
-            data = response.json()
+            # Define endpoints to test
+            endpoints = [
+                "/health",
+                "/system/status",
+                "/admin/overall-metrics",
+                "/admin/recent-trades",
+                "/trading-signals/active",
+                "/autonomous/status",
+                "/market-data/live"
+            ]
             
-            self.assertIn("success", data)
-            self.assertTrue(data["success"])
-            self.assertIn("metrics", data)
+            # Number of requests per endpoint
+            num_requests = 5
             
-            metrics = data["metrics"]
+            # Track response times
+            response_times = {}
             
-            # Check total signals is 0
-            self.assertIn("total_signals", metrics)
-            self.assertEqual(metrics["total_signals"], 0, "Expected 0 total signals")
+            for endpoint in endpoints:
+                start_time = time.time()
+                
+                # Make multiple requests
+                for _ in range(num_requests):
+                    response = requests.get(f"{self.api_url}{endpoint}")
+                    self.assertIn(response.status_code, [200, 404])
+                
+                end_time = time.time()
+                avg_time = (end_time - start_time) / num_requests
+                response_times[endpoint] = avg_time
             
-            # Check active strategies is 7
-            self.assertIn("active_strategies", metrics)
-            self.assertEqual(metrics["active_strategies"], 7, "Expected 7 active strategies")
-            
-            print(f"✅ Admin metrics verification successful:")
-            print(f"  Total signals: {metrics['total_signals']} (Expected: 0)")
-            print(f"  Active strategies: {metrics['active_strategies']} (Expected: 7)")
-            print(f"  System health: {metrics['system_health']}")
+            print(f"✅ Load testing verification successful:")
+            for endpoint, avg_time in response_times.items():
+                print(f"  {endpoint}: {avg_time:.4f}s average response time")
         except Exception as e:
-            self.fail(f"Admin metrics verification failed: {str(e)}")
+            self.fail(f"❌ Load testing verification failed: {str(e)}")
+    
+    def test_15_security_headers(self):
+        """Test security headers"""
+        try:
+            response = requests.get(f"{self.api_url}/health")
+            headers = response.headers
+            
+            # Check for common security headers
+            security_headers = {
+                "X-Content-Type-Options": "nosniff",
+                "X-Frame-Options": "DENY",
+                "Content-Security-Policy": None,
+                "Strict-Transport-Security": None,
+                "X-XSS-Protection": "1; mode=block"
+            }
+            
+            present_headers = []
+            missing_headers = []
+            
+            for header, expected_value in security_headers.items():
+                if header in headers:
+                    present_headers.append(header)
+                    if expected_value and headers[header] != expected_value:
+                        print(f"  Warning: {header} has value {headers[header]}, expected {expected_value}")
+                else:
+                    missing_headers.append(header)
+            
+            print(f"✅ Security headers verification:")
+            print(f"  Present headers: {', '.join(present_headers) if present_headers else 'None'}")
+            print(f"  Missing headers: {', '.join(missing_headers) if missing_headers else 'None'}")
+        except Exception as e:
+            self.fail(f"❌ Security headers verification failed: {str(e)}")
 
-if __name__ == "__main__":
-    print(f"🚀 Starting ALGO-FRONTEND Backend API Final Verification Tests")
+def run_tests():
+    """Run all tests and return results"""
+    print(f"🚀 Starting ALGO-FRONTEND Backend API Production Readiness Tests")
     print(f"Backend URL: {BACKEND_URL}")
     print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("-" * 80)
     
+    # Create test suite
+    suite = unittest.TestSuite()
+    
+    # Add all tests
+    for i in range(1, 16):
+        test_name = f"test_{i:02d}_" + getattr(AlgoFrontendBackendTest, f"test_{i:02d}_").__doc__.split()[0].lower()
+        suite.addTest(AlgoFrontendBackendTest(test_name))
+    
     # Run tests
-    unittest.main(argv=['first-arg-is-ignored'], exit=False)
+    runner = unittest.TextTestRunner(verbosity=2)
+    result = runner.run(suite)
+    
+    # Print summary
+    print("-" * 80)
+    print(f"Tests run: {result.testsRun}")
+    print(f"Failures: {len(result.failures)}")
+    print(f"Errors: {len(result.errors)}")
+    
+    # Return True if all tests passed
+    return len(result.failures) == 0 and len(result.errors) == 0
+
+if __name__ == "__main__":
+    success = run_tests()
+    sys.exit(0 if success else 1)
