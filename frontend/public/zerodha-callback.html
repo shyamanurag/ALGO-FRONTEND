@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zerodha Authentication - Elite Trading</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .status {
+            font-size: 18px;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .info {
+            background: #cce4ff;
+            color: #004085;
+            border: 1px solid #b8daff;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        .button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🚀 Elite Trading Platform</div>
+        <h2>Zerodha Authentication</h2>
+        
+        <div id="status" class="status info">
+            <div class="spinner"></div>
+            Processing authentication...
+        </div>
+        
+        <div id="actions" style="display: none;">
+            <button class="button" onclick="window.close()">Close Window</button>
+            <button class="button" onclick="retryAuth()">Retry</button>
+        </div>
+    </div>
+
+    <script>
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = message;
+            document.getElementById('actions').style.display = 'block';
+        }
+
+        function retryAuth() {
+            window.location.href = '/admin';
+        }
+
+        // Process the OAuth callback
+        document.addEventListener('DOMContentLoaded', function() {
+            const requestToken = getUrlParameter('request_token');
+            const action = getUrlParameter('action');
+            const status = getUrlParameter('status');
+
+            if (status === 'success' && requestToken) {
+                // Send the request token to the parent window
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'ZERODHA_AUTH_SUCCESS',
+                        request_token: requestToken
+                    }, window.location.origin);
+                    
+                    showStatus('✅ Authentication successful! You can close this window.', 'success');
+                    
+                    // Auto-close after 3 seconds
+                    setTimeout(() => {
+                        window.close();
+                    }, 3000);
+                } else {
+                    showStatus('✅ Authentication successful! Please return to the admin panel.', 'success');
+                }
+            } else if (action === 'login' && !requestToken) {
+                showStatus('❌ Authentication cancelled or failed. No authorization token received.', 'error');
+            } else if (requestToken) {
+                // Send token to parent window
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'ZERODHA_AUTH_SUCCESS',
+                        request_token: requestToken
+                    }, window.location.origin);
+                    
+                    showStatus('✅ Authorization successful! Processing connection...', 'success');
+                    
+                    setTimeout(() => {
+                        window.close();
+                    }, 2000);
+                } else {
+                    showStatus(`✅ Authorization token received: ${requestToken.substring(0, 20)}...`, 'success');
+                }
+            } else {
+                showStatus('❌ No authorization token received. Please try again.', 'error');
+            }
+        });
+    </script>
+</body>
+</html>
