@@ -227,6 +227,96 @@ class AlgoFrontendBackendTest(unittest.TestCase):
             print(f"  TrueData connected: {status['truedata']['connected']}")
         except Exception as e:
             self.fail(f"System status test failed: {str(e)}")
+            
+    def test_08_autonomous_status(self):
+        """Test autonomous trading engine status endpoint"""
+        try:
+            response = requests.get(f"{self.api_url}/autonomous/status")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            self.assertIn("status", data)
+            self.assertIn("engine_active", data)
+            self.assertIn("strategies", data)
+            
+            # Check that there are 7 active strategies
+            self.assertEqual(len(data["strategies"]), 7, "Expected 7 active strategies")
+            
+            # Check that engine is active
+            self.assertTrue(data["engine_active"], "Autonomous engine should be active")
+            
+            print(f"✅ Autonomous status successful:")
+            print(f"  Engine active: {data['engine_active']}")
+            print(f"  Status: {data['status']}")
+            print(f"  Active strategies: {len(data['strategies'])}")
+        except Exception as e:
+            self.fail(f"Autonomous status test failed: {str(e)}")
+            
+    def test_09_trading_signals_active(self):
+        """Test active trading signals endpoint"""
+        try:
+            response = requests.get(f"{self.api_url}/trading-signals/active")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            self.assertIn("signals", data)
+            signals = data["signals"]
+            
+            # Check that there are at least 13 signals
+            self.assertGreaterEqual(len(signals), 13, "Expected at least 13 active trading signals")
+            
+            # Check that all signals have quality scores of 8.0+
+            for signal in signals:
+                self.assertIn("quality_score", signal)
+                self.assertGreaterEqual(signal["quality_score"], 8.0, 
+                                       f"Signal {signal.get('signal_id', 'unknown')} has quality score below 8.0")
+            
+            print(f"✅ Trading signals active successful:")
+            print(f"  Total signals: {len(signals)}")
+            print(f"  All signals have quality score 8.0+: {all(s['quality_score'] >= 8.0 for s in signals)}")
+        except Exception as e:
+            self.fail(f"Trading signals active test failed: {str(e)}")
+            
+    def test_10_market_data_live(self):
+        """Test market data live endpoint with REAL_DATA_ONLY check"""
+        try:
+            response = requests.get(f"{self.api_url}/market-data/live")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for REAL_DATA_ONLY response
+            self.assertIn("data_source", data)
+            self.assertEqual(data["data_source"], "REAL_DATA_ONLY", "Expected REAL_DATA_ONLY data source")
+            
+            print(f"✅ Market data live successful:")
+            print(f"  Data source: {data['data_source']}")
+        except Exception as e:
+            self.fail(f"Market data live test failed: {str(e)}")
+            
+    def test_11_risk_metrics(self):
+        """Test risk management metrics endpoint"""
+        try:
+            response = requests.get(f"{self.api_url}/autonomous/risk-metrics")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            self.assertIn("metrics", data)
+            metrics = data["metrics"]
+            
+            required_fields = [
+                "daily_risk_limit", "position_risk_limit", "max_drawdown", 
+                "current_drawdown", "risk_utilization", "risk_status"
+            ]
+            
+            for field in required_fields:
+                self.assertIn(field, metrics, f"Missing field: {field}")
+            
+            print(f"✅ Risk metrics successful:")
+            print(f"  Risk status: {metrics['risk_status']}")
+            print(f"  Risk utilization: {metrics['risk_utilization']}%")
+            print(f"  Current drawdown: {metrics['current_drawdown']}%")
+        except Exception as e:
+            self.fail(f"Risk metrics test failed: {str(e)}")
 
 if __name__ == "__main__":
     print(f"🚀 Starting ALGO-FRONTEND Backend API Tests")
