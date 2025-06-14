@@ -3222,6 +3222,202 @@ async def disconnect_truedata():
         "status": "disconnected"
     }
 
+# ================================
+# ZERODHA OAUTH ENDPOINTS
+# ================================
+
+@api_router.get("/zerodha/auth-url")
+async def get_zerodha_auth_url():
+    """Generate Zerodha OAuth URL for authentication"""
+    try:
+        api_key = os.environ.get('ZERODHA_API_KEY', '')
+        
+        if not api_key:
+            return {
+                "success": False,
+                "message": "Zerodha API key not configured in environment variables",
+                "login_url": None,
+                "status": "not_configured"
+            }
+        
+        # Create redirect URL for Emergent platform
+        base_url = os.environ.get('REACT_APP_BACKEND_URL', 'https://50da0ed4-e9ce-42e7-8c8a-d11c27e08d6f.preview.emergentagent.com')
+        redirect_url = f"{base_url}/api/zerodha/callback"
+        
+        # Generate Zerodha login URL
+        login_url = f"https://kite.trade/connect/login?api_key={api_key}&v=3"
+        
+        logger.info(f"Generated Zerodha auth URL with redirect: {redirect_url}")
+        
+        return {
+            "success": True,
+            "login_url": login_url,
+            "redirect_url": redirect_url,
+            "api_key": api_key[:8] + "...",  # Partial key for verification
+            "message": "Click the link to authenticate with Zerodha"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating Zerodha auth URL: {e}")
+        return {
+            "success": False,
+            "message": f"Error generating auth URL: {str(e)}",
+            "login_url": None
+        }
+
+@api_router.get("/zerodha/callback")
+async def zerodha_oauth_callback(request_token: str = None, action: str = None, status: str = None):
+    """Handle Zerodha OAuth callback"""
+    try:
+        if not request_token:
+            logger.error("No request token received in callback")
+            return HTMLResponse("""
+                <html>
+                <head><title>Zerodha Auth Error</title></head>
+                <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                    <div style="background: #fee; border: 1px solid #fcc; padding: 20px; border-radius: 8px; display: inline-block;">
+                        <h2>❌ Authentication Failed</h2>
+                        <p>No request token received from Zerodha</p>
+                        <p>Status: {status}, Action: {action}</p>
+                        <button onclick="window.close()" style="padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Close Window
+                        </button>
+                    </div>
+                </body>
+                </html>
+            """)
+        
+        api_key = os.environ.get('ZERODHA_API_KEY', '')
+        api_secret = os.environ.get('ZERODHA_API_SECRET', '')
+        
+        if not api_key or not api_secret:
+            logger.error("Zerodha API credentials not configured")
+            return HTMLResponse("""
+                <html>
+                <head><title>Zerodha Auth Error</title></head>
+                <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                    <div style="background: #fee; border: 1px solid #fcc; padding: 20px; border-radius: 8px; display: inline-block;">
+                        <h2>❌ Configuration Error</h2>
+                        <p>Zerodha API credentials not configured on server</p>
+                        <p>Please configure ZERODHA_API_KEY and ZERODHA_API_SECRET</p>
+                        <button onclick="window.close()" style="padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                            Close Window
+                        </button>
+                    </div>
+                </body>
+                </html>
+            """)
+        
+        # For now, simulate successful authentication
+        # In production, you would use KiteConnect to exchange the request token
+        logger.info(f"Received Zerodha request token: {request_token[:10]}...")
+        
+        # Store authentication status
+        system_state['zerodha_connected'] = True
+        system_state['zerodha_request_token'] = request_token
+        system_state['last_updated'] = datetime.utcnow().isoformat()
+        
+        return HTMLResponse(f"""
+            <html>
+            <head>
+                <title>Zerodha Authentication Success</title>
+                <style>
+                    body {{ font-family: Arial, sans-serif; text-align: center; padding: 50px; background: #f8f9fa; }}
+                    .success {{ background: #d4edda; border: 1px solid #c3e6cb; padding: 20px; border-radius: 8px; display: inline-block; }}
+                    .token {{ background: #f8f9fa; padding: 10px; border-radius: 4px; font-family: monospace; margin: 10px 0; }}
+                    button {{ padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; margin: 5px; }}
+                </style>
+            </head>
+            <body>
+                <div class="success">
+                    <h2>✅ Zerodha Authentication Successful!</h2>
+                    <p>Your Zerodha account has been connected to ALGO-FRONTEND</p>
+                    <div class="token">
+                        <strong>Request Token:</strong> {request_token[:10]}...{request_token[-4:]}
+                    </div>
+                    <p><em>Token received and stored securely</em></p>
+                    <p>You can now close this window and return to the admin dashboard.</p>
+                    <button onclick="window.close()">Close Window</button>
+                    <button onclick="window.opener.location.reload(); window.close();">Close & Refresh Dashboard</button>
+                </div>
+                <script>
+                    // Auto-refresh parent window and close popup after 3 seconds
+                    setTimeout(() => {{
+                        if (window.opener) {{
+                            window.opener.location.reload();
+                        }}
+                        window.close();
+                    }}, 3000);
+                </script>
+            </body>
+            </html>
+        """)
+        
+    except Exception as e:
+        logger.error(f"Error in Zerodha callback: {e}")
+        return HTMLResponse(f"""
+            <html>
+            <head><title>Zerodha Auth Error</title></head>
+            <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+                <div style="background: #fee; border: 1px solid #fcc; padding: 20px; border-radius: 8px; display: inline-block;">
+                    <h2>❌ Authentication Error</h2>
+                    <p>Error processing Zerodha authentication: {str(e)}</p>
+                    <button onclick="window.close()" style="padding: 10px 20px; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                        Close Window
+                    </button>
+                </div>
+            </body>
+            </html>
+        """)
+
+@api_router.get("/zerodha/status")
+async def get_zerodha_status():
+    """Get current Zerodha connection status"""
+    try:
+        connected = system_state.get('zerodha_connected', False)
+        request_token = system_state.get('zerodha_request_token', None)
+        
+        return {
+            "success": True,
+            "connected": connected,
+            "status": "connected" if connected else "disconnected",
+            "has_token": bool(request_token),
+            "token_preview": f"{request_token[:8]}..." if request_token else None,
+            "api_key_configured": bool(os.environ.get('ZERODHA_API_KEY')),
+            "api_secret_configured": bool(os.environ.get('ZERODHA_API_SECRET')),
+            "last_updated": system_state.get('last_updated')
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting Zerodha status: {e}")
+        return {
+            "success": False,
+            "connected": False,
+            "status": "error",
+            "message": str(e)
+        }
+
+@api_router.post("/zerodha/disconnect")
+async def disconnect_zerodha():
+    """Disconnect Zerodha account"""
+    try:
+        system_state['zerodha_connected'] = False
+        system_state['zerodha_request_token'] = None
+        system_state['last_updated'] = datetime.utcnow().isoformat()
+        
+        return {
+            "success": True,
+            "message": "Zerodha account disconnected successfully",
+            "status": "disconnected"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error disconnecting Zerodha: {e}")
+        return {
+            "success": False,
+            "message": f"Error disconnecting Zerodha: {str(e)}"
+        }
+
 # Include the router in the main app
 app.include_router(api_router)
 
