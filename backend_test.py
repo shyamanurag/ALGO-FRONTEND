@@ -1,17 +1,25 @@
 """
-ALGO-FRONTEND Trading Platform - Production Readiness Testing
+Elite Autonomous Algorithmic Trading Platform - Production Readiness Testing
 Comprehensive Backend API Testing for Real Money Deployment
 
-This test suite specifically tests the REAL fixes implemented:
-1. Fixed React Router Navigation
-2. Added Missing WebSocket Endpoint: /api/ws/autonomous-data
-3. Added TrueData Endpoints: /api/truedata/connect and /api/truedata/disconnect
-4. Fixed Route Conflicts
-5. Added Zerodha OAuth Integration:
-   - GET /api/zerodha/auth-url - Generates Zerodha OAuth URL
-   - GET /api/zerodha/callback - Handles OAuth callback with request token
-   - GET /api/zerodha/status - Returns current connection status
-   - POST /api/zerodha/disconnect - Disconnects Zerodha account
+This test suite tests the following key features:
+1. Backend API Endpoints:
+   - GET /api/health - System health check
+   - GET /api/ - Root endpoint
+   - GET /api/admin/overall-metrics - Admin metrics
+   - GET /api/admin/recent-trades - Recent trades
+2. TrueData Integration:
+   - POST /api/system/start-truedata - Start TrueData connection
+   - POST /api/system/start-truedata-tcp - Start TrueData TCP connection
+   - GET /api/system/truedata-status - Get TrueData status
+3. System Management:
+   - POST /api/system/fix-status - Fix system status
+   - POST /api/system/force-live-mode - Force live mode
+4. Zerodha Integration:
+   - GET /api/system/zerodha-auth-status - Get Zerodha auth status
+   - POST /api/system/zerodha-authenticate - Authenticate Zerodha
+5. WebSocket Connection:
+   - WS /api/ws/autonomous-data - WebSocket for real-time data
 """
 
 import requests
