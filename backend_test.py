@@ -10,7 +10,7 @@ import json
 from datetime import datetime
 
 # Backend URL from frontend .env
-BACKEND_URL = "https://da03cbec-2aae-4d74-b485-23e83c1e1564.preview.emergentagent.com"
+BACKEND_URL = "https://50da0ed4-e9ce-42e7-8c8a-d11c27e08d6f.preview.emergentagent.com"
 
 class AlgoFrontendBackendTest(unittest.TestCase):
     """Test suite for ALGO-FRONTEND backend API endpoints"""
