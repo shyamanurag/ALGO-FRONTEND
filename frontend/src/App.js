@@ -239,6 +239,73 @@ function App() {
     setRealTimeData({});
   };
 
+  // TrueData connection handlers
+  const handleTrueDataConnect = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/truedata/connect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Connection failed: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('✅ TrueData connected successfully');
+        // Update system status immediately
+        setSystemStatus(prev => ({
+          ...prev,
+          truedata_connected: true,
+          truedata: { status: 'CONNECTED', connected: true }
+        }));
+      } else {
+        console.error('❌ TrueData connection failed:', data.message);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('❌ Error connecting TrueData:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const handleTrueDataDisconnect = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/truedata/disconnect`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Disconnection failed: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('✅ TrueData disconnected successfully');
+        // Update system status immediately
+        setSystemStatus(prev => ({
+          ...prev,
+          truedata_connected: false,
+          truedata: { status: 'DISCONNECTED', connected: false }
+        }));
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('❌ Error disconnecting TrueData:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   if (!isAuthenticated) {
     return <AdminLogin onLogin={handleLogin} />;
   }
