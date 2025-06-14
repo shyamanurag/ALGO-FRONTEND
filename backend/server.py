@@ -1136,6 +1136,39 @@ async def store_signal_in_database(signal: Dict, status: str, **extra_data):
     except Exception as e:
         logger.error(f"Error storing signal in database: {e}")
 
+async def store_elite_recommendation(signal: Dict, strategy_name: str, symbol: str):
+    """Store elite 10/10 signal as recommendation in elite_recommendations table"""
+    try:
+        if db_pool:
+            recommendation_id = f"ELITE_{strategy_name}_{symbol}_{int(datetime.utcnow().timestamp())}"
+            
+            # Use SQLite INSERT for elite recommendations
+            await execute_db_query("""
+                INSERT INTO elite_recommendations (
+                    recommendation_id, symbol, strategy, direction, entry_price,
+                    stop_loss, primary_target, confidence_score, timeframe, 
+                    valid_until, scan_timestamp, status, metadata
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, 
+            recommendation_id,
+            symbol,
+            strategy_name, 
+            signal.get('signal', signal.get('action', 'UNKNOWN')),
+            signal.get('entry_price', 0),
+            signal.get('stop_loss', signal.get('entry_price', 0) * 0.98),
+            signal.get('target', signal.get('entry_price', 0) * 1.02),
+            signal.get('quality_score', 10.0),
+            signal.get('timeframe', '1D'),
+            datetime.utcnow() + timedelta(days=7),  # Valid for 1 week
+            datetime.utcnow(),
+            'ACTIVE',
+            json.dumps(signal, default=str))
+            
+            logger.info(f"✨ Elite recommendation stored: {recommendation_id}")
+            
+    except Exception as e:
+        logger.error(f"Error storing elite recommendation: {e}")
+
 async def update_trading_metrics(metric_name: str, value: float):
     """Update trading metrics in database"""
     try:
