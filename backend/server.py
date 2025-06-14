@@ -3591,6 +3591,344 @@ async def get_data_sources_status():
             "message": "Error retrieving data sources status"
         }
 
+# ================================
+# ENHANCED TRADING ENDPOINTS
+# ================================
+
+@api_router.get("/strategies/metrics")
+async def get_strategy_metrics():
+    """Get real-time strategy performance metrics"""
+    try:
+        strategies = []
+        
+        if strategy_instances:
+            for strategy_name, strategy_instance in strategy_instances.items():
+                # Get strategy metrics from database
+                if db_pool:
+                    signals_today = await execute_db_query(
+                        "SELECT COUNT(*) FROM trading_signals WHERE strategy_name = ? AND DATE(generated_at) = DATE('now')",
+                        strategy_name
+                    )
+                    
+                    total_signals = await execute_db_query(
+                        "SELECT COUNT(*) FROM trading_signals WHERE strategy_name = ?",
+                        strategy_name
+                    )
+                    
+                    win_count = await execute_db_query(
+                        "SELECT COUNT(*) FROM trading_signals WHERE strategy_name = ? AND status = 'EXECUTED'",
+                        strategy_name
+                    )
+                    
+                    avg_quality = await execute_db_query(
+                        "SELECT AVG(quality_score) FROM trading_signals WHERE strategy_name = ?",
+                        strategy_name
+                    )
+                    
+                    last_signal = await execute_db_query(
+                        "SELECT generated_at FROM trading_signals WHERE strategy_name = ? ORDER BY generated_at DESC LIMIT 1",
+                        strategy_name
+                    )
+                    
+                    strategies.append({
+                        "name": strategy_name,
+                        "active": hasattr(strategy_instance, 'active') and strategy_instance.active,
+                        "signals_today": signals_today[0][0] if signals_today else 0,
+                        "total_signals": total_signals[0][0] if total_signals else 0,
+                        "win_rate": (win_count[0][0] / total_signals[0][0] * 100) if total_signals and total_signals[0][0] > 0 else 0,
+                        "avg_quality": avg_quality[0][0] if avg_quality and avg_quality[0][0] else 0,
+                        "last_signal": last_signal[0][0] if last_signal else None,
+                        "pnl_today": 0  # This would be calculated from actual trades
+                    })
+        
+        return {"success": True, "strategies": strategies}
+        
+    except Exception as e:
+        logger.error(f"Error getting strategy metrics: {e}")
+        return {"success": False, "strategies": [], "error": str(e)}
+
+@api_router.get("/strategies/performance")
+async def get_strategy_performance():
+    """Get detailed strategy performance data"""
+    try:
+        strategies = []
+        
+        # Return strategy performance data
+        strategy_names = [
+            "MomentumSurfer", "NewsImpactScalper", "VolatilityExplosion", 
+            "ConfluenceAmplifier", "PatternHunter", "LiquidityMagnet", "VolumeProfileScalper"
+        ]
+        
+        for strategy_name in strategy_names:
+            if db_pool:
+                # Get real data from database
+                signals_result = await execute_db_query(
+                    "SELECT COUNT(*) FROM trading_signals WHERE strategy_name = ? AND DATE(generated_at) = DATE('now')",
+                    strategy_name
+                )
+                
+                total_signals_result = await execute_db_query(
+                    "SELECT COUNT(*) FROM trading_signals WHERE strategy_name = ?",
+                    strategy_name
+                )
+                
+                strategies.append({
+                    "name": strategy_name,
+                    "active": strategy_name in strategy_instances if strategy_instances else False,
+                    "signals_today": signals_result[0][0] if signals_result else 0,
+                    "total_trades": total_signals_result[0][0] if total_signals_result else 0,
+                    "win_rate": 0,  # Calculate from actual trade results
+                    "pnl_today": 0,  # Calculate from actual trade results
+                    "avg_quality": 0,  # Calculate from signal quality scores
+                    "last_signal": None
+                })
+        
+        return {"success": True, "strategies": strategies}
+        
+    except Exception as e:
+        logger.error(f"Error getting strategy performance: {e}")
+        return {"success": False, "strategies": [], "error": str(e)}
+
+@api_router.get("/strategies/{strategy_name}/details")
+async def get_strategy_details(strategy_name: str):
+    """Get detailed information about a specific strategy"""
+    try:
+        if db_pool:
+            # Get recent signals for this strategy
+            recent_signals = await execute_db_query(
+                "SELECT symbol, action, quality_score, status, generated_at FROM trading_signals WHERE strategy_name = ? ORDER BY generated_at DESC LIMIT 10",
+                strategy_name
+            )
+            
+            details = {
+                "strategy_name": strategy_name,
+                "total_signals": 0,
+                "total_pnl": 0,
+                "sharpe_ratio": 0,
+                "max_drawdown": 0,
+                "recent_signals": []
+            }
+            
+            if recent_signals:
+                details["recent_signals"] = [
+                    {
+                        "symbol": signal[0],
+                        "action": signal[1], 
+                        "quality_score": signal[2],
+                        "status": signal[3],
+                        "generated_at": signal[4]
+                    }
+                    for signal in recent_signals
+                ]
+            
+            return {"success": True, **details}
+        
+        return {"success": False, "error": "Database not available"}
+        
+    except Exception as e:
+        logger.error(f"Error getting strategy details: {e}")
+        return {"success": False, "error": str(e)}
+
+@api_router.post("/strategies/{strategy_name}/toggle")
+async def toggle_strategy_status(strategy_name: str, request_data: dict):
+    """Toggle strategy active/inactive status"""
+    try:
+        active = request_data.get('active', False)
+        
+        # In a real implementation, this would update the strategy's active status
+        if strategy_name in strategy_instances:
+            if hasattr(strategy_instances[strategy_name], 'active'):
+                strategy_instances[strategy_name].active = active
+        
+        logger.info(f"Strategy {strategy_name} {'activated' if active else 'deactivated'}")
+        return {"success": True, "message": f"Strategy {strategy_name} {'activated' if active else 'deactivated'}"}
+        
+    except Exception as e:
+        logger.error(f"Error toggling strategy {strategy_name}: {e}")
+        return {"success": False, "error": str(e)}
+
+@api_router.post("/strategies/{strategy_name}/reset")
+async def reset_strategy(strategy_name: str):
+    """Reset strategy performance metrics"""
+    try:
+        if db_pool:
+            # Clear strategy signals and metrics
+            await execute_db_query(
+                "DELETE FROM trading_signals WHERE strategy_name = ?",
+                strategy_name
+            )
+        
+        logger.info(f"Strategy {strategy_name} metrics reset")
+        return {"success": True, "message": f"Strategy {strategy_name} has been reset"}
+        
+    except Exception as e:
+        logger.error(f"Error resetting strategy {strategy_name}: {e}")
+        return {"success": False, "error": str(e)}
+
+@api_router.post("/trading/place-order")
+async def place_trading_order(order_data: dict):
+    """Place a new trading order"""
+    try:
+        symbol = order_data.get('symbol')
+        action = order_data.get('action')
+        quantity = order_data.get('quantity')
+        order_type = order_data.get('order_type', 'MARKET')
+        price = order_data.get('price')
+        
+        if not all([symbol, action, quantity]):
+            return {"success": False, "error": "Missing required fields: symbol, action, quantity"}
+        
+        order_id = f"ORD_{uuid.uuid4().hex[:8]}"
+        
+        # Store order in database
+        if db_pool:
+            await execute_db_query(
+                """INSERT INTO orders (order_id, user_id, symbol, quantity, order_type, side, 
+                   price, status, strategy_name, created_at) 
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                order_id, "default_user", symbol, quantity, order_type, action,
+                price, "PENDING", "Manual", datetime.utcnow()
+            )
+        
+        # In paper trading mode, immediately fill the order
+        if PAPER_TRADING:
+            if db_pool:
+                await execute_db_query(
+                    "UPDATE orders SET status = ?, filled_at = ? WHERE order_id = ?",
+                    "FILLED", datetime.utcnow(), order_id
+                )
+        
+        logger.info(f"Order placed: {order_id} for {symbol} {action} {quantity}")
+        return {"success": True, "order_id": order_id, "status": "FILLED" if PAPER_TRADING else "PENDING"}
+        
+    except Exception as e:
+        logger.error(f"Error placing order: {e}")
+        return {"success": False, "error": str(e)}
+
+@api_router.post("/trading/cancel-order/{order_id}")
+async def cancel_order(order_id: str):
+    """Cancel a pending order"""
+    try:
+        if db_pool:
+            await execute_db_query(
+                "UPDATE orders SET status = ? WHERE order_id = ? AND status = ?",
+                "CANCELLED", order_id, "PENDING"
+            )
+        
+        logger.info(f"Order cancelled: {order_id}")
+        return {"success": True, "message": "Order cancelled successfully"}
+        
+    except Exception as e:
+        logger.error(f"Error cancelling order: {e}")
+        return {"success": False, "error": str(e)}
+
+@api_router.post("/trading/square-off/{symbol}")
+async def square_off_position(symbol: str):
+    """Square off a specific position"""
+    try:
+        # Get position details
+        if db_pool:
+            position = await fetch_one_db(
+                "SELECT * FROM positions WHERE symbol = ? AND status = 'OPEN'",
+                symbol
+            )
+            
+            if position:
+                # Create square-off order
+                order_id = f"SQR_{uuid.uuid4().hex[:8]}"
+                opposite_side = 'SELL' if position['quantity'] > 0 else 'BUY'
+                
+                await execute_db_query(
+                    """INSERT INTO orders (order_id, user_id, symbol, quantity, order_type, side, 
+                       status, strategy_name, created_at, filled_at) 
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    order_id, position['user_id'], symbol, abs(position['quantity']), 
+                    "MARKET", opposite_side, "FILLED", "Square-off", datetime.utcnow(), datetime.utcnow()
+                )
+                
+                # Close position
+                await execute_db_query(
+                    "UPDATE positions SET status = ?, exit_time = ? WHERE symbol = ? AND status = 'OPEN'",
+                    "CLOSED", datetime.utcnow(), symbol
+                )
+        
+        logger.info(f"Position squared off: {symbol}")
+        return {"success": True, "message": f"Position for {symbol} squared off successfully"}
+        
+    except Exception as e:
+        logger.error(f"Error squaring off position: {e}")
+        return {"success": False, "error": str(e)}
+
+@api_router.post("/trading/square-off-all")
+async def square_off_all_positions():
+    """Square off all open positions"""
+    try:
+        if db_pool:
+            positions = await execute_db_query(
+                "SELECT symbol, quantity, user_id FROM positions WHERE status = 'OPEN'"
+            )
+            
+            squared_off_count = 0
+            for position in positions:
+                symbol, quantity, user_id = position
+                order_id = f"SQR_{uuid.uuid4().hex[:8]}"
+                opposite_side = 'SELL' if quantity > 0 else 'BUY'
+                
+                # Create square-off order
+                await execute_db_query(
+                    """INSERT INTO orders (order_id, user_id, symbol, quantity, order_type, side, 
+                       status, strategy_name, created_at, filled_at) 
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    order_id, user_id, symbol, abs(quantity), "MARKET", opposite_side, 
+                    "FILLED", "Square-off-All", datetime.utcnow(), datetime.utcnow()
+                )
+                
+                squared_off_count += 1
+            
+            # Close all positions
+            await execute_db_query(
+                "UPDATE positions SET status = ?, exit_time = ? WHERE status = 'OPEN'",
+                "CLOSED", datetime.utcnow()
+            )
+        
+        logger.info(f"All positions squared off: {squared_off_count} positions")
+        return {"success": True, "message": f"All {squared_off_count} positions squared off successfully"}
+        
+    except Exception as e:
+        logger.error(f"Error squaring off all positions: {e}")
+        return {"success": False, "error": str(e)}
+
+@api_router.get("/trading/orders")
+async def get_trading_orders():
+    """Get trading orders history"""
+    try:
+        orders = []
+        
+        if db_pool:
+            orders_result = await execute_db_query(
+                "SELECT * FROM orders ORDER BY created_at DESC LIMIT 50"
+            )
+            
+            if orders_result:
+                for order in orders_result:
+                    orders.append({
+                        "order_id": order[0],
+                        "symbol": order[2],
+                        "side": order[8],
+                        "quantity": order[4],
+                        "order_type": order[7],
+                        "price": order[9],
+                        "status": order[12],
+                        "strategy_name": order[19],
+                        "created_at": order[22]
+                    })
+        
+        return {"success": True, "orders": orders}
+        
+    except Exception as e:
+        logger.error(f"Error getting orders: {e}")
+        return {"success": False, "orders": [], "error": str(e)}
+
 # Include the router in the main app
 app.include_router(api_router)
 
