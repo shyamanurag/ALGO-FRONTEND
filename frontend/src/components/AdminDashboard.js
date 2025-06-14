@@ -377,10 +377,55 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
                   {zerodhaStatus.connected ? '🟢 Connected' : '🔴 Disconnected'}
                 </span>
               </div>
-              <p className="text-gray-600 text-sm mb-2">Trading broker authentication</p>
-              {zerodhaStatus.token_preview && (
-                <p className="text-xs text-gray-500 mb-3">Token: {zerodhaStatus.token_preview}</p>
+              
+              <p className="text-gray-600 text-sm mb-2">
+                {zerodhaStatus.status === 'CONNECTED' ? 'Live trading broker connected' : 'Trading broker authentication'}
+              </p>
+              
+              {/* Account Details */}
+              {zerodhaStatus.account_name && (
+                <div className="text-xs text-gray-600 mb-2">
+                  <div><strong>Account:</strong> {zerodhaStatus.account_name}</div>
+                  <div><strong>Client ID:</strong> {zerodhaStatus.client_id}</div>
+                  <div><strong>API Key:</strong> {zerodhaStatus.api_key}</div>
+                </div>
               )}
+              
+              {/* Trading Account Info */}
+              {zerodhaStatus.connected && zerodhaStatus.available_cash !== undefined && (
+                <div className="bg-white rounded p-2 mb-3">
+                  <div className="text-xs text-gray-600">
+                    <div className="flex justify-between">
+                      <span>Available Cash:</span>
+                      <span className="font-medium text-green-600">₹{zerodhaStatus.available_cash?.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Used Margin:</span>
+                      <span className="font-medium text-red-600">₹{zerodhaStatus.used_margin?.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              {/* Connection Status */}
+              {zerodhaStatus.last_connected && (
+                <p className="text-xs text-green-600 mb-2">
+                  Last connected: {new Date(zerodhaStatus.last_connected).toLocaleString()}
+                </p>
+              )}
+              
+              {zerodhaStatus.last_attempt && !zerodhaStatus.connected && (
+                <p className="text-xs text-red-600 mb-2">
+                  Last attempt: {new Date(zerodhaStatus.last_attempt).toLocaleString()}
+                </p>
+              )}
+              
+              {zerodhaStatus.error && (
+                <p className="text-xs text-red-600 mb-3">
+                  Error: {zerodhaStatus.error}
+                </p>
+              )}
+              
               <div className="flex space-x-2">
                 {!zerodhaStatus.connected ? (
                   <button
@@ -398,6 +443,14 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
                   </button>
                 )}
               </div>
+              
+              {/* API Configuration Status */}
+              <div className="mt-3 text-xs text-gray-500">
+                <div>API Key: {zerodhaStatus.api_key ? '✅ Configured' : '❌ Not Set'}</div>
+                <div>Client ID: {zerodhaStatus.client_id ? '✅ Configured' : '❌ Not Set'}</div>
+                <div>Status: {zerodhaStatus.status || 'UNKNOWN'}</div>
+              </div>
+            </div>
               
               {/* Configuration Status */}
               <div className="mt-3 text-xs text-gray-500">
