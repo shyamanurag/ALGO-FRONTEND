@@ -9,13 +9,23 @@ from typing import Optional, Dict, Any, List
 from datetime import datetime, timedelta
 import hashlib
 import requests
-from kiteconnect import KiteConnect
-import pyotp
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+try:
+    from kiteconnect import KiteConnect
+    KITECONNECT_AVAILABLE = True
+except ImportError:
+    KITECONNECT_AVAILABLE = False
+    logging.warning("KiteConnect not available - Zerodha integration disabled")
 
 logger = logging.getLogger(__name__)
 
 class ZerodhaManager:
     def __init__(self):
+        # Load credentials from environment
         self.api_key = os.environ.get('ZERODHA_API_KEY')
         self.api_secret = os.environ.get('ZERODHA_API_SECRET')
         self.client_id = os.environ.get('ZERODHA_CLIENT_ID')
@@ -27,9 +37,15 @@ class ZerodhaManager:
         self.last_connection_attempt = None
         self.connection_error = None
         
-        if self.api_key and self.api_secret:
+        logger.info(f"Initializing Zerodha Manager for account: {self.account_name}")
+        logger.info(f"API Key configured: {'Yes' if self.api_key else 'No'}")
+        logger.info(f"Client ID: {self.client_id}")
+        
+        if self.api_key and self.api_secret and KITECONNECT_AVAILABLE:
             self.kite = KiteConnect(api_key=self.api_key)
-            logger.info("Zerodha KiteConnect instance created")
+            logger.info("Zerodha KiteConnect instance created successfully")
+        elif not KITECONNECT_AVAILABLE:
+            logger.error("KiteConnect library not available")
         else:
             logger.warning("Zerodha API credentials not found in environment")
     
