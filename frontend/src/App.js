@@ -318,7 +318,9 @@ function App() {
           userRole={userRole}
           systemStatus={systemStatus}
           connectedAccounts={connectedAccounts}
-          onLogout={handleLogout} 
+          onLogout={handleLogout}
+          onTrueDataConnect={handleTrueDataConnect}
+          onTrueDataDisconnect={handleTrueDataDisconnect}
         />
         {/* Live Indices Header - Shows real-time data across all pages */}
         <LiveIndicesHeader />
