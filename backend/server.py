@@ -200,16 +200,29 @@ elite_engine = None
 analyzers = {}
 strategy_instances = {}
 
-# System state
+# Global state with data source management
 system_state = {
-    'initialized': False,
-    'trading_active': AUTONOMOUS_TRADING_ENABLED,
-    'emergency_mode': False,
-    'daily_pnl': 0.0,
-    'active_positions': {},
-    'market_data': {},
     'system_health': 'HEALTHY',
-    'start_time': datetime.utcnow()
+    'trading_active': True,
+    'paper_trading': PAPER_TRADING,
+    'autonomous_trading': AUTONOMOUS_TRADING_ENABLED,
+    'market_open': False,
+    'daily_pnl': 0.0,
+    'strategies_active': 7,
+    'database_connected': False,
+    'redis_connected': False,
+    'truedata_connected': False,
+    'zerodha_connected': False,
+    'websocket_connections': 0,
+    'primary_data_source': 'truedata',
+    'active_data_source': None,
+    'data_source_fallback_active': False,
+    'last_data_source_switch': None,
+    'data_source_health': {
+        'truedata': {'status': 'disconnected', 'last_check': None, 'error_count': 0},
+        'zerodha': {'status': 'disconnected', 'last_check': None, 'error_count': 0}
+    },
+    'last_updated': datetime.utcnow().isoformat()
 }
 
 # Pydantic models for API
