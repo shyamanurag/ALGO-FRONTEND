@@ -161,31 +161,59 @@ function App() {
 
     const fetchSystemData = async () => {
       try {
-        // Try to fetch health status instead of potentially problematic endpoints
+        // Enhanced health status fetch with better error handling
         const healthResponse = await fetch(`${BACKEND_URL}/api/health`);
+        
+        if (!healthResponse.ok) {
+          throw new Error(`API Error: ${healthResponse.status} - ${healthResponse.statusText}`);
+        }
+        
         const healthData = await healthResponse.json();
+        
+        // Also fetch detailed system status
+        let systemData = null;
+        try {
+          const systemResponse = await fetch(`${BACKEND_URL}/api/system/status`);
+          if (systemResponse.ok) {
+            const systemResponseData = await systemResponse.json();
+            systemData = systemResponseData.status;
+          }
+        } catch (error) {
+          console.warn('System status endpoint not available:', error);
+        }
         
         setSystemStatus({
           status: healthData.status,
-          database: healthData.database,
+          database: healthData.database || healthData.components?.database,
           timestamp: healthData.timestamp,
-          // Add the full system status
-          system_health: healthData.system_health,
-          autonomous_trading: healthData.autonomous_trading,
-          paper_trading: healthData.paper_trading,
-          market_status: healthData.market_status,
-          current_time: healthData.current_time,
+          // Enhanced system status from both endpoints
+          system_health: systemData?.system_health || healthData.status,
+          autonomous_trading: systemData?.autonomous_trading || healthData.autonomous_trading,
+          paper_trading: systemData?.paper_trading || healthData.paper_trading || true,
+          market_status: systemData?.market_open ? 'OPEN' : 'CLOSED',
+          current_time: healthData.timestamp,
           uptime: healthData.uptime,
-          last_update: healthData.last_update,
-          data_source: healthData.data_source,
+          last_update: new Date().toISOString(),
+          data_source: systemData?.data_source || 'NO_DATA',
           symbols_tracked: healthData.symbols_tracked,
-          truedata: healthData.truedata,
-          trading_stats: healthData.trading_stats
+          truedata: healthData.truedata || { status: 'DISCONNECTED', connected: false },
+          truedata_connected: systemData?.truedata_connected || false,
+          zerodha_connected: systemData?.zerodha_connected || false,
+          websocket_connections: systemData?.websocket_connections || 0,
+          trading_stats: healthData.trading_stats,
+          // Add component status
+          components: healthData.components || {}
         });
         
       } catch (error) {
         console.error('Error fetching system data:', error);
-        setSystemStatus({ status: 'error', database: 'disconnected' });
+        setSystemStatus({ 
+          status: 'error', 
+          database: 'disconnected',
+          system_health: 'UNHEALTHY',
+          last_error: error.message,
+          last_update: new Date().toISOString()
+        });
       }
     };
 
