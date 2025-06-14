@@ -52,46 +52,41 @@ A sophisticated, enterprise-grade autonomous trading platform with real-time mon
 - **System Health Monitoring**: Continuous monitoring of all components
 - **Live Indices Display**: NIFTY, BANKNIFTY, FINNIFTY real-time data
 
-### 🔐 **Production Infrastructure**
-- **Authentication**: Complete Zerodha OAuth implementation
-- **Data Integrity**: 100% real data or honest error reporting
-- **System Reliability**: Robust error handling and recovery
-- **Monitoring**: Comprehensive system health tracking
-- **Security**: Secure credential management
+## 🚀 **Quick Start**
 
-## 🏗️ Architecture
+### **Prerequisites**
+- Node.js 18+ and Python 3.11+
+- Redis and PostgreSQL (optional, SQLite included)
+- TrueData account for real market data
+- Zerodha account for live trading
 
-### Backend (FastAPI)
-```
-backend/
-├── server.py              # Main FastAPI application with real data endpoints
-├── requirements.txt       # Python dependencies
-├── .env                   # Environment configuration
-├── src/                   # Core trading modules
-│   ├── strategies/        # Trading strategy implementations
-│   ├── analyzers/         # Market analysis components
-│   ├── brokers/          # Broker integrations (Zerodha)
-│   ├── data/             # Real data providers (TrueData)
-│   └── events/           # Event handling system (NEW)
-└── core/                  # Core system components
+### **Environment Setup**
+```bash
+# Backend environment
+cd backend
+cp .env.example .env
+# Configure your API keys and database URLs
+pip install -r requirements.txt
+
+# Frontend environment  
+cd ../frontend
+cp .env.example .env
+# Set REACT_APP_BACKEND_URL
+yarn install
 ```
 
-### Frontend (React)
+### **Run the Application**
+```bash
+# Start backend
+cd backend && python server.py
+
+# Start frontend (new terminal)
+cd frontend && yarn start
 ```
-frontend/
-├── src/
-│   ├── components/        # React components with real data integration
-│   │   ├── AdminDashboard.js         # Main dashboard (no mock data)
-│   │   ├── AutonomousMonitoring.js   # Real-time monitoring (no mock data)
-│   │   ├── LiveIndices.js            # Real market data display
-│   │   ├── LiveIndicesHeader.js      # Global live data header (NEW)
-│   │   ├── EliteRecommendations.js   # Actual recommendations
-│   │   ├── MarketData.js             # Live market data components
-│   │   └── TradingDashboard.js       # Real trading interface
-│   ├── App.js            # Main application with live header
-│   └── index.js          # Entry point
-├── package.json          # Node dependencies
-└── .env                  # Frontend configuration
+
+### **Using Supervisor (Recommended)**
+```bash
+sudo supervisorctl start all
 ```
 
 ## 🚀 Quick Start
