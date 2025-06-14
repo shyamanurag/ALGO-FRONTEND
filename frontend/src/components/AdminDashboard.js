@@ -275,28 +275,37 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-bold text-gray-900">📡 TrueData</h3>
                 <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  currentSystemStatus.truedata_connected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  truedataStatus.connected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                 }`}>
-                  {currentSystemStatus.truedata_connected ? '🟢 Connected' : '🔴 Disconnected'}
+                  {truedataStatus.connected ? '🟢 Connected' : '🔴 Disconnected'}
                 </span>
               </div>
-              <p className="text-gray-600 text-sm mb-4">Real-time market data feed</p>
+              <p className="text-gray-600 text-sm mb-2">Real-time market data feed</p>
+              {truedataStatus.url && (
+                <p className="text-xs text-gray-500 mb-3">Server: {truedataStatus.url}:{truedataStatus.port}</p>
+              )}
               <div className="flex space-x-2">
-                {!currentSystemStatus.truedata_connected ? (
+                {!truedataStatus.connected ? (
                   <button
-                    onClick={onTrueDataConnect}
+                    onClick={handleTruedataConnect}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm transition duration-200"
                   >
                     🚀 Connect TrueData
                   </button>
                 ) : (
                   <button
-                    onClick={onTrueDataDisconnect}
+                    onClick={handleTruedataDisconnect}
                     className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm transition duration-200"
                   >
                     🔌 Disconnect
                   </button>
                 )}
+              </div>
+              
+              {/* Configuration Status */}
+              <div className="mt-3 text-xs text-gray-500">
+                <div>Username: {truedataStatus.username_configured ? '✅ Configured' : '❌ Not Set'}</div>
+                <div>Password: {truedataStatus.password_configured ? '✅ Configured' : '❌ Not Set'}</div>
               </div>
             </div>
 
