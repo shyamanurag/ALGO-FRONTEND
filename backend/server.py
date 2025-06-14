@@ -123,6 +123,7 @@ strategy_instances = {}
 market_data_last_update = None
 truedata_connected = False
 db_pool = None
+market_data_cache = {}
 
 # Trading configuration from environment
 autonomous_trading_active = os.getenv('AUTONOMOUS_TRADING_ENABLED', 'false').lower() == 'true'
