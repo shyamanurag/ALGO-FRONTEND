@@ -2828,22 +2828,18 @@ async def autonomous_websocket_endpoint(websocket: WebSocket):
     
     try:
         while True:
-            # Send periodic autonomous trading updates
+            # Send only REAL system status - no mock data
             autonomous_data = {
-                "type": "autonomous_trade_executed",
-                "user_id": "ZD001",
-                "trade_data": {
-                    "symbol": "NIFTY25JUN24400CE",
-                    "side": "BUY",
-                    "quantity": 50,
-                    "price": 125.5,
-                    "strategy": "MomentumSurfer",
-                    "timestamp": datetime.utcnow().isoformat()
-                }
+                "type": "system_status_update",
+                "system_health": system_state.get('system_health', 'HEALTHY'),
+                "trading_active": system_state.get('trading_active', False),
+                "market_open": is_market_open(),
+                "database_connected": True if db_pool else False,
+                "timestamp": datetime.utcnow().isoformat()
             }
             
             await websocket.send_text(json.dumps(autonomous_data))
-            await asyncio.sleep(30)  # Send updates every 30 seconds
+            await asyncio.sleep(10)  # Send updates every 10 seconds
             
     except WebSocketDisconnect:
         logger.info("🔌 Autonomous data WebSocket disconnected")
