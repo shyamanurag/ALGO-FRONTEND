@@ -2867,38 +2867,40 @@ async def get_current_positions():
     """Get current positions from REAL database"""
     try:
         if not db_pool:
-            return {"positions": [], "message": "Database not available"}
+            return {"success": True, "positions": [], "message": "Database not available"}
         
-        async with db_pool.acquire() as conn:
-            positions = await conn.fetch("""
-                SELECT position_id, user_id, symbol, quantity, average_entry_price,
-                       total_investment, current_price, current_value, unrealized_pnl,
-                       pnl_percent, status, strategy_name, entry_reason, entry_time
-                FROM positions 
-                WHERE status = 'OPEN'
-                ORDER BY entry_time DESC
-            """)
-            
-            positions_data = []
-            for position in positions:
+        # Use SQLite queries
+        positions_result = await execute_db_query("""
+            SELECT position_id, user_id, symbol, quantity, average_entry_price,
+                   total_investment, current_price, current_value, unrealized_pnl,
+                   pnl_percent, status, strategy_name, entry_reason, entry_time
+            FROM positions 
+            WHERE status = 'OPEN'
+            ORDER BY entry_time DESC
+        """)
+        
+        positions_data = []
+        if positions_result:
+            for position in positions_result:
                 positions_data.append({
-                    "position_id": position['position_id'],
-                    "user_id": position['user_id'],
-                    "symbol": position['symbol'],
-                    "quantity": position['quantity'],
-                    "average_entry_price": float(position['average_entry_price']),
-                    "total_investment": float(position['total_investment']),
-                    "current_price": float(position['current_price']),
-                    "current_value": float(position['current_value']),
-                    "unrealized_pnl": float(position['unrealized_pnl']),
-                    "pnl_percent": float(position['pnl_percent']),
-                    "status": position['status'],
-                    "strategy": position['strategy_name'],
-                    "entry_reason": position['entry_reason'],
-                    "entry_time": position['entry_time'].isoformat()
+                    "position_id": position[0],
+                    "user_id": position[1],
+                    "symbol": position[2],
+                    "quantity": position[3],
+                    "average_entry_price": float(position[4]) if position[4] else 0.0,
+                    "total_investment": float(position[5]) if position[5] else 0.0,
+                    "current_price": float(position[6]) if position[6] else 0.0,
+                    "current_value": float(position[7]) if position[7] else 0.0,
+                    "unrealized_pnl": float(position[8]) if position[8] else 0.0,
+                    "pnl_percent": float(position[9]) if position[9] else 0.0,
+                    "status": position[10],
+                    "strategy_name": position[11],
+                    "entry_reason": position[12],
+                    "entry_time": position[13]
                 })
         
         return {
+            "success": True,
             "positions": positions_data,
             "count": len(positions_data),
             "total_investment": sum(p['total_investment'] for p in positions_data),
@@ -2909,7 +2911,7 @@ async def get_current_positions():
         
     except Exception as e:
         logger.error(f"Error getting positions: {e}")
-        raise HTTPException(500, f"Error getting positions: {str(e)}")
+        return {"success": False, "positions": [], "error": str(e)}
 
 @api_router.get("/strategies")
 async def get_strategies():
