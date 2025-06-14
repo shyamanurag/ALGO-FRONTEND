@@ -3181,6 +3181,46 @@ async def websocket_trading_data(websocket: WebSocket):
         logger.error(f"WebSocket error: {e}")
         websocket_connections.discard(websocket)
 
+@api_router.post("/truedata/connect")
+async def connect_truedata():
+    """Connect to TrueData (real connection attempt)"""
+    try:
+        # Real TrueData connection would go here
+        # For now, return honest status about configuration
+        if not TRUEDATA_USERNAME or not TRUEDATA_PASSWORD:
+            return {
+                "success": False,
+                "message": "TrueData credentials not configured in environment variables",
+                "status": "disconnected"
+            }
+        
+        # If credentials exist, attempt real connection
+        # This is where actual TrueData SDK integration would go
+        logger.info("Attempting TrueData connection...")
+        
+        return {
+            "success": False,
+            "message": "TrueData SDK integration required for real connection",
+            "status": "disconnected"
+        }
+        
+    except Exception as e:
+        logger.error(f"TrueData connection error: {e}")
+        return {
+            "success": False,
+            "message": f"Connection error: {str(e)}",
+            "status": "disconnected"
+        }
+
+@api_router.post("/truedata/disconnect")
+async def disconnect_truedata():
+    """Disconnect from TrueData"""
+    return {
+        "success": True,
+        "message": "TrueData disconnected",
+        "status": "disconnected"
+    }
+
 # Include the router in the main app
 app.include_router(api_router)
 
