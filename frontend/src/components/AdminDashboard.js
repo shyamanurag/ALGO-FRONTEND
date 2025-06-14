@@ -12,20 +12,36 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
   const [topPerformers, setTopPerformers] = useState([]);
   const [currentSystemStatus, setCurrentSystemStatus] = useState({});
   const [zerodhaStatus, setZerodhaStatus] = useState({ connected: false, status: 'disconnected' });
+  const [truedataStatus, setTruedataStatus] = useState({ connected: false, status: 'disconnected' });
 
   useEffect(() => {
     fetchOverallMetrics();
     fetchRecentTrades();
     fetchSystemStatus();
     fetchZerodhaStatus();
+    fetchTruedataStatus();
     
     // Update system status every 10 seconds
     const interval = setInterval(() => {
       fetchSystemStatus();
       fetchZerodhaStatus();
+      fetchTruedataStatus();
     }, 10000);
     return () => clearInterval(interval);
   }, []);
+
+  const fetchTruedataStatus = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/truedata/status`);
+      const data = await response.json();
+      if (data.success) {
+        setTruedataStatus(data);
+      }
+    } catch (error) {
+      console.error('Error fetching TrueData status:', error);
+      setTruedataStatus({ connected: false, status: 'error' });
+    }
+  };
 
   const fetchZerodhaStatus = async () => {
     try {
