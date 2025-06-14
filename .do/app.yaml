@@ -1,0 +1,72 @@
+# DigitalOcean App Platform Configuration for ALGO-FRONTEND
+name: algo-frontend-trading
+region: nyc3
+
+services:
+- name: backend
+  source_dir: /
+  github:
+    repo: shyamanurag/ALGO-FRONTEND
+    branch: main
+    deploy_on_push: true
+  
+  dockerfile_path: Dockerfile
+  
+  http_port: 8001
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  
+  envs:
+  - key: NODE_ENV
+    value: production
+  - key: DATABASE_URL
+    type: SECRET
+  - key: REDIS_URL
+    type: SECRET
+  - key: ZERODHA_API_KEY
+    type: SECRET
+  - key: ZERODHA_API_SECRET
+    type: SECRET
+  - key: TRUEDATA_USERNAME
+    type: SECRET
+  - key: TRUEDATA_PASSWORD
+    type: SECRET
+  - key: PAPER_TRADING
+    value: "true"
+  - key: AUTONOMOUS_TRADING_ENABLED
+    value: "true"
+  - key: INTRADAY_TRADING_ENABLED
+    value: "true"
+  - key: ELITE_RECOMMENDATIONS_ENABLED
+    value: "true"
+  
+  health_check:
+    http_path: /api/health
+    initial_delay_seconds: 30
+    period_seconds: 30
+    timeout_seconds: 10
+    success_threshold: 1
+    failure_threshold: 3
+
+  routes:
+  - path: /api
+  - path: /
+
+databases:
+- name: trading-postgres
+  engine: PG
+  version: "15"
+  size: basic-xs
+  
+- name: trading-redis  
+  engine: REDIS
+  version: "7"
+  size: basic-xs
+
+alerts:
+- rule: CPU_UTILIZATION
+  value: 80
+- rule: MEM_UTILIZATION
+  value: 80
+- rule: RESTART_COUNT
+  value: 5
