@@ -328,10 +328,18 @@ function App() {
         <LiveIndicesHeader />
         <div className="main-content">
           <Routes>
-            {/* Real Trading Dashboard - Main Route */}
+            {/* Trading Routes */}
             <Route 
               path="/trading" 
               element={<RealTradingDashboard />} 
+            />
+            <Route 
+              path="/orders" 
+              element={<OrderManagement />} 
+            />
+            <Route 
+              path="/strategy-monitoring" 
+              element={<StrategyMonitoring />} 
             />
             
             {/* Admin Routes */}
