@@ -7,6 +7,11 @@ This test suite specifically tests the REAL fixes implemented:
 2. Added Missing WebSocket Endpoint: /api/ws/autonomous-data
 3. Added TrueData Endpoints: /api/truedata/connect and /api/truedata/disconnect
 4. Fixed Route Conflicts
+5. Added Zerodha OAuth Integration:
+   - GET /api/zerodha/auth-url - Generates Zerodha OAuth URL
+   - GET /api/zerodha/callback - Handles OAuth callback with request token
+   - GET /api/zerodha/status - Returns current connection status
+   - POST /api/zerodha/disconnect - Disconnects Zerodha account
 """
 
 import requests
