@@ -45,10 +45,10 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
 
   const fetchZerodhaStatus = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/zerodha/status`);
+      const response = await fetch(`${BACKEND_URL}/api/admin/zerodha/status`);
       const data = await response.json();
       if (data.success) {
-        setZerodhaStatus(data);
+        setZerodhaStatus(data.zerodha);
       }
     } catch (error) {
       console.error('Error fetching Zerodha status:', error);
@@ -58,7 +58,7 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
 
   const handleZerodhaAuth = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/zerodha/auth-url`);
+      const response = await fetch(`${BACKEND_URL}/api/admin/zerodha/login-url`);
       const data = await response.json();
       
       if (data.success && data.login_url) {
@@ -66,7 +66,7 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
         const popup = window.open(
           data.login_url, 
           'zerodha-auth', 
-          'width=500,height=700,scrollbars=yes,resizable=yes'
+          'width=600,height=800,scrollbars=yes,resizable=yes'
         );
         
         // Check if popup was blocked
@@ -75,17 +75,31 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
           return;
         }
         
+        // Listen for message from popup (request token)
+        const handleMessage = (event) => {
+          if (event.origin !== window.location.origin) return;
+          
+          if (event.data.type === 'ZERODHA_AUTH_SUCCESS') {
+            handleZerodhaConnect(event.data.request_token);
+            popup.close();
+            window.removeEventListener('message', handleMessage);
+          }
+        };
+        
+        window.addEventListener('message', handleMessage);
+        
         // Monitor popup closure
         const checkClosed = setInterval(() => {
           if (popup.closed) {
             clearInterval(checkClosed);
-            // Refresh Zerodha status after auth
+            window.removeEventListener('message', handleMessage);
+            // Refresh status even if auth was cancelled
             setTimeout(fetchZerodhaStatus, 1000);
           }
         }, 1000);
         
       } else {
-        alert(`❌ ${data.message}`);
+        alert(`❌ ${data.message || 'Unable to generate login URL'}`);
       }
     } catch (error) {
       console.error('Error initiating Zerodha auth:', error);
@@ -93,9 +107,35 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
     }
   };
 
-  const handleZerodhaDisconnect = async () => {
+  const handleZerodhaConnect = async (requestToken) => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/zerodha/disconnect`, {
+      const response = await fetch(`${BACKEND_URL}/api/admin/zerodha/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ request_token: requestToken })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        alert('✅ Successfully connected to Zerodha!');
+        fetchZerodhaStatus();
+      } else {
+        alert(`❌ Failed to connect: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('Error connecting to Zerodha:', error);
+      alert('❌ Error connecting to Zerodha. Please try again.');
+    }
+  };
+
+  const handleZerodhaDisconnect = async () => {
+    if (!window.confirm('Are you sure you want to disconnect from Zerodha?')) {
+      return;
+    }
+    
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/admin/zerodha/disconnect`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' }
       });
