@@ -393,25 +393,36 @@ class AlgoFrontendBackendTest(unittest.TestCase):
             response = requests.get(f"{self.api_url}/health")
             headers = response.headers
             
-            # Check for common security headers
+            # Check for required security headers
             security_headers = {
                 "X-Content-Type-Options": "nosniff",
                 "X-Frame-Options": "DENY",
                 "Content-Security-Policy": None,
                 "Strict-Transport-Security": None,
-                "X-XSS-Protection": "1; mode=block"
+                "X-XSS-Protection": "1; mode=block",
+                "Referrer-Policy": "strict-origin-when-cross-origin",
+                "Permissions-Policy": None
             }
             
             present_headers = []
             missing_headers = []
             
             for header, expected_value in security_headers.items():
-                if header in headers:
+                if header.lower() in [h.lower() for h in headers.keys()]:
+                    # Find the actual header name with correct case
+                    actual_header = next(h for h in headers.keys() if h.lower() == header.lower())
                     present_headers.append(header)
-                    if expected_value and headers[header] != expected_value:
-                        print(f"  Warning: {header} has value {headers[header]}, expected {expected_value}")
+                    if expected_value and headers[actual_header] != expected_value:
+                        print(f"  Warning: {header} has value {headers[actual_header]}, expected {expected_value}")
                 else:
                     missing_headers.append(header)
+            
+            # Verify that critical security headers are present
+            critical_headers = ["X-Content-Type-Options", "X-Frame-Options", "Content-Security-Policy"]
+            missing_critical = [h for h in critical_headers if h in missing_headers]
+            
+            if missing_critical:
+                self.fail(f"Missing critical security headers: {', '.join(missing_critical)}")
             
             print(f"✅ Security headers verification:")
             print(f"  Present headers: {', '.join(present_headers) if present_headers else 'None'}")
