@@ -262,6 +262,117 @@ class AlgoFrontendBackendTest(unittest.TestCase):
             
         except Exception as e:
             self.fail(f"❌ Real system status verification failed: {str(e)}")
+            
+    def test_09_zerodha_auth_url_endpoint(self):
+        """Test Zerodha auth URL endpoint - REAL fix #5"""
+        try:
+            response = requests.get(f"{self.api_url}/zerodha/auth-url")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for required fields
+            self.assertIn("success", data)
+            self.assertIn("message", data)
+            
+            # The endpoint should return an honest response about configuration status
+            # It's expected to return success=False since Zerodha API key is not configured
+            print(f"✅ Zerodha auth URL endpoint working correctly")
+            print(f"  Success: {data['success']}")
+            print(f"  Message: {data['message']}")
+            print(f"  Status: {data.get('status', 'N/A')}")
+            
+            # Check if login_url is present when API key is configured
+            if data['success']:
+                self.assertIn("login_url", data)
+                print(f"  Login URL: {data['login_url']}")
+            
+        except Exception as e:
+            self.fail(f"❌ Zerodha auth URL endpoint failed: {str(e)}")
+    
+    def test_10_zerodha_status_endpoint(self):
+        """Test Zerodha status endpoint - REAL fix #5"""
+        try:
+            response = requests.get(f"{self.api_url}/zerodha/status")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for required fields
+            self.assertIn("success", data)
+            self.assertIn("connected", data)
+            self.assertIn("status", data)
+            self.assertIn("api_key_configured", data)
+            self.assertIn("api_secret_configured", data)
+            
+            print(f"✅ Zerodha status endpoint working correctly")
+            print(f"  Success: {data['success']}")
+            print(f"  Connected: {data['connected']}")
+            print(f"  Status: {data['status']}")
+            print(f"  API Key Configured: {data['api_key_configured']}")
+            print(f"  API Secret Configured: {data['api_secret_configured']}")
+            
+        except Exception as e:
+            self.fail(f"❌ Zerodha status endpoint failed: {str(e)}")
+    
+    def test_11_zerodha_disconnect_endpoint(self):
+        """Test Zerodha disconnect endpoint - REAL fix #5"""
+        try:
+            response = requests.post(f"{self.api_url}/zerodha/disconnect")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for required fields
+            self.assertIn("success", data)
+            self.assertIn("message", data)
+            self.assertIn("status", data)
+            
+            # The endpoint should return success=True
+            self.assertTrue(data["success"])
+            self.assertEqual(data["status"], "disconnected")
+            
+            print(f"✅ Zerodha disconnect endpoint working correctly")
+            print(f"  Success: {data['success']}")
+            print(f"  Message: {data['message']}")
+            print(f"  Status: {data['status']}")
+            
+        except Exception as e:
+            self.fail(f"❌ Zerodha disconnect endpoint failed: {str(e)}")
+    
+    def test_12_zerodha_callback_endpoint(self):
+        """Test Zerodha callback endpoint with mock request token - REAL fix #5"""
+        try:
+            # Create a mock request token
+            mock_request_token = "mock_request_token_for_testing"
+            
+            # Test the callback endpoint with the mock token
+            response = requests.get(f"{self.api_url}/zerodha/callback?request_token={mock_request_token}")
+            self.assertEqual(response.status_code, 200)
+            
+            # The response should be HTML, so we check for specific content
+            content = response.text
+            
+            # Check if it's an HTML response
+            self.assertIn("<html", content.lower())
+            
+            # Check for success or error indicators in the HTML
+            if "authentication successful" in content.lower():
+                print(f"✅ Zerodha callback endpoint working correctly - Success response")
+                # Check if the token is reflected in the response
+                self.assertIn(mock_request_token[:10], content)
+            elif "authentication failed" in content.lower() or "configuration error" in content.lower():
+                print(f"✅ Zerodha callback endpoint working correctly - Error response (expected due to missing API credentials)")
+                # This is also valid as the API credentials are not configured
+            else:
+                self.fail("Unexpected response from Zerodha callback endpoint")
+            
+            # Now check if the status endpoint reflects the connection attempt
+            status_response = requests.get(f"{self.api_url}/zerodha/status")
+            status_data = status_response.json()
+            
+            print(f"  Status after callback: {status_data['status']}")
+            print(f"  Has token: {status_data.get('has_token', False)}")
+            
+        except Exception as e:
+            self.fail(f"❌ Zerodha callback endpoint failed: {str(e)}")
 
 def run_tests():
     """Run all tests and return results"""
