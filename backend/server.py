@@ -3580,7 +3580,7 @@ async def get_data_sources_status():
                 ]),
                 "fallback_capable": system_state.get('zerodha_connected', False)
             },
-            "message": f"Active data source: {system_state.get('active_data_source', 'none').title()}"
+            "message": f"Active data source: {(system_state.get('active_data_source') or 'none').title()}"
         }
         
     except Exception as e:
