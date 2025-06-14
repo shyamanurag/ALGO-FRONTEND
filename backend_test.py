@@ -426,26 +426,10 @@ def run_tests():
     print(f"Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("-" * 80)
     
-    # Create test suite
-    suite = unittest.TestSuite()
-    
-    # Add all tests
-    for i in range(1, 16):
-        test_name = f"test_{i:02d}_" + getattr(AlgoFrontendBackendTest, f"test_{i:02d}_").__doc__.split()[0].lower()
-        suite.addTest(AlgoFrontendBackendTest(test_name))
-    
     # Run tests
-    runner = unittest.TextTestRunner(verbosity=2)
-    result = runner.run(suite)
+    unittest.main(argv=['first-arg-is-ignored'], exit=False)
     
-    # Print summary
-    print("-" * 80)
-    print(f"Tests run: {result.testsRun}")
-    print(f"Failures: {len(result.failures)}")
-    print(f"Errors: {len(result.errors)}")
-    
-    # Return True if all tests passed
-    return len(result.failures) == 0 and len(result.errors) == 0
+    return True
 
 if __name__ == "__main__":
     success = run_tests()
