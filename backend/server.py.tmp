@@ -1,0 +1,4 @@
+@api_router.post("/trading/generate-signal")
+async def force_generate_signal():
+    """🚫 DISABLED: Signal generation only works with REAL market data"""
+    raise HTTPException(403, "Signal generation disabled - requires real market data connection (TrueData/Zerodha)")
