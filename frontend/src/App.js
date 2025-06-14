@@ -39,70 +39,120 @@ function App() {
     testConnection();
   }, []);
 
-  // WebSocket connection for real-time autonomous trading data
+  // WebSocket connection for real-time autonomous trading data  
   useEffect(() => {
     if (!isAuthenticated) return;
 
     const wsUrl = BACKEND_URL.replace('https://', 'wss://').replace('http://', 'ws://') + '/api/ws/autonomous-data';
+    let ws = null;
+    let reconnectTimeout = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
     
-    try {
-      const ws = new WebSocket(wsUrl);
+    const connectWebSocket = () => {
+      try {
+        console.log('🔌 Attempting WebSocket connection to:', wsUrl);
+        ws = new WebSocket(wsUrl);
 
-      ws.onopen = () => {
-        console.log('Autonomous Trading WebSocket connected');
-      };
+        ws.onopen = () => {
+          console.log('✅ Autonomous Trading WebSocket connected');
+          reconnectAttempts = 0;
+          
+          // Send initial ping to establish connection
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: 'ping' }));
+          }
+        };
 
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        
-        switch (data.type) {
-          case 'autonomous_trade_executed':
-            setRealTimeData(prev => ({
-              ...prev,
-              [`trade_${data.user_id}`]: data.trade_data
-            }));
-            break;
-          case 'strategy_performance_update':
-            setRealTimeData(prev => ({
-              ...prev,
-              [`performance_${data.user_id}`]: data.performance_data
-            }));
-            break;
-          case 'account_status_change':
-            setConnectedAccounts(prev => 
-              prev.map(account => 
-                account.user_id === data.user_id 
-                  ? { ...account, status: data.status }
-                  : account
-              )
-            );
-            break;
-          case 'risk_alert':
-            console.warn(`Risk Alert for User ${data.user_id}: ${data.message}`);
-            break;
-          default:
-            console.log('Unknown autonomous data type:', data.type);
-        }
-      };
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            
+            switch (data.type) {
+              case 'autonomous_trade_executed':
+                setRealTimeData(prev => ({
+                  ...prev,
+                  [`trade_${data.user_id}`]: data.trade_data
+                }));
+                break;
+              case 'strategy_performance_update':
+                setRealTimeData(prev => ({
+                  ...prev,
+                  [`performance_${data.user_id}`]: data.performance_data
+                }));
+                break;
+              case 'account_status_change':
+                setConnectedAccounts(prev => 
+                  prev.map(account => 
+                    account.user_id === data.user_id 
+                      ? { ...account, status: data.status }
+                      : account
+                  )
+                );
+                break;
+              case 'risk_alert':
+                console.warn(`Risk Alert for User ${data.user_id}: ${data.message}`);
+                break;
+              case 'initial_data':
+              case 'autonomous_update':
+                if (data.system_health) {
+                  setSystemStatus(prev => ({
+                    ...prev,
+                    system_health: data.system_health,
+                    trading_active: data.trading_active,
+                    last_update: new Date().toISOString()
+                  }));
+                }
+                break;
+              case 'pong':
+                // Keep-alive response
+                break;
+              default:
+                console.log('Unknown autonomous data type:', data.type);
+            }
+          } catch (error) {
+            console.error('Error parsing WebSocket message:', error);
+          }
+        };
 
-      ws.onclose = () => {
-        console.log('Autonomous Trading WebSocket disconnected');
-      };
+        ws.onclose = (event) => {
+          console.log('🔌 Autonomous Trading WebSocket disconnected:', event.code, event.reason);
+          
+          // Auto-reconnect logic
+          if (reconnectAttempts < maxReconnectAttempts && isAuthenticated) {
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+            console.log(`🔄 Reconnecting in ${delay}ms (attempt ${reconnectAttempts + 1}/${maxReconnectAttempts})`);
+            
+            reconnectTimeout = setTimeout(() => {
+              reconnectAttempts++;
+              connectWebSocket();
+            }, delay);
+          } else {
+            console.error('❌ WebSocket max reconnection attempts reached');
+          }
+        };
 
-      ws.onerror = (error) => {
-        console.warn('WebSocket connection failed:', error);
-      };
+        ws.onerror = (error) => {
+          console.error('❌ WebSocket connection error:', error);
+        };
 
-      return () => {
-        try {
-          ws.close();
-        } catch (e) {
-          console.warn('Error closing WebSocket:', e);
-        }
-      };
-    } catch (error) {
-      console.warn('WebSocket initialization failed:', error);
-    }
+      } catch (error) {
+        console.error('❌ WebSocket initialization failed:', error);
+      }
+    };
+
+    // Initial connection
+    connectWebSocket();
+
+    // Cleanup function
+    return () => {
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+      }
+      if (ws) {
+        ws.close();
+      }
+    };
   }, [isAuthenticated, BACKEND_URL]);
 
   // Fetch system status and connected accounts
