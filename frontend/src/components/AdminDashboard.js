@@ -450,8 +450,7 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
                 <div>Client ID: {zerodhaStatus.client_id ? '✅ Configured' : '❌ Not Set'}</div>
                 <div>Status: {zerodhaStatus.status || 'UNKNOWN'}</div>
               </div>
-            </div>
-              
+            
               {/* Configuration Status */}
               <div className="mt-3 text-xs text-gray-500">
                 <div>API Key: {zerodhaStatus.api_key_configured ? '✅ Configured' : '❌ Not Set'}</div>
