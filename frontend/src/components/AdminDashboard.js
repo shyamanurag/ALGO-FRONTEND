@@ -274,15 +274,32 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-lg font-bold text-gray-900">📡 TrueData</h3>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                  truedataStatus.connected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                }`}>
-                  {truedataStatus.connected ? '🟢 Connected' : '🔴 Disconnected'}
-                </span>
+                <div className="flex items-center space-x-2">
+                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
+                    truedataStatus.connected ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {truedataStatus.connected ? '🟢 Connected' : '🔴 Disconnected'}
+                  </span>
+                  {truedataStatus.fallback_mode && (
+                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      📊 Zerodha Fallback
+                    </span>
+                  )}
+                </div>
               </div>
-              <p className="text-gray-600 text-sm mb-2">Real-time market data feed</p>
+              <p className="text-gray-600 text-sm mb-2">
+                {truedataStatus.fallback_mode 
+                  ? "Using Zerodha as backup data source" 
+                  : "Primary real-time market data feed"}
+              </p>
               {truedataStatus.url && (
-                <p className="text-xs text-gray-500 mb-3">Server: {truedataStatus.url}:{truedataStatus.port}</p>
+                <p className="text-xs text-gray-500 mb-2">Server: {truedataStatus.url}:{truedataStatus.port}</p>
+              )}
+              {truedataStatus.active_source && (
+                <p className="text-xs text-blue-600 mb-3">
+                  Active Source: {truedataStatus.active_source.toUpperCase()}
+                  {truedataStatus.fallback_mode && " (Backup Mode)"}
+                </p>
               )}
               <div className="flex space-x-2">
                 {!truedataStatus.connected ? (
@@ -290,7 +307,7 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
                     onClick={handleTruedataConnect}
                     className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm transition duration-200"
                   >
-                    🚀 Connect TrueData
+                    🚀 Connect Data Source
                   </button>
                 ) : (
                   <button
@@ -304,8 +321,9 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
               
               {/* Configuration Status */}
               <div className="mt-3 text-xs text-gray-500">
-                <div>Username: {truedataStatus.username_configured ? '✅ Configured' : '❌ Not Set'}</div>
-                <div>Password: {truedataStatus.password_configured ? '✅ Configured' : '❌ Not Set'}</div>
+                <div>TrueData Username: {truedataStatus.username_configured ? '✅ Configured' : '❌ Not Set'}</div>
+                <div>TrueData Password: {truedataStatus.password_configured ? '✅ Configured' : '❌ Not Set'}</div>
+                <div>Zerodha Backup: {zerodhaStatus.connected ? '✅ Available' : '❌ Unavailable'}</div>
               </div>
             </div>
 
