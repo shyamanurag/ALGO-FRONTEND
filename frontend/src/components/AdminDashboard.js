@@ -113,6 +113,46 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
     }
   };
 
+  const handleTruedataConnect = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/truedata/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        alert('✅ TrueData connected successfully');
+        setTruedataStatus({ connected: true, status: 'connected' });
+      } else {
+        alert(`❌ ${data.message}`);
+      }
+    } catch (error) {
+      console.error('Error connecting TrueData:', error);
+      alert('❌ Error connecting to TrueData. Please try again.');
+    }
+  };
+
+  const handleTruedataDisconnect = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/truedata/disconnect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        alert('✅ TrueData disconnected successfully');
+        setTruedataStatus({ connected: false, status: 'disconnected' });
+      } else {
+        alert(`❌ ${data.message}`);
+      }
+    } catch (error) {
+      console.error('Error disconnecting TrueData:', error);
+      alert('❌ Error disconnecting TrueData. Please try again.');
+    }
+  };
+
   const fetchSystemStatus = async () => {
     try {
       const response = await fetch(`${BACKEND_URL}/api/system/status`);
