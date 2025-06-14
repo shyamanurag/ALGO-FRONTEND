@@ -390,6 +390,174 @@ class AlgoFrontendBackendTest(unittest.TestCase):
             
         except Exception as e:
             self.fail(f"❌ Hybrid data status endpoint failed: {str(e)}")
+            
+    def test_15_strategies_metrics(self):
+        """Test strategies metrics endpoint"""
+        try:
+            response = requests.get(f"{self.api_url}/strategies/metrics")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for required fields
+            self.assertIn("success", data)
+            
+            print(f"✅ Strategies metrics endpoint working correctly")
+            print(f"  Success: {data['success']}")
+            if "metrics" in data:
+                print(f"  Number of strategies: {len(data['metrics'])}")
+                
+            # Verify no mock data is present
+            if "metrics" in data and data["metrics"]:
+                for strategy in data["metrics"]:
+                    self.assertNotIn("demo", str(strategy).lower())
+                    self.assertNotIn("mock", str(strategy).lower())
+            
+        except Exception as e:
+            self.fail(f"❌ Strategies metrics endpoint failed: {str(e)}")
+            
+    def test_16_strategies_performance(self):
+        """Test strategies performance endpoint"""
+        try:
+            response = requests.get(f"{self.api_url}/strategies/performance")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for required fields
+            self.assertIn("success", data)
+            
+            print(f"✅ Strategies performance endpoint working correctly")
+            print(f"  Success: {data['success']}")
+            if "performance" in data:
+                print(f"  Performance data available: {bool(data['performance'])}")
+                
+            # Verify no mock data is present
+            if "performance" in data and data["performance"]:
+                for perf in data["performance"]:
+                    self.assertNotIn("demo", str(perf).lower())
+                    self.assertNotIn("mock", str(perf).lower())
+            
+        except Exception as e:
+            self.fail(f"❌ Strategies performance endpoint failed: {str(e)}")
+            
+    def test_17_strategy_details(self):
+        """Test strategy details endpoint"""
+        try:
+            # Test with a known strategy name
+            strategy_name = "momentum_surfer"
+            response = requests.get(f"{self.api_url}/strategies/{strategy_name}/details")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for required fields
+            self.assertIn("success", data)
+            
+            print(f"✅ Strategy details endpoint working correctly")
+            print(f"  Success: {data['success']}")
+            if "details" in data:
+                print(f"  Details available: {bool(data['details'])}")
+                
+            # Verify no mock data is present
+            if "details" in data and data["details"]:
+                self.assertNotIn("demo", str(data["details"]).lower())
+                self.assertNotIn("mock", str(data["details"]).lower())
+            
+        except Exception as e:
+            self.fail(f"❌ Strategy details endpoint failed: {str(e)}")
+            
+    def test_18_trading_place_order(self):
+        """Test trading place order endpoint"""
+        try:
+            # Create a test order
+            test_order = {
+                "symbol": "NIFTY",
+                "action": "BUY",
+                "quantity": 50,
+                "order_type": "MARKET"
+            }
+            
+            response = requests.post(
+                f"{self.api_url}/trading/place-order",
+                json=test_order
+            )
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for required fields
+            self.assertIn("success", data)
+            
+            print(f"✅ Trading place order endpoint working correctly")
+            print(f"  Success: {data['success']}")
+            if "order_id" in data:
+                print(f"  Order ID: {data['order_id']}")
+            
+        except Exception as e:
+            self.fail(f"❌ Trading place order endpoint failed: {str(e)}")
+            
+    def test_19_trading_orders(self):
+        """Test trading orders endpoint"""
+        try:
+            response = requests.get(f"{self.api_url}/trading/orders")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for required fields
+            self.assertIn("success", data)
+            self.assertIn("orders", data)
+            
+            print(f"✅ Trading orders endpoint working correctly")
+            print(f"  Success: {data['success']}")
+            print(f"  Number of orders: {len(data['orders'])}")
+            
+            # Verify no mock data is present
+            if data["orders"]:
+                for order in data["orders"]:
+                    self.assertNotIn("demo", str(order).lower())
+                    self.assertNotIn("mock", str(order).lower())
+            
+        except Exception as e:
+            self.fail(f"❌ Trading orders endpoint failed: {str(e)}")
+            
+    def test_20_positions(self):
+        """Test positions endpoint"""
+        try:
+            response = requests.get(f"{self.api_url}/positions")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for required fields
+            self.assertIn("success", data)
+            self.assertIn("positions", data)
+            
+            print(f"✅ Positions endpoint working correctly")
+            print(f"  Success: {data['success']}")
+            print(f"  Number of positions: {len(data['positions'])}")
+            
+            # Verify no mock data is present
+            if data["positions"]:
+                for position in data["positions"]:
+                    self.assertNotIn("demo", str(position).lower())
+                    self.assertNotIn("mock", str(position).lower())
+            
+        except Exception as e:
+            self.fail(f"❌ Positions endpoint failed: {str(e)}")
+            
+    def test_21_square_off_all(self):
+        """Test square off all endpoint"""
+        try:
+            response = requests.post(f"{self.api_url}/trading/square-off-all")
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            
+            # Check for required fields
+            self.assertIn("success", data)
+            
+            print(f"✅ Square off all endpoint working correctly")
+            print(f"  Success: {data['success']}")
+            if "message" in data:
+                print(f"  Message: {data['message']}")
+            
+        except Exception as e:
+            self.fail(f"❌ Square off all endpoint failed: {str(e)}")
 
 def run_tests():
     """Run all tests and return results"""
