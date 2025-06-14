@@ -1,72 +1,105 @@
-# DigitalOcean App Platform Configuration for ALGO-FRONTEND
-name: algo-frontend-trading
-region: nyc3
-
+name: elite-trading-platform
+region: nyc
 services:
-- name: backend
+- name: elite-trading-platform
   source_dir: /
   github:
-    repo: shyamanurag/ALGO-FRONTEND
+    repo: YOUR_GITHUB_USERNAME/elite-trading-platform
     branch: main
     deploy_on_push: true
-  
-  dockerfile_path: Dockerfile
-  
-  http_port: 8001
+  run_command: /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+  environment_slug: docker
   instance_count: 1
   instance_size_slug: basic-xxs
+  http_port: 80
   
+  health_check:
+    http_path: /health
+    initial_delay_seconds: 60
+    period_seconds: 30
+    timeout_seconds: 10
+    success_threshold: 1
+    failure_threshold: 3
+
+  # Environment variables for production
   envs:
   - key: NODE_ENV
-    value: production
-  - key: DATABASE_URL
-    type: SECRET
-  - key: REDIS_URL
-    type: SECRET
-  - key: ZERODHA_API_KEY
-    type: SECRET
-  - key: ZERODHA_API_SECRET
-    type: SECRET
-  - key: TRUEDATA_USERNAME
-    type: SECRET
-  - key: TRUEDATA_PASSWORD
-    type: SECRET
+    value: "production"
+  - key: PYTHON_ENV
+    value: "production"
   - key: PAPER_TRADING
-    value: "true"
+    value: "false"
   - key: AUTONOMOUS_TRADING_ENABLED
     value: "true"
   - key: INTRADAY_TRADING_ENABLED
     value: "true"
   - key: ELITE_RECOMMENDATIONS_ENABLED
     value: "true"
+  - key: DATA_PROVIDER_ENABLED
+    value: "true"
+  - key: AUTO_SQUARE_OFF_ENABLED
+    value: "true"
+  - key: AUTO_TARGET_BOOKING
+    value: "true"
+  - key: AUTO_STOP_LOSS
+    value: "true"
+  - key: DAILY_STOP_LOSS_PERCENT
+    value: "2.0"
+  - key: JWT_ALGORITHM
+    value: "HS256"
+  - key: JWT_EXPIRATION_HOURS
+    value: "24"
+    
+  # Database and Redis connections (will be set in DigitalOcean dashboard)
+  # These will be configured to use your dedicated PostgreSQL and Redis databases
+  - key: DATABASE_URL
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+  - key: REDIS_URL
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+  - key: JWT_SECRET_KEY
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+    
+  # Trading API credentials (set in DigitalOcean dashboard)
+  - key: TRUEDATA_USERNAME
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+  - key: TRUEDATA_PASSWORD
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+  - key: ZERODHA_API_KEY
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+  - key: ZERODHA_API_SECRET
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+  - key: ZERODHA_CLIENT_ID
+    scope: RUN_AND_BUILD_TIME
+    type: SECRET
+
+# Static site for documentation (optional)
+static_sites:
+- name: docs
+  source_dir: docs
+  github:
+    repo: YOUR_GITHUB_USERNAME/elite-trading-platform
+    branch: main
+    deploy_on_push: true
+  build_command: echo "No build needed for docs"
   
-  health_check:
-    http_path: /api/health
-    initial_delay_seconds: 30
-    period_seconds: 30
-    timeout_seconds: 10
-    success_threshold: 1
-    failure_threshold: 3
-
-  routes:
-  - path: /api
-  - path: /
-
-databases:
-- name: trading-postgres
-  engine: PG
-  version: "15"
-  size: basic-xs
-  
-- name: trading-redis  
-  engine: REDIS
-  version: "7"
-  size: basic-xs
-
-alerts:
-- rule: CPU_UTILIZATION
-  value: 80
-- rule: MEM_UTILIZATION
-  value: 80
-- rule: RESTART_COUNT
-  value: 5
+# Database specifications (reference for your dedicated databases)
+# Note: These are managed separately in DigitalOcean
+# databases:
+# - name: elite-trading-postgres
+#   engine: PG
+#   version: "15"
+#   size: db-s-1vcpu-1gb
+#   num_nodes: 1
+#   
+# - name: elite-trading-redis
+#   engine: REDIS
+#   version: "7"
+#   size: db-s-1vcpu-1gb
+#   num_nodes: 1
