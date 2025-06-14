@@ -345,6 +345,8 @@ function App() {
                     systemStatus={systemStatus}
                     connectedAccounts={connectedAccounts}
                     realTimeData={realTimeData}
+                    onTrueDataConnect={handleTrueDataConnect}
+                    onTrueDataDisconnect={handleTrueDataDisconnect}
                   />
                 } 
               />
