@@ -1,42 +1,27 @@
-# Dependencies
-node_modules/
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Production files
-.git/
-.gitignore
-README.md
-Dockerfile
-.dockerignore
-
-# Environment files
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Logs
-logs/
-*.log
+# Node modules
+node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Coverage directory used by tools like istanbul
-coverage/
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
 
-# IDE files
+# IDE
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
 # OS generated files
 .DS_Store
@@ -47,16 +32,44 @@ coverage/
 ehthumbs.db
 Thumbs.db
 
-# Testing
-test-results/
-coverage/
+# Git
+.git/
+.gitignore
 
-# Build outputs
+# Documentation
+README.md
+DEPLOYMENT.md
+docs/
+
+# Testing
+coverage/
+.nyc_output/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Logs
+logs/
+*.log
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Build artifacts
 build/
 dist/
-*.tgz
+.next/
+out/
 
-# Database files
+# Database
 *.db
 *.sqlite
 *.sqlite3
+
+# Temporary files
+tmp/
+temp/
