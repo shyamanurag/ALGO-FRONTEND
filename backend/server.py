@@ -709,14 +709,14 @@ def setup_scheduler():
             id='health_check'
         )
         
-        # Strategy execution every 30 seconds during market hours - DISABLED to prevent fake signals
-        # if CORE_COMPONENTS_AVAILABLE:
-        #     scheduler.add_job(
-        #         execute_strategy_loop,
-        #         'interval',
-        #         seconds=30,
-        #         id='strategy_execution'
-        #     )
+        # Strategy execution every 30 seconds during market hours - ENABLED for real signal generation
+        if CORE_COMPONENTS_AVAILABLE:
+            scheduler.add_job(
+                execute_strategy_loop,
+                'interval',
+                seconds=30,
+                id='strategy_execution'
+            )
         
         scheduler.start()
         logger.info("Scheduler started with all jobs")
