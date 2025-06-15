@@ -112,6 +112,11 @@ class AutonomousTradeEngine:
             asyncio.create_task(self._trading_loop())
             logger.info("🤖 Autonomous Trading Engine started")
             
+    async def stop_autonomous_trading(self):
+        """Stop autonomous trading"""
+        self.running = False
+        logger.info("⏹️ Autonomous Trading Engine stopped")
+        
     async def emergency_stop(self):
         """Emergency stop - immediately halt all trading and close positions"""
         logger.critical("🚨 EMERGENCY STOP ACTIVATED - Halting autonomous trading engine")
