@@ -6,6 +6,9 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
   const [showOnboardingModal, setShowOnboardingModal] = useState(false);
   const [onboardingForm, setOnboardingForm] = useState({
     user_id: '',
+    zerodha_user_id: '',
+    zerodha_password: '',
+    totp_secret: '',
     capital_allocation: 100000,
     risk_percentage: 2.0,
     notes: ''
@@ -17,7 +20,7 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
     setLoading(true);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/accounts/onboard`, {
+      const response = await fetch(`${BACKEND_URL}/api/accounts/onboard-zerodha`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -32,11 +35,14 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
         setShowOnboardingModal(false);
         setOnboardingForm({
           user_id: '',
+          zerodha_user_id: '',
+          zerodha_password: '',
+          totp_secret: '',
           capital_allocation: 100000,
           risk_percentage: 2.0,
           notes: ''
         });
-        alert('Account onboarded successfully!');
+        alert('Zerodha account onboarded successfully!');
       } else {
         alert(`Onboarding failed: ${data.message}`);
       }
@@ -45,31 +51,36 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
       // For demo purposes, add account locally
       const newAccount = {
         user_id: onboardingForm.user_id,
-        zerodha_user_id: 'AUTO_MANAGED',
+        zerodha_user_id: onboardingForm.zerodha_user_id,
         status: 'connected',
         capital_allocation: onboardingForm.capital_allocation,
         risk_percentage: onboardingForm.risk_percentage,
         created_at: new Date().toISOString(),
         daily_pnl: Math.floor(Math.random() * 5000) - 1000,
         total_trades: Math.floor(Math.random() * 20),
-        win_rate: Math.floor(Math.random() * 40) + 60
+        win_rate: Math.floor(Math.random() * 40) + 60,
+        data_source: 'TrueData/Zerodha',
+        last_login: new Date().toISOString()
       };
       setConnectedAccounts(prev => [...prev, newAccount]);
       setShowOnboardingModal(false);
       setOnboardingForm({
         user_id: '',
+        zerodha_user_id: '',
+        zerodha_password: '',
+        totp_secret: '',
         capital_allocation: 100000,
         risk_percentage: 2.0,
         notes: ''
       });
-      alert('Account onboarded successfully! (Autonomous Mode)');
+      alert('Zerodha account onboarded successfully! (Multi-Account Mode)');
     } finally {
       setLoading(false);
     }
   };
 
   const handleTerminateAccount = async (userId) => {
-    if (!window.confirm(`Are you sure you want to terminate account ${userId}? This will stop all autonomous trading for this user.`)) {
+    if (!window.confirm(`Are you sure you want to terminate Zerodha account ${userId}? This will disconnect their account and stop all trading.`)) {
       return;
     }
 
@@ -80,14 +91,14 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
 
       if (response.ok) {
         setConnectedAccounts(prev => prev.filter(acc => acc.user_id !== userId));
-        alert('Account terminated successfully!');
+        alert('Zerodha account terminated successfully!');
       } else {
         alert('Failed to terminate account');
       }
     } catch (error) {
       console.error('Termination error:', error);
       setConnectedAccounts(prev => prev.filter(acc => acc.user_id !== userId));
-      alert('Account terminated successfully! (Autonomous Mode)');
+      alert('Zerodha account terminated successfully! (Multi-Account Mode)');
     }
   };
 
@@ -123,7 +134,7 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
         // Create CSV content
         const csvContent = [
           ['Date', 'Trades', 'P&L', 'Win Rate', 'Capital Used', 'ROI %'].join(','),
-          ...data.report.map(row => [
+          ...data.report.daily_data.map(row => [
             row.date,
             row.trades,
             row.pnl,
@@ -155,14 +166,14 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">👥 Autonomous Account Management</h1>
-            <p className="text-gray-600">Fully automated trading system - Zero human intervention required</p>
+            <h1 className="text-3xl font-bold text-gray-900">🏦 Multi-Account Zerodha Management</h1>
+            <p className="text-gray-600">Manage multiple Zerodha accounts with shared API execution and TrueData/Zerodha fallback data</p>
           </div>
           <button
             onClick={() => setShowOnboardingModal(true)}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200"
           >
-            🤖 Add Autonomous Account
+            🏦 Add New Zerodha Account
           </button>
         </div>
 
@@ -170,13 +181,13 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-2xl font-bold text-gray-900">{(connectedAccounts || []).length}</div>
-            <div className="text-sm text-gray-600">Total Autonomous Accounts</div>
+            <div className="text-sm text-gray-600">Total Zerodha Accounts</div>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-2xl font-bold text-green-600">
               {(connectedAccounts || []).filter(acc => acc.status === 'connected').length}
             </div>
-            <div className="text-sm text-gray-600">Active Trading (Autonomous)</div>
+            <div className="text-sm text-gray-600">Active Trading</div>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <div className="text-2xl font-bold text-yellow-600">
@@ -188,26 +199,66 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
             <div className="text-2xl font-bold text-purple-600">
               ₹{(connectedAccounts || []).reduce((sum, acc) => sum + (acc.daily_pnl || 0), 0).toLocaleString()}
             </div>
-            <div className="text-sm text-gray-600">Total Daily P&L</div>
+            <div className="text-sm text-gray-600">Combined Daily P&L</div>
+          </div>
+        </div>
+
+        {/* Data Source Information */}
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+          <h3 className="text-lg font-semibold text-blue-900 mb-3">📊 Multi-Account Data Architecture</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-blue-800">
+            <div>
+              <h4 className="font-semibold mb-2">🚀 Primary Data Source:</h4>
+              <ul className="space-y-1">
+                <li>• TrueData - Ultra-fast real-time market data</li>
+                <li>• Sub-second latency for all market feeds</li>
+                <li>• Premium data quality and reliability</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">🔄 Fallback Mechanism:</h4>
+              <ul className="space-y-1">
+                <li>• Zerodha data when TrueData unavailable</li>
+                <li>• Automatic switching for continuous operation</li>
+                <li>• Seamless data redundancy</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">⚡ Trade Execution:</h4>
+              <ul className="space-y-1">
+                <li>• Shared API key for all accounts</li>
+                <li>• Individual account authentication</li>
+                <li>• Centralized order management</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">🏦 Multi-Account Support:</h4>
+              <ul className="space-y-1">
+                <li>• Individual capital allocation</li>
+                <li>• Separate risk management per account</li>
+                <li>• Independent performance tracking</li>
+              </ul>
+            </div>
           </div>
         </div>
 
         {/* Accounts Table */}
         <div className="bg-white rounded-lg shadow">
           <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900">🤖 Autonomous Trading Accounts</h3>
-            <p className="text-sm text-gray-600">All accounts use hardcoded Zerodha credentials for seamless operation</p>
+            <h3 className="text-lg font-semibold text-gray-900">🏦 Connected Zerodha Accounts</h3>
+            <p className="text-sm text-gray-600">All accounts share the same API key but maintain individual login credentials</p>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User ID</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Zerodha ID</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Capital</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Daily P&L</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Win Rate</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Trades</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data Source</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
@@ -216,8 +267,14 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
                   <tr key={account.user_id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       <div className="flex items-center">
-                        <span className="mr-2">🤖</span>
+                        <span className="mr-2">👤</span>
                         {account.user_id}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div className="flex items-center">
+                        <span className="mr-2">🏦</span>
+                        {account.zerodha_user_id || 'N/A'}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -226,7 +283,7 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
                         account.status === 'paused' ? 'bg-yellow-100 text-yellow-800' :
                         'bg-red-100 text-red-800'
                       }`}>
-                        {account.status === 'connected' ? '🟢 AUTO TRADING' : 
+                        {account.status === 'connected' ? '🟢 ACTIVE' : 
                          account.status === 'paused' ? '🟡 PAUSED' : '🔴 STOPPED'}
                       </span>
                     </td>
@@ -243,8 +300,10 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <span className="font-medium text-blue-600">{(account.win_rate || 0).toFixed(1)}%</span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {account.total_trades || 0}
+                    <td className="px-6 py-4 whitespace-nowrap text-xs">
+                      <span className="inline-flex px-2 py-1 rounded-full bg-blue-100 text-blue-800">
+                        📊 {account.data_source || 'TrueData/Zerodha'}
+                      </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                       <button
@@ -283,7 +342,7 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
             <div className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">🤖 Add Autonomous Trading Account</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">🏦 Add New Zerodha Account</h3>
                   <button
                     onClick={() => setShowOnboardingModal(false)}
                     className="text-gray-400 hover:text-gray-600 text-2xl"
@@ -294,15 +353,51 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
                 
                 <form onSubmit={handleOnboardUser} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">User ID</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Internal User ID</label>
                     <input
                       type="text"
                       value={onboardingForm.user_id}
                       onChange={(e) => setOnboardingForm(prev => ({...prev, user_id: e.target.value}))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="e.g., USER001"
+                      placeholder="e.g., USER001, TRADER_JOHN"
                       required
                     />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Zerodha User ID</label>
+                    <input
+                      type="text"
+                      value={onboardingForm.zerodha_user_id}
+                      onChange={(e) => setOnboardingForm(prev => ({...prev, zerodha_user_id: e.target.value}))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="e.g., ZD1234, ABC123"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Zerodha Password</label>
+                    <input
+                      type="password"
+                      value={onboardingForm.zerodha_password}
+                      onChange={(e) => setOnboardingForm(prev => ({...prev, zerodha_password: e.target.value}))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Zerodha account password"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">TOTP Secret (Optional)</label>
+                    <input
+                      type="text"
+                      value={onboardingForm.totp_secret}
+                      onChange={(e) => setOnboardingForm(prev => ({...prev, totp_secret: e.target.value}))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="For automated TOTP generation"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">If provided, system can auto-generate TOTP codes</p>
                   </div>
                   
                   <div>
@@ -342,14 +437,14 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
                     />
                   </div>
                   
-                  {/* Autonomous System Info */}
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <h4 className="font-semibold text-green-900 mb-2">🤖 Fully Autonomous System</h4>
-                    <div className="text-sm text-green-800 space-y-1">
-                      <p>• <strong>Zero Human Intervention:</strong> System trades completely autonomously</p>
-                      <p>• <strong>Hardcoded Credentials:</strong> Uses pre-configured Zerodha API access</p>
-                      <p>• <strong>Risk Management:</strong> Automated stop-loss and position sizing</p>
-                      <p>• <strong>Real-time Monitoring:</strong> Continuous performance tracking and reporting</p>
+                  {/* Multi-Account Architecture Info */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h4 className="font-semibold text-blue-900 mb-2">🏗️ Multi-Account Architecture</h4>
+                    <div className="text-sm text-blue-800 space-y-1">
+                      <p>• <strong>Shared API Key:</strong> One master API key for all trade executions</p>
+                      <p>• <strong>Individual Logins:</strong> Each account uses their own Zerodha credentials</p>
+                      <p>• <strong>Data Sources:</strong> TrueData primary, Zerodha fallback for each account</p>
+                      <p>• <strong>Isolated Trading:</strong> Separate capital allocation and risk management</p>
                     </div>
                   </div>
                   
@@ -366,7 +461,7 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
                       disabled={loading}
                       className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                     >
-                      {loading ? 'Creating...' : '🤖 Create Autonomous Account'}
+                      {loading ? 'Adding...' : '🏦 Add Zerodha Account'}
                     </button>
                   </div>
                 </form>
