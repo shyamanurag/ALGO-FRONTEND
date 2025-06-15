@@ -69,44 +69,19 @@ function AnalyticsReports() {
   };
 
   const generateDemoReportData = () => {
-    const days = Math.ceil((new Date(dateRange.end) - new Date(dateRange.start)) / (1000 * 60 * 60 * 24)) + 1;
-    const data = [];
-    
-    for (let i = 0; i < days; i++) {
-      const date = new Date(new Date(dateRange.start).getTime() + i * 24 * 60 * 60 * 1000);
-      data.push({
-        date: date.toISOString().split('T')[0],
-        trades: Math.floor(Math.random() * 15) + 5,
-        pnl: Math.floor(Math.random() * 10000) - 3000,
-        win_rate: Math.floor(Math.random() * 30) + 60,
-        capital_used: Math.floor(Math.random() * 50000) + 50000,
-        roi_percent: (Math.random() * 10 - 2).toFixed(2),
-        strategies_used: Math.floor(Math.random() * 7) + 1,
-        max_drawdown: Math.floor(Math.random() * 5000),
-        avg_trade_duration: Math.floor(Math.random() * 240) + 30 // minutes
-      });
-    }
-    
+    // Return empty data structure - NO MOCK DATA
     return {
       summary: {
-        total_trades: data.reduce((sum, day) => sum + day.trades, 0),
-        total_pnl: data.reduce((sum, day) => sum + day.pnl, 0),
-        avg_win_rate: data.reduce((sum, day) => sum + day.win_rate, 0) / data.length,
-        best_day: Math.max(...data.map(d => d.pnl)),
-        worst_day: Math.min(...data.map(d => d.pnl)),
-        total_capital_used: Math.max(...data.map(d => d.capital_used)),
-        avg_roi: data.reduce((sum, day) => sum + parseFloat(day.roi_percent), 0) / data.length
+        total_trades: 0,
+        total_pnl: 0,
+        avg_win_rate: 0,
+        best_day: 0,
+        worst_day: 0,
+        total_capital_used: 0,
+        avg_roi: 0
       },
-      daily_data: data,
-      strategy_breakdown: [
-        { strategy: 'Momentum Surfer', trades: 45, pnl: 12500, win_rate: 72 },
-        { strategy: 'News Impact Scalper', trades: 38, pnl: 8900, win_rate: 68 },
-        { strategy: 'Volatility Explosion', trades: 52, pnl: 15600, win_rate: 75 },
-        { strategy: 'Confluence Amplifier', trades: 29, pnl: 7800, win_rate: 81 },
-        { strategy: 'Pattern Hunter', trades: 41, pnl: 9200, win_rate: 69 },
-        { strategy: 'Liquidity Magnet', trades: 33, pnl: 6500, win_rate: 64 },
-        { strategy: 'Volume Profile Scalper', trades: 47, pnl: 11400, win_rate: 71 }
-      ]
+      daily_data: [],
+      strategy_breakdown: []
     };
   };
 
