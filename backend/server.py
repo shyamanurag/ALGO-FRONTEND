@@ -3167,16 +3167,26 @@ async def emergency_stop():
     try:
         logger.critical("🚨 EMERGENCY STOP ACTIVATED - Halting all autonomous trading")
         
-        # In production: stop all strategies, close positions, disconnect APIs
+        # Get the autonomous engine and trigger emergency stop
+        from autonomous_trading_engine import get_autonomous_engine
+        autonomous_engine = get_autonomous_engine()
+        
+        result = await autonomous_engine.emergency_stop()
         
         return {
             "success": True,
             "message": "Emergency stop activated successfully",
-            "timestamp": datetime.utcnow().isoformat()
+            "details": result,
+            "timestamp": datetime.now().isoformat()
         }
+        
     except Exception as e:
         logger.error(f"Error in emergency stop: {e}")
-        raise HTTPException(500, f"Error in emergency stop: {str(e)}")
+        return {
+            "success": False,
+            "error": f"Emergency stop failed: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }
 
 @api_router.put("/autonomous/strategy/{strategy_name}/toggle")
 async def toggle_autonomous_strategy(strategy_name: str):
