@@ -46,27 +46,6 @@ function EliteRecommendations() {
     }
   };
 
-  const manualScan = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/elite-recommendations/scan`, {
-        method: 'POST',
-      });
-      
-      if (response.ok) {
-        fetchEliteRecommendations();
-        alert('Manual scan completed! New recommendations loaded.');
-      } else {
-        alert('Manual scan failed. Please try again.');
-      }
-    } catch (error) {
-      console.error('Manual scan error:', error);
-      alert('Manual scan failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const getRecommendationColor = (recommendation) => {
     switch (recommendation) {
       case 'BUY': return 'bg-green-100 text-green-800';
@@ -85,26 +64,18 @@ function EliteRecommendations() {
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Elite Recommendations</h1>
-            <p className="text-gray-600">10/10 Confidence Advisory Signals (7-10 Day Targets)</p>
+            <h1 className="text-3xl font-bold text-gray-900">🤖 Elite Autonomous Recommendations</h1>
+            <p className="text-gray-600">10/10 Confidence Advisory Signals (Autonomous Generation)</p>
             <div className="flex items-center mt-2 text-sm text-gray-500">
-              <div className="w-3 h-3 bg-yellow-400 rounded-full mr-2"></div>
-              <span>Advisory Only - Not for Intraday Execution</span>
+              <div className="w-3 h-3 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+              <span>Fully Autonomous - No Human Intervention</span>
             </div>
           </div>
           
-          <div className="flex items-center space-x-4">
-            <div className="text-right text-sm text-gray-600">
-              <div>Last Scan: {lastScanTime ? new Date(lastScanTime).toLocaleTimeString() : 'Unknown'}</div>
-              <div>Next Auto Scan: {new Date(Date.now() + 300000).toLocaleTimeString()}</div>
-            </div>
-            <button
-              onClick={manualScan}
-              disabled={loading}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg font-medium transition duration-200 disabled:opacity-50"
-            >
-              {loading ? '🔍 Scanning...' : '🔍 Manual Scan'}
-            </button>
+          <div className="text-right text-sm text-gray-600">
+            <div>Last Autonomous Scan: {lastScanTime ? new Date(lastScanTime).toLocaleTimeString() : 'Scanning...'}</div>
+            <div>Next Auto Scan: {new Date(Date.now() + 300000).toLocaleTimeString()}</div>
+            <div className="text-xs text-green-600 mt-1">🤖 Autonomous System Active</div>
           </div>
         </div>
 
@@ -160,15 +131,15 @@ function EliteRecommendations() {
         </div>
 
         {/* Important Notice */}
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8">
+        <div className="bg-blue-50 border-l-4 border-blue-400 p-4 mb-8">
           <div className="flex">
             <div className="flex-shrink-0">
-              <span className="text-yellow-400 text-xl">⚠️</span>
+              <span className="text-blue-400 text-xl">🤖</span>
             </div>
             <div className="ml-3">
-              <p className="text-sm text-yellow-700">
-                <strong>Important Notice:</strong> Elite recommendations are designed for 7-10 day holding periods and are NOT suitable for intraday trading. 
-                These are advisory signals only. Our autonomous trading system operates exclusively on intraday strategies with 30-second to 4-hour timeframes.
+              <p className="text-sm text-blue-700">
+                <strong>Fully Autonomous System:</strong> Elite recommendations are generated completely autonomously by our AI algorithms every 5 minutes. 
+                These are advisory signals designed for 7-10 day holding periods and are NOT executed automatically by our trading system, which operates exclusively on intraday strategies.
               </p>
             </div>
           </div>
@@ -178,21 +149,21 @@ function EliteRecommendations() {
         {loading && recommendations.length === 0 ? (
           <div className="text-center py-12">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-            <p className="mt-4 text-gray-600">Scanning markets for elite opportunities...</p>
+            <p className="mt-4 text-gray-600">Autonomous system scanning markets for elite opportunities...</p>
           </div>
         ) : recommendations.length === 0 ? (
           <div className="bg-white rounded-lg shadow p-8 text-center">
-            <div className="text-6xl mb-4">🔍</div>
+            <div className="text-6xl mb-4">🤖</div>
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No Elite Recommendations</h3>
             <p className="text-gray-600 mb-4">
-              Our Elite engine maintains extremely high standards. Currently, no stocks meet the 10/10 confidence criteria.
+              Our Elite autonomous engine maintains extremely high standards. Currently, no stocks meet the 10/10 confidence criteria.
             </p>
-            <button
-              onClick={manualScan}
-              className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-lg font-medium transition duration-200"
-            >
-              Trigger Manual Scan
-            </button>
+            <div className="text-sm text-green-600">
+              <div className="flex items-center justify-center">
+                <div className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></div>
+                Autonomous scanning continues every 5 minutes
+              </div>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -243,7 +214,7 @@ function EliteRecommendations() {
 
                   {/* Analysis */}
                   <div className="mb-4">
-                    <p className="text-sm font-medium text-gray-700 mb-2">Analysis:</p>
+                    <p className="text-sm font-medium text-gray-700 mb-2">AI Analysis:</p>
                     <p className="text-sm text-gray-600 leading-relaxed">{recommendation.analysis}</p>
                   </div>
 
@@ -269,7 +240,7 @@ function EliteRecommendations() {
                       <span className="text-sm font-semibold text-red-600">₹{recommendation.stop_loss}</span>
                     </div>
                     <div className="flex justify-between items-center text-xs text-gray-500">
-                      <span>Generated:</span>
+                      <span>Generated by AI:</span>
                       <span>{new Date(recommendation.generated_at).toLocaleString()}</span>
                     </div>
                   </div>
@@ -279,7 +250,7 @@ function EliteRecommendations() {
                 <div className="bg-gray-50 px-6 py-3">
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-gray-500">ID: {recommendation.id}</span>
-                    <span className="text-xs text-purple-600 font-medium">⭐ ELITE GRADE</span>
+                    <span className="text-xs text-purple-600 font-medium">🤖 AUTONOMOUS ELITE</span>
                   </div>
                 </div>
               </div>
@@ -290,7 +261,7 @@ function EliteRecommendations() {
         {/* Historical Performance */}
         {scanStats.historical_performance && (
           <div className="bg-white rounded-lg shadow mt-8 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Historical Elite Performance</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Historical Autonomous Performance</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">{scanStats.historical_performance.total_recommendations}</div>
