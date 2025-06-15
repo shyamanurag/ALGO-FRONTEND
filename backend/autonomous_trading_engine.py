@@ -149,14 +149,31 @@ class AutonomousTradeEngine:
         for strategy_name in self.strategies:
             self.strategies[strategy_name]["active"] = False
         
-        logger.critical("🚨 EMERGENCY STOP COMPLETE - All trading halted")
+    async def reset_for_new_session(self):
+        """Reset all data for a new trading session"""
+        logger.info("🔄 Resetting autonomous engine for new session")
         
-        return {
-            "success": True,
-            "message": "Emergency stop completed",
-            "positions_closed": len(positions_to_close),
-            "strategies_deactivated": len(self.strategies)
-        }
+        # Reset all strategy data
+        for strategy_name in self.strategies:
+            self.strategies[strategy_name].update({
+                "trades_today": 0,
+                "pnl": 0.0,
+                "win_rate": 0.0,
+                "last_signal_time": None,
+                "active": False  # Deactivate until manually enabled
+            })
+        
+        # Clear all positions and history
+        self.active_positions.clear()
+        self.trade_history.clear()
+        self.daily_pnl = 0.0
+        self.used_capital = 0.0
+        self.market_data_buffer.clear()
+        
+        # Stop trading loop
+        self.running = False
+        
+        logger.info("✅ Autonomous engine reset complete - all data cleared")
         
     async def _trading_loop(self):
         """Main trading loop - analyzes market and executes trades"""
