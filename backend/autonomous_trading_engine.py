@@ -149,6 +149,15 @@ class AutonomousTradeEngine:
         for strategy_name in self.strategies:
             self.strategies[strategy_name]["active"] = False
         
+        logger.critical("🚨 EMERGENCY STOP COMPLETE - All trading halted")
+        
+        return {
+            "success": True,
+            "message": "Emergency stop completed",
+            "positions_closed": len(positions_to_close),
+            "strategies_deactivated": len(self.strategies)
+        }
+    
     async def reset_for_new_session(self):
         """Reset all data for a new trading session"""
         logger.info("🔄 Resetting autonomous engine for new session")
