@@ -94,6 +94,17 @@ function Navigation({ user, userRole, systemStatus, connectedAccounts, onLogout 
                   >
                     🔗 Accounts
                   </Link>
+                  
+                  <Link
+                    to="/analytics"
+                    className={`px-2 py-1.5 rounded-md text-xs font-medium ${
+                      isActive('/analytics')
+                        ? 'bg-blue-600 text-white' 
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    📊 Analytics
+                  </Link>
                 </div>
               </div>
             )}
