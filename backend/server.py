@@ -1898,6 +1898,73 @@ async def authenticate_zerodha(request_data: dict):
             "error": str(e)
         }
 
+@api_router.get("/system/stored-tokens")
+async def get_stored_tokens():
+    """Get information about stored authentication tokens"""
+    try:
+        if not db_pool:
+            return {
+                "success": False,
+                "error": "Database not available"
+            }
+            
+        tokens_result = await execute_db_query("""
+            SELECT provider, created_at, updated_at, is_active 
+            FROM auth_tokens 
+            WHERE is_active = 1 
+            ORDER BY created_at DESC
+        """)
+        
+        tokens = []
+        if tokens_result:
+            for row in tokens_result:
+                tokens.append({
+                    "provider": row[0],
+                    "created_at": row[1],
+                    "updated_at": row[2],
+                    "is_active": bool(row[3]),
+                    "status": "Available for restoration"
+                })
+        
+        return {
+            "success": True,
+            "stored_tokens": tokens,
+            "count": len(tokens),
+            "message": "These tokens will be automatically restored after deployment"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting stored tokens: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+@api_router.post("/system/restore-tokens")
+async def manual_restore_tokens():
+    """Manually restore tokens from database"""
+    try:
+        success = await restore_auth_tokens_from_database()
+        
+        if success:
+            return {
+                "success": True,
+                "message": "Tokens restored successfully from database",
+                "timestamp": datetime.now().isoformat()
+            }
+        else:
+            return {
+                "success": False,
+                "message": "No valid tokens found in database to restore"
+            }
+            
+    except Exception as e:
+        logger.error(f"Error manually restoring tokens: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @api_router.get("/system/hybrid-data-status")
 async def get_hybrid_data_status():
     """Get hybrid data provider status - TrueData + Zerodha"""
