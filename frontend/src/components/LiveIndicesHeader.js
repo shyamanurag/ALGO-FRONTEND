@@ -9,8 +9,8 @@ function LiveIndicesHeader() {
 
   useEffect(() => {
     fetchLiveIndices();
-    // Update every 2 seconds for real-time feel
-    const interval = setInterval(fetchLiveIndices, 2000);
+    // Update every 3 seconds for better performance
+    const interval = setInterval(fetchLiveIndices, 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -93,56 +93,65 @@ function LiveIndicesHeader() {
 
   return (
     <div className="bg-white border-b border-gray-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between py-3">
-          <div className="flex items-center space-x-6">
+      <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2">
+          {/* Header section with connection status */}
+          <div className="flex items-center space-x-4 mb-2 sm:mb-0">
             <div className="flex items-center space-x-2">
-              <h2 className="text-lg font-bold text-gray-900">📈 Live Market Data</h2>
+              <h2 className="text-sm font-bold text-gray-900 hidden sm:block">📈 Live Market Data</h2>
+              <h2 className="text-xs font-bold text-gray-900 sm:hidden">📈 Market</h2>
               <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${
                 isConnected ? 'bg-green-100 text-green-800 border-green-200' : 'bg-red-100 text-red-800 border-red-200'
               }`}>
-                {isConnected ? '🟢 CONNECTED' : '🔴 DISCONNECTED'}
+                {isConnected ? '🟢' : '🔴'} {isConnected ? 'LIVE' : 'OFF'}
               </span>
             </div>
-            
-            <div className="flex items-center space-x-4">
+          </div>
+          
+          {/* Indices data - Compact layout */}
+          <div className="flex items-center justify-between w-full sm:w-auto">
+            <div className="flex items-center space-x-3 overflow-x-auto">
               {Object.entries(indices).map(([symbol, data]) => (
-                <div key={symbol} className="flex items-center space-x-2 bg-gray-50 rounded-lg px-3 py-2">
-                  <div className="flex flex-col">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-bold text-sm text-gray-900">{symbol}</span>
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium border ${getStatusColor(data.data_source)}`}>
-                        {getStatusIcon(data.data_source)} {data.data_source}
-                      </span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg font-bold text-gray-900">
-                        {data.ltp > 0 ? `₹${data.ltp.toLocaleString()}` : 'N/A'}
-                      </span>
-                      {data.change !== 0 && (
-                        <span className={`text-sm font-medium ${
-                          data.change >= 0 ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          {data.change >= 0 ? '▲' : '▼'} {Math.abs(data.change).toFixed(2)} ({data.change_percent.toFixed(2)}%)
+                <div key={symbol} className="flex-shrink-0 bg-gray-50 rounded-lg px-2 py-1.5">
+                  <div className="flex items-center space-x-2">
+                    <div className="flex flex-col">
+                      <div className="flex items-center space-x-1">
+                        <span className="font-bold text-xs text-gray-900">{symbol}</span>
+                        <span className={`inline-flex items-center px-1 py-0.5 rounded text-xs ${getStatusColor(data.data_source)}`}>
+                          {getStatusIcon(data.data_source)}
                         </span>
-                      )}
+                      </div>
+                      <div className="flex items-center space-x-1">
+                        <span className="text-sm font-bold text-gray-900">
+                          {data.ltp > 0 ? `₹${(data.ltp/1000).toFixed(1)}k` : 'N/A'}
+                        </span>
+                        {data.change !== 0 && (
+                          <span className={`text-xs font-medium ${
+                            data.change >= 0 ? 'text-green-600' : 'text-red-600'
+                          }`}>
+                            {data.change >= 0 ? '▲' : '▼'} {data.change_percent.toFixed(1)}%
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="text-sm text-gray-600">
-              Last Update: {lastUpdate || 'Loading...'}
+            
+            {/* Control section */}
+            <div className="flex items-center space-x-2 ml-4">
+              <div className="text-xs text-gray-600 hidden sm:block">
+                {lastUpdate && `${lastUpdate.split(':').slice(0,2).join(':')}`}
+              </div>
+              <button
+                onClick={fetchLiveIndices}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs font-medium transition duration-200 flex-shrink-0"
+                title="Refresh market data"
+              >
+                ↻
+              </button>
             </div>
-            <button
-              onClick={fetchLiveIndices}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm font-medium transition duration-200"
-            >
-              Refresh
-            </button>
           </div>
         </div>
       </div>
