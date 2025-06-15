@@ -169,33 +169,17 @@ class NewsImpactScalper:
         Simulate news impact detection
         In production, this would connect to news feeds and sentiment analysis
         """
-        try:
-            # For simulation, randomly generate news events
-            import random
-            
-            # Simulate news probability (higher during market hours)
-            news_probability = 0.1 if self._is_trading_hours() else 0.02
-            
-            if random.random() < news_probability:
-                # Create simulated news event
-                news_event = NewsEvent(
-                    title=f"Market Update for {symbol}",
-                    content="Simulated news content",
-                    timestamp=current_time,
-                    severity=random.choice(["medium", "high"]),
-                    sentiment=random.uniform(-0.5, 0.5),
-                    symbols_mentioned=[symbol],
-                    impact_score=random.uniform(0.5, 1.0)
-                )
-                
-                self.scalping_state.active_news_events.append(news_event)
-                return True
-            
+        # DISABLED: No simulation on weekends or when markets are closed
+        current_day = current_time.weekday()  # 0=Monday, 6=Sunday
+        if current_day >= 5:  # Weekend
             return False
             
-        except Exception as e:
-            logger.error(f"Error simulating news impact: {e}")
+        # Only generate news impact during actual trading hours
+        if not self._is_trading_hours():
             return False
+            
+        # For now, return False until real news feed is implemented
+        return False
     
     def _create_scalping_signal(self, symbol: str, df: pd.DataFrame, current_time: datetime) -> Optional[Dict]:
         """Create news scalping signal"""
