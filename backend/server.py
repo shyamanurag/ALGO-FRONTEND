@@ -1255,8 +1255,21 @@ async def update_trading_metrics(metric_name: str, value: float):
 
 def is_market_open() -> bool:
     """Check if market is currently open"""
+    from datetime import datetime, time
+    
+    # Get current time and day
     current_time = datetime.now().time()
-    return time(9, 15) <= current_time <= time(15, 30)
+    current_day = datetime.now().weekday()  # 0=Monday, 6=Sunday
+    
+    # Market is closed on weekends (Saturday=5, Sunday=6)
+    if current_day >= 5:  # Saturday or Sunday
+        return False
+    
+    # Market hours: 9:15 AM to 3:30 PM IST on weekdays
+    market_open = time(9, 15)
+    market_close = time(15, 30)
+    
+    return market_open <= current_time <= market_close
 
 async def broadcast_elite_recommendations(recommendations):
     """Broadcast elite recommendations to websocket clients"""
