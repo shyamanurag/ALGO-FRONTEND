@@ -9,6 +9,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import os
+import re
 import logging
 from pathlib import Path
 import asyncio
