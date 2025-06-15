@@ -28,11 +28,7 @@ function AnalyticsReports() {
     } catch (error) {
       console.error('Error fetching users:', error);
       // Demo users for development
-      setUsers([
-        { user_id: 'USER001', name: 'Autonomous Trader 1' },
-        { user_id: 'USER002', name: 'Autonomous Trader 2' },
-        { user_id: 'USER003', name: 'Autonomous Trader 3' }
-      ]);
+      setUsers([]);  // NO MOCK DATA - empty array
     }
   };
 
