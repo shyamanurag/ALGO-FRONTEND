@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import LiveMarketDataStatus from './LiveMarketDataStatus';
 import LiveIndices from './LiveIndices';
 import LiveIndicesHeader from './LiveIndicesHeader';
+import ZerodhaAuthSetup from './ZerodhaAuthSetup';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
