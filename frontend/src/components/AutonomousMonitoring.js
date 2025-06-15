@@ -46,15 +46,9 @@ function AutonomousMonitoring({ systemStatus, connectedAccounts, realTimeData })
 
   const fetchActiveOrders = async () => {
     try {
-      // Use real trading orders endpoint instead of autonomous endpoint
-      const response = await fetch(`${BACKEND_URL}/api/trading/orders`);
+      const response = await fetch(`${BACKEND_URL}/api/autonomous/active-orders?user=${selectedUser}`);
       const data = await response.json();
-      
-      if (data.success && data.orders) {
-        setActiveOrders(data.orders);
-      } else {
-        setActiveOrders([]);
-      }
+      setActiveOrders(data.orders || []);
     } catch (error) {
       console.error('Error fetching active orders:', error);
       setActiveOrders([]);
