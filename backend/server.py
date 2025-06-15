@@ -1582,12 +1582,12 @@ async def onboard_zerodha_account(account_data: dict):
         if db_pool:
             await execute_db_query("""
                 INSERT INTO users (
-                    user_id, username, email, full_name, 
+                    user_id, username, email, full_name, password_hash,
                     paper_trading, autonomous_trading, 
                     max_daily_loss, created_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, 
-            user_id, zerodha_user_id, f"{user_id}@zerodha.trading", f"Zerodha User {zerodha_user_id}",
+            user_id, zerodha_user_id, f"{user_id}@zerodha.trading", f"Zerodha User {zerodha_user_id}", "zerodha_managed",
             True, True, capital_allocation * (risk_percentage / 100), datetime.utcnow())
             
             # Store encrypted Zerodha credentials (in production, use proper encryption)
