@@ -4,7 +4,7 @@
     "passed": 16,
     "failed": 1,
     "success_rate": 94.11764705882352,
-    "timestamp": "2025-06-15T11:23:35.290133"
+    "timestamp": "2025-06-15T11:27:53.784258"
   },
   "detailed_results": {
     "Core System Health": {
@@ -19,15 +19,15 @@
         "status": "PASS",
         "response": {
           "status": "healthy",
-          "timestamp": "2025-06-15T11:23:29.230410",
+          "timestamp": "2025-06-15T11:27:50.729053",
           "database": "connected",
           "tables_created": true,
           "system_health": "HEALTHY",
           "autonomous_trading": false,
           "paper_trading": true,
           "market_status": "OPEN",
-          "current_time": "11:23:29 AM",
-          "last_update": "11:23:29 AM",
+          "current_time": "11:27:50 AM",
+          "last_update": "11:27:50 AM",
           "symbols_tracked": 0,
           "truedata": {
             "connected": false,
