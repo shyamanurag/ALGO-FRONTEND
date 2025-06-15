@@ -255,6 +255,18 @@ function Navigation({ user, userRole, systemStatus, connectedAccounts, onLogout 
               🔗 Account Management
             </Link>
 
+            <Link
+              to="/analytics"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`block px-3 py-2 rounded-md text-sm font-medium ${
+                isActive('/analytics')
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              📊 Analytics & Reports
+            </Link>
+
             {/* Mobile Status Indicators */}
             <div className="border-t border-gray-700 pt-2 mt-2">
               <div className="px-3 py-2 space-y-1">
