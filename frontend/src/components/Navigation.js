@@ -16,7 +16,7 @@ function Navigation({ user, userRole, systemStatus, connectedAccounts, onLogout 
           <div className="flex items-center">
             <div className="flex-shrink-0">
               <h1 className="text-xl font-bold text-white">
-                Elite Autonomous Trading
+                🤖 Elite Autonomous Trading Platform
               </h1>
             </div>
             
@@ -31,29 +31,7 @@ function Navigation({ user, userRole, systemStatus, connectedAccounts, onLogout 
                         : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                     }`}
                   >
-                    🤖 Live Status
-                  </Link>
-                  
-                  <Link
-                    to="/trading"
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      isActive('/trading')
-                        ? 'bg-blue-600 text-white' 
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    💰 Live Trading
-                  </Link>
-                  
-                  <Link
-                    to="/orders"
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      isActive('/orders')
-                        ? 'bg-blue-600 text-white' 
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    📋 Orders
+                    🤖 Autonomous Status
                   </Link>
                   
                   <Link
@@ -64,40 +42,7 @@ function Navigation({ user, userRole, systemStatus, connectedAccounts, onLogout 
                         : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                     }`}
                   >
-                    📊 Strategies
-                  </Link>
-                  
-                  <Link
-                    to="/admin"
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      isActive('/admin') 
-                        ? 'bg-blue-600 text-white' 
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    ⚙️ Admin
-                  </Link>
-                  
-                  <Link
-                    to="/accounts"
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      isActive('/accounts')
-                        ? 'bg-blue-600 text-white' 
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    Account Management
-                  </Link>
-                  
-                  <Link
-                    to="/autonomous-monitoring"
-                    className={`px-3 py-2 rounded-md text-sm font-medium ${
-                      isActive('/autonomous-monitoring')
-                        ? 'bg-blue-600 text-white' 
-                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-                    }`}
-                  >
-                    Autonomous Monitor
+                    📊 Strategy Monitor
                   </Link>
                   
                   <Link
@@ -108,7 +53,40 @@ function Navigation({ user, userRole, systemStatus, connectedAccounts, onLogout 
                         : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                     }`}
                   >
-                    Elite Advisory
+                    ⭐ Elite Recommendations
+                  </Link>
+                  
+                  <Link
+                    to="/autonomous-monitoring"
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      isActive('/autonomous-monitoring')
+                        ? 'bg-blue-600 text-white' 
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    🔍 Autonomous Monitor
+                  </Link>
+                  
+                  <Link
+                    to="/admin"
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      isActive('/admin') 
+                        ? 'bg-blue-600 text-white' 
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    ⚙️ System Admin
+                  </Link>
+                  
+                  <Link
+                    to="/accounts"
+                    className={`px-3 py-2 rounded-md text-sm font-medium ${
+                      isActive('/accounts')
+                        ? 'bg-blue-600 text-white' 
+                        : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                    }`}
+                  >
+                    🔗 Account Management
                   </Link>
                 </div>
               </div>
@@ -116,14 +94,24 @@ function Navigation({ user, userRole, systemStatus, connectedAccounts, onLogout 
           </div>
 
           <div className="flex items-center space-x-4">
-            {/* System Status Indicator */}
+            {/* Autonomous Trading Status Indicator */}
             <div className="flex items-center space-x-2">
               <div className={`w-3 h-3 rounded-full ${
-                systemStatus.status === 'HEALTHY' ? 'bg-green-400' : 
-                systemStatus.status === 'WARNING' ? 'bg-yellow-400' : 'bg-red-400'
+                systemStatus.autonomous_trading ? 'bg-green-400 animate-pulse' : 'bg-red-400'
               }`}></div>
               <span className="text-sm text-gray-300">
-                System {systemStatus.status || 'Unknown'}
+                {systemStatus.autonomous_trading ? 'AUTONOMOUS ACTIVE' : 'AUTONOMOUS INACTIVE'}
+              </span>
+            </div>
+
+            {/* System Health Indicator */}
+            <div className="flex items-center space-x-2">
+              <div className={`w-3 h-3 rounded-full ${
+                systemStatus.system_health === 'HEALTHY' ? 'bg-green-400' : 
+                systemStatus.system_health === 'WARNING' ? 'bg-yellow-400' : 'bg-red-400'
+              }`}></div>
+              <span className="text-sm text-gray-300">
+                {systemStatus.system_health || 'Unknown'}
               </span>
             </div>
 
@@ -134,7 +122,7 @@ function Navigation({ user, userRole, systemStatus, connectedAccounts, onLogout 
                   {activeAccounts}/{totalAccounts}
                 </span>
               </div>
-              <span className="text-sm text-gray-300">Active Accounts</span>
+              <span className="text-sm text-gray-300">Connected</span>
             </div>
 
             {/* User Info & Logout */}
@@ -166,36 +154,25 @@ function Navigation({ user, userRole, systemStatus, connectedAccounts, onLogout 
         <div className="md:hidden bg-gray-800">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
             <Link
-              to="/"
+              to="/live-status"
               className={`block px-3 py-2 rounded-md text-base font-medium ${
-                isActive('/') 
+                isActive('/live-status') || isActive('/')
                   ? 'bg-blue-600 text-white' 
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
               }`}
             >
-              Admin Dashboard
+              🤖 Autonomous Status
             </Link>
             
             <Link
-              to="/accounts"
+              to="/strategy-monitoring"
               className={`block px-3 py-2 rounded-md text-base font-medium ${
-                isActive('/accounts')
+                isActive('/strategy-monitoring')
                   ? 'bg-blue-600 text-white' 
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
               }`}
             >
-              Account Management
-            </Link>
-            
-            <Link
-              to="/autonomous-monitoring"
-              className={`block px-3 py-2 rounded-md text-base font-medium ${
-                isActive('/autonomous-monitoring')
-                  ? 'bg-blue-600 text-white' 
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-              }`}
-            >
-              Autonomous Monitor
+              📊 Strategy Monitor
             </Link>
             
             <Link
@@ -206,7 +183,40 @@ function Navigation({ user, userRole, systemStatus, connectedAccounts, onLogout 
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'
               }`}
             >
-              Elite Advisory
+              ⭐ Elite Recommendations
+            </Link>
+            
+            <Link
+              to="/autonomous-monitoring"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                isActive('/autonomous-monitoring')
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              🔍 Autonomous Monitor
+            </Link>
+            
+            <Link
+              to="/admin"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                isActive('/admin')
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              ⚙️ System Admin
+            </Link>
+            
+            <Link
+              to="/accounts"
+              className={`block px-3 py-2 rounded-md text-base font-medium ${
+                isActive('/accounts')
+                  ? 'bg-blue-600 text-white' 
+                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+              }`}
+            >
+              🔗 Account Management
             </Link>
           </div>
         </div>

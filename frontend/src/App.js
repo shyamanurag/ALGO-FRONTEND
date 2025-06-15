@@ -2,18 +2,14 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import AdminDashboard from './components/AdminDashboard';
-import UserDashboard from './components/UserDashboard';
-import AccountManagement from './components/AccountManagement';
 import AutonomousMonitoring from './components/AutonomousMonitoring';
-import UserReports from './components/UserReports';
 import EliteRecommendations from './components/EliteRecommendations';
 import Navigation from './components/Navigation';
 import AdminLogin from './components/AdminLogin';
-import RealTradingDashboard from './components/RealTradingDashboard';
 import LiveIndicesHeader from './components/LiveIndicesHeader';
 import LiveAutonomousStatus from './components/LiveAutonomousStatus';
-import OrderManagement from './components/OrderManagement';
 import StrategyMonitoring from './components/StrategyMonitoring';
+import AccountManagement from './components/AccountManagement';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
@@ -21,7 +17,6 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(true); // Set to true for testing
   const [user, setUser] = useState({ name: 'Admin User', role: 'admin' }); // Default user for testing
   const [userRole, setUserRole] = useState('admin');
-  const [selectedUserId, setSelectedUserId] = useState(null);
   const [systemStatus, setSystemStatus] = useState({});
   const [connectedAccounts, setConnectedAccounts] = useState([]);
   const [realTimeData, setRealTimeData] = useState({});
@@ -235,7 +230,6 @@ function App() {
     setIsAuthenticated(false);
     setUser(null);
     setUserRole(null);
-    setSelectedUserId(null);
     setSystemStatus({});
     setConnectedAccounts([]);
     setRealTimeData({});
@@ -328,21 +322,7 @@ function App() {
         <LiveIndicesHeader />
         <div className="main-content">
           <Routes>
-            {/* Trading Routes */}
-            <Route 
-              path="/trading" 
-              element={<RealTradingDashboard />} 
-            />
-            <Route 
-              path="/orders" 
-              element={<OrderManagement />} 
-            />
-            <Route 
-              path="/strategy-monitoring" 
-              element={<StrategyMonitoring />} 
-            />
-            
-            {/* Admin Routes */}
+            {/* Autonomous Trading Routes Only */}
             <Route 
               path="/" 
               element={<LiveAutonomousStatus />}
@@ -351,6 +331,12 @@ function App() {
               path="/live-status" 
               element={<LiveAutonomousStatus />}
             />
+            <Route 
+              path="/strategy-monitoring" 
+              element={<StrategyMonitoring />} 
+            />
+            
+            {/* Admin Routes */}
             <Route 
               path="/admin" 
               element={
@@ -369,24 +355,6 @@ function App() {
                 <AccountManagement 
                   connectedAccounts={connectedAccounts}
                   setConnectedAccounts={setConnectedAccounts}
-                />
-              } 
-            />
-            <Route 
-              path="/user/:userId" 
-              element={
-                <UserDashboard 
-                  connectedAccounts={connectedAccounts}
-                  realTimeData={realTimeData}
-                />
-              } 
-            />
-            <Route 
-              path="/reports/:userId" 
-              element={
-                <UserReports 
-                  connectedAccounts={connectedAccounts}
-                  realTimeData={realTimeData}
                 />
               } 
             />
