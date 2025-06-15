@@ -3188,6 +3188,31 @@ async def emergency_stop():
             "timestamp": datetime.now().isoformat()
         }
 
+@api_router.post("/autonomous/reset-session")
+async def reset_autonomous_session():
+    """Reset autonomous engine for new trading session"""
+    try:
+        logger.info("🔄 Resetting autonomous trading session")
+        
+        from autonomous_trading_engine import get_autonomous_engine
+        autonomous_engine = get_autonomous_engine()
+        
+        await autonomous_engine.reset_for_new_session()
+        
+        return {
+            "success": True,
+            "message": "Autonomous engine reset successfully",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error resetting autonomous session: {e}")
+        return {
+            "success": False,
+            "error": f"Reset failed: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }
+
 @api_router.put("/autonomous/strategy/{strategy_name}/toggle")
 async def toggle_autonomous_strategy(strategy_name: str):
     """Toggle autonomous strategy"""
