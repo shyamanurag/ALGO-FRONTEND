@@ -98,7 +98,7 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
     } catch (error) {
       console.error('Termination error:', error);
       setConnectedAccounts(prev => prev.filter(acc => acc.user_id !== userId));
-      alert('Zerodha account terminated successfully! (Multi-Account Mode)');
+      alert('Zerodha account terminated successfully! (Real Data Only)');
     }
   };
 
