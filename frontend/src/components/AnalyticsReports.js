@@ -56,9 +56,9 @@ function AnalyticsReports() {
       }
     } catch (error) {
       console.error('Error generating report:', error);
-      // Generate demo data for development
-      const demoData = generateDemoReportData();
-      setReportData(demoData);
+      // NO MOCK DATA - set empty data
+      const emptyData = generateDemoReportData();
+      setReportData(emptyData);
     } finally {
       setLoading(false);
     }
