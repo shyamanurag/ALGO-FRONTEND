@@ -169,6 +169,11 @@ class AutonomousTradeEngine:
     
     async def _analyze_and_trade(self):
         """Analyze market data with each strategy and execute trades"""
+        # Double-check market is open before trading
+        if not self._is_market_open():
+            logger.warning("🚫 Trading attempted outside market hours - blocked")
+            return
+            
         for strategy_name, strategy_data in self.strategies.items():
             if not strategy_data["active"]:
                 continue
