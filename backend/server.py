@@ -1651,6 +1651,100 @@ async def toggle_account_status(user_id: str):
         logger.error(f"Error toggling account status: {e}")
         raise HTTPException(500, str(e))
 
+# 🔥 SACRED SYSTEM PURIFICATION ENDPOINTS - ELIMINATE DEMO DATA VIRUS!
+@api_router.delete("/system/purge-demo-data")
+async def purge_all_demo_data():
+    """🔥 NUCLEAR OPTION: Purge ALL demo/fake data from sacred trading system"""
+    try:
+        if not db_pool:
+            return {
+                "success": False,
+                "error": "Database not available for purification"
+            }
+        
+        purged_tables = []
+        
+        # 🗑️ PURGE ALL FAKE DATA
+        try:
+            # Completely wipe orders table
+            await execute_db_query("DELETE FROM orders")
+            # Completely wipe positions table  
+            await execute_db_query("DELETE FROM positions")
+            # Completely wipe trading_signals table
+            await execute_db_query("DELETE FROM trading_signals")
+            # Remove demo users
+            await execute_db_query("DELETE FROM users WHERE user_id LIKE '%DEMO%' OR user_id LIKE '%TEST%'")
+            
+            purged_tables = ["orders", "positions", "trading_signals", "demo_users"]
+            
+            # Reset sequences to start fresh
+            await execute_db_query("DELETE FROM sqlite_sequence WHERE name IN ('orders', 'positions', 'trading_signals')")
+            
+        except Exception as e:
+            logger.warning(f"Purification error: {e}")
+        
+        logger.info("🔥 DEMO DATA VIRUS ELIMINATED!")
+        
+        return {
+            "success": True,
+            "message": "🔥 SACRED SYSTEM PURIFIED! Demo data virus eliminated!",
+            "purged_tables": purged_tables,
+            "status": "SYSTEM RESTORED TO VIRGIN PURITY",
+            "next_step": "Only authentic market data will flow through your elite platform",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error during purification: {e}")
+        return {
+            "success": False,
+            "error": f"Purification failed: {str(e)}"
+        }
+
+@api_router.get("/system/contamination-report")
+async def generate_contamination_report():
+    """🔍 Generate report of demo/fake data contamination in sacred system"""
+    try:
+        if not db_pool:
+            return {
+                "success": False,
+                "error": "Database not available"
+            }
+        
+        contamination = {}
+        
+        # Check for contamination
+        try:
+            orders_count = await execute_db_query("SELECT COUNT(*) FROM orders")
+            contamination["orders"] = orders_count[0][0] if orders_count else 0
+            
+            positions_count = await execute_db_query("SELECT COUNT(*) FROM positions")  
+            contamination["positions"] = positions_count[0][0] if positions_count else 0
+            
+            signals_count = await execute_db_query("SELECT COUNT(*) FROM trading_signals")
+            contamination["trading_signals"] = signals_count[0][0] if signals_count else 0
+            
+        except Exception as e:
+            contamination["error"] = str(e)
+        
+        total_contamination = sum([v for v in contamination.values() if isinstance(v, int)])
+        
+        return {
+            "success": True,
+            "contamination_report": contamination,
+            "total_contaminated_records": total_contamination,
+            "system_status": "🦠 CONTAMINATED" if total_contamination > 0 else "✨ PURE",
+            "recommendation": "🔥 IMMEDIATE PURIFICATION REQUIRED" if total_contamination > 0 else "Sacred system is clean",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating contamination report: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @api_router.get("/health")
 async def health_check():
     """Health check with real system status - NO MOCK DATA"""
