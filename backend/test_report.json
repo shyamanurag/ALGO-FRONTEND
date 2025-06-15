@@ -1,0 +1,130 @@
+{
+  "test_summary": {
+    "total_tests": 17,
+    "passed": 16,
+    "failed": 1,
+    "success_rate": 94.11764705882352,
+    "timestamp": "2025-06-15T11:23:35.290133"
+  },
+  "detailed_results": {
+    "Core System Health": {
+      "API Root": {
+        "status": "PASS",
+        "response": {
+          "message": "Elite Autonomous Algo Trading Platform - Ready!",
+          "version": "2.0.0"
+        }
+      },
+      "Health Check": {
+        "status": "PASS",
+        "response": {
+          "status": "healthy",
+          "timestamp": "2025-06-15T11:23:29.230410",
+          "database": "connected",
+          "tables_created": true,
+          "system_health": "HEALTHY",
+          "autonomous_trading": false,
+          "paper_trading": true,
+          "market_status": "OPEN",
+          "current_time": "11:23:29 AM",
+          "last_update": "11:23:29 AM",
+          "symbols_tracked": 0,
+          "truedata": {
+            "connected": false,
+            "status": "DISCONNECTED"
+          }
+        }
+      },
+      "Database Connection": {
+        "status": "PASS"
+      }
+    },
+    "Database Integrity": {
+      "Mock Data Protection": {
+        "status": "PASS",
+        "message": "Protection working"
+      },
+      "Database Schema": {
+        "status": "PASS",
+        "tables": 10
+      }
+    },
+    "Authentication & Security": {
+      "CORS Configuration": {
+        "status": "FAIL",
+        "error": "CORS headers missing"
+      }
+    },
+    "Admin Dashboard API": {
+      "Admin Metrics": {
+        "status": "PASS",
+        "metrics": {
+          "total_signals": 0,
+          "total_trades_today": 0,
+          "active_strategies": 7,
+          "autonomous_trading": false,
+          "system_health": "HEALTHY"
+        }
+      },
+      "Recent Trades": {
+        "status": "PASS",
+        "trades_count": 0
+      }
+    },
+    "Autonomous Trading System": {
+      "Autonomous Status": {
+        "status": "PASS",
+        "autonomous_trading": false,
+        "paper_trading": true
+      }
+    },
+    "Strategy Monitoring": {
+      "Active Strategies": {
+        "status": "PASS",
+        "count": 7
+      }
+    },
+    "Elite Recommendations": {
+      "Elite Recommendations API": {
+        "status": "PASS",
+        "response": "Available"
+      }
+    },
+    "Account Management": {
+      "Account Management": {
+        "status": "PASS",
+        "note": "Basic structure in place"
+      }
+    },
+    "Market Data Integration": {
+      "Market Data API": {
+        "status": "PASS",
+        "note": "Endpoint available"
+      }
+    },
+    "WebSocket Connections": {
+      "WebSocket Configuration": {
+        "status": "PASS",
+        "note": "WebSocket setup in place"
+      }
+    },
+    "TrueData Integration": {
+      "TrueData Integration": {
+        "status": "PASS",
+        "response": "TrueData connection initiated"
+      }
+    },
+    "Zerodha Integration": {
+      "Zerodha Integration": {
+        "status": "PASS",
+        "credentials": "Configured"
+      }
+    },
+    "Data Protection System": {
+      "Data Protection Triggers": {
+        "status": "PASS",
+        "triggers": 5
+      }
+    }
+  }
+}
