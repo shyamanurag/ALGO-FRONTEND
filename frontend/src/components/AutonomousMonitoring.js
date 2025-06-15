@@ -108,19 +108,18 @@ function AutonomousMonitoring({ systemStatus, connectedAccounts, realTimeData })
 
   const handleStrategyToggle = async (strategyName) => {
     try {
-      // Use real system endpoint for strategy control
-      const response = await fetch(`${BACKEND_URL}/api/system/strategy/${strategyName}/toggle`, {
+      const response = await fetch(`${BACKEND_URL}/api/autonomous/strategy/${strategyName}/toggle`, {
         method: 'PUT',
       });
 
       if (response.ok) {
         fetchStrategyPerformance(); // Refresh data
       } else {
-        alert('Strategy toggle not available - use Admin dashboard');
+        alert('Failed to toggle strategy');
       }
     } catch (error) {
       console.error('Strategy toggle error:', error);
-      alert('Strategy control not available - use Admin dashboard for strategy management');
+      alert('Failed to toggle strategy. Please try again.');
     }
   };
 
