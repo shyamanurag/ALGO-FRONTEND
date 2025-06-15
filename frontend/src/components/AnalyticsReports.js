@@ -50,9 +50,9 @@ function AnalyticsReports() {
       if (data.success) {
         setReportData(data.report);
       } else {
-        // Generate demo data for development
-        const demoData = generateDemoReportData();
-        setReportData(demoData);
+        // NO MOCK DATA - set empty data
+        const emptyData = generateDemoReportData();
+        setReportData(emptyData);
       }
     } catch (error) {
       console.error('Error generating report:', error);
