@@ -722,8 +722,21 @@ class AutonomousTradeEngine:
     
     def _is_market_open(self) -> bool:
         """Check if market is currently open"""
+        from datetime import datetime, time
+        
+        # Get current time in IST (Indian Standard Time)
         current_time = datetime.now().time()
-        return time(9, 15) <= current_time <= time(15, 30)
+        current_day = datetime.now().weekday()  # 0=Monday, 6=Sunday
+        
+        # Market is closed on weekends (Saturday=5, Sunday=6)
+        if current_day >= 5:  # Saturday or Sunday
+            return False
+        
+        # Market hours: 9:15 AM to 3:30 PM IST
+        market_open = time(9, 15)
+        market_close = time(15, 30)
+        
+        return market_open <= current_time <= market_close
     
     def get_strategy_performance(self) -> Dict:
         """Get current strategy performance data"""
