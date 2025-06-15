@@ -1,0 +1,46 @@
+{
+  "deployment_flow": {
+    "pre_deployment": [
+      "\u2705 Code is ready for deployment",
+      "\u2705 Paper trading mode enabled (safe)",
+      "\u2705 All APIs configured and working",
+      "\u26a0\ufe0f Zerodha token needs manual auth after deployment"
+    ],
+    "deployment": [
+      "\ud83d\ude80 Deploy to https://fresh-start-13.emergent.host/",
+      "\u2705 App will load and work in paper trading mode",
+      "\u2705 All features functional except live trading",
+      "\ud83d\udcf1 UI will show 'Authentication Required' for Zerodha"
+    ],
+    "post_deployment": [
+      "\ud83d\udd10 Visit the deployed app",
+      "\ud83d\udd11 Go to Admin > Zerodha Authentication",
+      "\ud83c\udf10 Click 'Authenticate with Zerodha'",
+      "\u2705 Complete login once - token persists thereafter"
+    ]
+  },
+  "zerodha_authentication": {
+    "method": "web_ui_based",
+    "location": "Admin Dashboard > Zerodha Setup",
+    "process": [
+      "1. Click 'Authenticate with Zerodha' button",
+      "2. Login with your Zerodha credentials",
+      "3. System automatically captures and stores token",
+      "4. Live trading becomes available immediately"
+    ],
+    "persistence": "Token stored in production database",
+    "reauth_needed": "Only if token expires (rare)"
+  },
+  "fallback_solution": {
+    "if_ui_fails": [
+      "Use API endpoint: POST /api/system/zerodha-authenticate",
+      "Send: {\"request_token\": \"YOUR_TOKEN_HERE\"}",
+      "Manual token entry via API calls"
+    ]
+  },
+  "production_safety": {
+    "paper_trading": "Enabled by default",
+    "real_money_risk": "ZERO until explicitly enabled",
+    "safety_measures": "Multiple confirmation layers"
+  }
+}

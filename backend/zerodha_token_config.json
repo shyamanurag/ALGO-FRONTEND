@@ -1,0 +1,19 @@
+{
+  "deployment_mode": "production",
+  "auto_token_refresh": true,
+  "manual_auth_required": true,
+  "login_url": "https://kite.zerodha.com/connect/login?api_key=sylcoq492qz6f7ej&v=3",
+  "instructions": [
+    "1. Visit the login_url to authenticate",
+    "2. After login, get the request_token from redirect URL",
+    "3. Use the request_token with /api/system/zerodha-authenticate endpoint",
+    "4. System will automatically persist the token for deployment"
+  ],
+  "api_endpoints": {
+    "auth_status": "/api/system/zerodha-auth-status",
+    "authenticate": "/api/system/zerodha-authenticate",
+    "refresh_token": "/api/system/zerodha-refresh"
+  },
+  "production_ready": false,
+  "last_updated": "2025-06-15T11:33:15.208485"
+}
