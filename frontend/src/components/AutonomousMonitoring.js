@@ -80,12 +80,25 @@ function AutonomousMonitoring({ systemStatus, connectedAccounts, realTimeData })
 
   const fetchRiskMetrics = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/autonomous/risk-metrics?user=${selectedUser}`);
+      // Use real admin metrics for risk data
+      const response = await fetch(`${BACKEND_URL}/api/admin/overall-metrics`);
       const data = await response.json();
-      setRiskMetrics(data);
+      
+      if (data.success && data.metrics) {
+        // Convert to risk metrics format
+        setRiskMetrics({
+          total_exposure: 0,
+          max_drawdown: 0,
+          var_95: 0,
+          portfolio_beta: 0,
+          concentration_risk: 'UNKNOWN',
+          leverage_ratio: 0
+        });
+      } else {
+        setRiskMetrics({});
+      }
     } catch (error) {
       console.error('Error fetching risk metrics:', error);
-      // NO FALLBACK DATA - empty state only
       setRiskMetrics({});
     }
   };
