@@ -4534,6 +4534,59 @@ async def startup_event():
         system_state['system_health'] = 'ERROR'
         raise
 
+async def restore_auth_tokens_from_database():
+    """Restore authentication tokens from database on startup"""
+    try:
+        if not db_pool:
+            logger.warning("Database not available for token restoration")
+            return False
+            
+        # Get stored access token
+        token_result = await execute_db_query("""
+            SELECT access_token, provider FROM auth_tokens 
+            WHERE provider = 'zerodha' AND is_active = 1 
+            ORDER BY created_at DESC LIMIT 1
+        """)
+        
+        if token_result and len(token_result) > 0:
+            access_token = token_result[0][0]
+            provider = token_result[0][1]
+            
+            if access_token:
+                try:
+                    from real_zerodha_client import get_real_zerodha_client
+                    client = get_real_zerodha_client()
+                    
+                    # Restore the access token
+                    if hasattr(client, 'set_access_token'):
+                        client.set_access_token(access_token)
+                        logger.info(f"✅ Restored {provider} access token from database")
+                        return True
+                    else:
+                        logger.warning("Client doesn't support token restoration")
+                        
+                except Exception as restore_error:
+                    logger.error(f"Failed to restore token to client: {restore_error}")
+        else:
+            logger.info("No stored access tokens found in database")
+            
+        return False
+        
+    except Exception as e:
+        logger.error(f"Error restoring auth tokens: {e}")
+        return False
+
+# Call this function on startup
+@app.on_event("startup")
+async def startup_token_restoration():
+    """Restore tokens on application startup"""
+    logger.info("🔄 Attempting to restore authentication tokens from database...")
+    success = await restore_auth_tokens_from_database()
+    if success:
+        logger.info("✅ Authentication tokens restored successfully")
+    else:
+        logger.info("ℹ️  No tokens to restore - will need authentication")
+
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown"""
