@@ -43,50 +43,65 @@ class AutonomousDashboardUpdater:
     
     async def calculate_autonomous_performance(self) -> Dict[str, Any]:
         """Calculate real performance metrics from autonomous system"""
-        try:
-            # In production, this would fetch from trading database
-            # For now, simulate realistic performance based on current time
-            now = datetime.now()
-            
-            # Simulate realistic trading performance
-            daily_trades = (now.hour - 9) if now.hour >= 9 and now.hour <= 15 else 0
-            
-            performance = {
+        # Return clean state when markets are closed (weekends/after hours)
+        now = datetime.now()
+        current_day = now.weekday()  # 0=Monday, 6=Sunday
+        
+        # If it's weekend, return zero performance
+        if current_day >= 5:  # Saturday or Sunday
+            return {
                 "session_performance": {
-                    "total_trades": max(0, daily_trades),
-                    "success_rate": 73.3 if daily_trades > 0 else 0.0,
-                    "total_pnl": round(daily_trades * 156.3, 2) if daily_trades > 0 else 0.0,
-                    "max_drawdown": 2.8 if daily_trades > 0 else 0.0
+                    "total_trades": 0,
+                    "success_rate": 0.0,
+                    "total_pnl": 0.0,
+                    "max_drawdown": 0.0
                 },
-                "active_strategies": [
-                    {
-                        "name": "Momentum Surfer",
-                        "trades": max(0, daily_trades // 2),
-                        "pnl": round(daily_trades * 85.0, 2) if daily_trades > 0 else 0.0,
-                        "status": "ACTIVE" if 9 <= now.hour <= 15 else "SCHEDULED"
-                    },
-                    {
-                        "name": "Volatility Explosion", 
-                        "trades": max(0, daily_trades // 3),
-                        "pnl": round(daily_trades * 62.5, 2) if daily_trades > 0 else 0.0,
-                        "status": "ACTIVE" if 9 <= now.hour <= 15 else "SCHEDULED"
-                    },
-                    {
-                        "name": "Elite Confluence",
-                        "trades": max(0, daily_trades // 4),
-                        "pnl": round(daily_trades * 45.0, 2) if daily_trades > 0 else 0.0,
-                        "status": "ACTIVE" if 9 <= now.hour <= 15 else "SCHEDULED"
-                    }
-                ],
+                "active_strategies": [],
                 "autonomous_actions": {
-                    "opened": daily_trades,
-                    "closed": max(0, daily_trades - 2),
-                    "stop_losses": max(0, daily_trades // 5),
-                    "targets_hit": max(0, daily_trades // 3)
+                    "opened": 0,
+                    "closed": 0,
+                    "stop_losses": 0,
+                    "targets_hit": 0
                 }
             }
-            
-            return performance
+        
+        # During weekdays, only show performance during market hours
+        if not (9 <= now.hour < 15 or (now.hour == 15 and now.minute < 30)):
+            return {
+                "session_performance": {
+                    "total_trades": 0,
+                    "success_rate": 0.0,
+                    "total_pnl": 0.0,
+                    "max_drawdown": 0.0
+                },
+                "active_strategies": [],
+                "autonomous_actions": {
+                    "opened": 0,
+                    "closed": 0,
+                    "stop_losses": 0,
+                    "targets_hit": 0
+                }
+            }
+        
+        # During market hours on weekdays, fetch real data from trading database
+        # TODO: Implement real database queries
+        try:
+            # For now, return empty performance until real database is connected
+            return {
+                "session_performance": {
+                    "total_trades": 0,
+                    "success_rate": 0.0,
+                    "total_pnl": 0.0,
+                    "max_drawdown": 0.0
+                },
+                "active_strategies": [],
+                "autonomous_actions": {
+                    "opened": 0,
+                    "closed": 0,
+                    "stop_losses": 0,
+                    "targets_hit": 0
+                }
+            }
             
         except Exception as e:
             print(f"Error calculating performance: {e}")
