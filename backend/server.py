@@ -1316,55 +1316,115 @@ async def get_admin_recent_trades():
 
 @api_router.get("/reports/system/{report_type}")
 async def get_system_report(report_type: str):
-    """Get system-wide analytics report"""
+    """Get system-wide analytics report - REAL DATA ONLY"""
     try:
-        # Generate demo data for development
-        start_date = datetime.now() - timedelta(days=30)
-        report_data = []
+        if not db_pool:
+            return {"success": False, "error": "Database not connected"}
         
-        for i in range(30):
-            date = start_date + timedelta(days=i)
-            report_data.append({
-                "date": date.strftime("%Y-%m-%d"),
-                "trades": random.randint(10, 50),
-                "pnl": random.randint(-5000, 15000),
-                "win_rate": random.randint(60, 85),
-                "capital_used": random.randint(100000, 500000),
-                "roi_percent": round(random.uniform(-2, 8), 2),
-                "strategies_used": random.randint(3, 7),
-                "max_drawdown": random.randint(1000, 8000),
-                "avg_trade_duration": random.randint(30, 300)
-            })
+        # Get REAL data from trading_signals table
+        signals_result = await execute_db_query("""
+            SELECT 
+                DATE(generated_at) as date,
+                COUNT(*) as signals_count,
+                AVG(quality_score) as avg_quality,
+                strategy_name
+            FROM trading_signals 
+            WHERE generated_at >= datetime('now', '-30 days')
+            GROUP BY DATE(generated_at), strategy_name
+            ORDER BY date DESC
+        """)
         
-        total_pnl = sum(d["pnl"] for d in report_data)
-        total_trades = sum(d["trades"] for d in report_data)
-        avg_win_rate = sum(d["win_rate"] for d in report_data) / len(report_data)
+        # Get REAL data from orders table
+        orders_result = await execute_db_query("""
+            SELECT 
+                DATE(created_at) as date,
+                COUNT(*) as trades_count,
+                SUM(CASE WHEN status = 'FILLED' THEN (average_price * filled_quantity) ELSE 0 END) as total_value,
+                AVG(average_price) as avg_price
+            FROM orders 
+            WHERE created_at >= datetime('now', '-30 days')
+            GROUP BY DATE(created_at)
+            ORDER BY date DESC
+        """)
+        
+        # Get REAL data from positions table  
+        positions_result = await execute_db_query("""
+            SELECT 
+                DATE(entry_time) as date,
+                SUM(realized_pnl) as daily_pnl,
+                COUNT(*) as positions_count,
+                AVG(pnl_percent) as avg_pnl_percent
+            FROM positions 
+            WHERE entry_time >= datetime('now', '-30 days')
+            AND status = 'CLOSED'
+            GROUP BY DATE(entry_time)
+            ORDER BY date DESC
+        """)
+        
+        # Process REAL data
+        daily_data = []
+        total_trades = 0
+        total_pnl = 0
+        
+        if orders_result:
+            for row in orders_result:
+                date_str = row[0]
+                trades = row[1] or 0
+                total_trades += trades
+                
+                # Get corresponding PnL data
+                daily_pnl = 0
+                if positions_result:
+                    for pos_row in positions_result:
+                        if pos_row[0] == date_str:
+                            daily_pnl = pos_row[1] or 0
+                            break
+                
+                total_pnl += daily_pnl
+                
+                daily_data.append({
+                    "date": date_str,
+                    "trades": trades,
+                    "pnl": daily_pnl,
+                    "win_rate": 0,  # Calculate from actual win/loss data
+                    "capital_used": row[2] or 0,
+                    "roi_percent": round((daily_pnl / max(row[2] or 1, 1)) * 100, 2)
+                })
+        
+        # Get REAL strategy breakdown
+        strategy_breakdown = []
+        if signals_result:
+            strategy_stats = {}
+            for row in signals_result:
+                strategy = row[3]
+                if strategy not in strategy_stats:
+                    strategy_stats[strategy] = {"signals": 0, "avg_quality": 0}
+                strategy_stats[strategy]["signals"] += row[1]
+                strategy_stats[strategy]["avg_quality"] = row[2] or 0
+            
+            for strategy, stats in strategy_stats.items():
+                strategy_breakdown.append({
+                    "strategy": strategy,
+                    "trades": stats["signals"],
+                    "pnl": 0,  # Will need to calculate from actual executions
+                    "win_rate": 0  # Will need to calculate from actual results
+                })
         
         summary = {
             "total_trades": total_trades,
             "total_pnl": total_pnl,
-            "avg_win_rate": avg_win_rate,
-            "best_day": max(d["pnl"] for d in report_data),
-            "worst_day": min(d["pnl"] for d in report_data),
-            "total_capital_used": max(d["capital_used"] for d in report_data),
-            "avg_roi": sum(d["roi_percent"] for d in report_data) / len(report_data)
+            "avg_win_rate": 0,  # Calculate from actual results
+            "best_day": max([d["pnl"] for d in daily_data]) if daily_data else 0,
+            "worst_day": min([d["pnl"] for d in daily_data]) if daily_data else 0,
+            "total_capital_used": sum([d["capital_used"] for d in daily_data]),
+            "avg_roi": sum([d["roi_percent"] for d in daily_data]) / len(daily_data) if daily_data else 0
         }
-        
-        strategy_breakdown = [
-            {"strategy": "Momentum Surfer", "trades": 145, "pnl": 32500, "win_rate": 72},
-            {"strategy": "News Impact Scalper", "trades": 128, "pnl": 28900, "win_rate": 68},
-            {"strategy": "Volatility Explosion", "trades": 162, "pnl": 45600, "win_rate": 75},
-            {"strategy": "Confluence Amplifier", "trades": 89, "pnl": 27800, "win_rate": 81},
-            {"strategy": "Pattern Hunter", "trades": 141, "pnl": 39200, "win_rate": 69},
-            {"strategy": "Liquidity Magnet", "trades": 103, "pnl": 26500, "win_rate": 64},
-            {"strategy": "Volume Profile Scalper", "trades": 157, "pnl": 41400, "win_rate": 71}
-        ]
         
         return {
             "success": True,
             "report": {
                 "summary": summary,
-                "daily_data": report_data,
+                "daily_data": daily_data,
                 "strategy_breakdown": strategy_breakdown
             }
         }
@@ -1375,46 +1435,86 @@ async def get_system_report(report_type: str):
 
 @api_router.get("/reports/user/{user_id}/{report_type}")
 async def get_user_report(user_id: str, report_type: str):
-    """Get user-specific analytics report"""
+    """Get user-specific analytics report - REAL DATA ONLY"""
     try:
-        # Generate demo data for specific user
-        start_date = datetime.now() - timedelta(days=30)
-        report_data = []
+        if not db_pool:
+            return {"success": False, "error": "Database not connected"}
         
-        for i in range(30):
-            date = start_date + timedelta(days=i)
-            report_data.append({
-                "date": date.strftime("%Y-%m-%d"),
-                "trades": random.randint(3, 15),
-                "pnl": random.randint(-2000, 5000),
-                "win_rate": random.randint(55, 85),
-                "capital_used": random.randint(50000, 200000),
-                "roi_percent": round(random.uniform(-1, 4), 2),
-                "strategies_used": random.randint(2, 5),
-                "max_drawdown": random.randint(500, 3000),
-                "avg_trade_duration": random.randint(30, 240)
-            })
+        # Get REAL user orders
+        orders_result = await execute_db_query("""
+            SELECT 
+                DATE(created_at) as date,
+                COUNT(*) as trades_count,
+                SUM(CASE WHEN status = 'FILLED' THEN (average_price * filled_quantity) ELSE 0 END) as total_value,
+                AVG(average_price) as avg_price
+            FROM orders 
+            WHERE user_id = ? 
+            AND created_at >= datetime('now', '-30 days')
+            GROUP BY DATE(created_at)
+            ORDER BY date DESC
+        """, user_id)
         
-        total_pnl = sum(d["pnl"] for d in report_data)
-        total_trades = sum(d["trades"] for d in report_data)
-        avg_win_rate = sum(d["win_rate"] for d in report_data) / len(report_data)
+        # Get REAL user positions
+        positions_result = await execute_db_query("""
+            SELECT 
+                DATE(entry_time) as date,
+                SUM(realized_pnl) as daily_pnl,
+                COUNT(*) as positions_count,
+                AVG(pnl_percent) as avg_pnl_percent
+            FROM positions 
+            WHERE user_id = ?
+            AND entry_time >= datetime('now', '-30 days')
+            AND status = 'CLOSED'
+            GROUP BY DATE(entry_time)
+            ORDER BY date DESC
+        """, user_id)
+        
+        # Process REAL data
+        daily_data = []
+        total_trades = 0
+        total_pnl = 0
+        
+        if orders_result:
+            for row in orders_result:
+                date_str = row[0]
+                trades = row[1] or 0
+                total_trades += trades
+                
+                # Get corresponding PnL data
+                daily_pnl = 0
+                if positions_result:
+                    for pos_row in positions_result:
+                        if pos_row[0] == date_str:
+                            daily_pnl = pos_row[1] or 0
+                            break
+                
+                total_pnl += daily_pnl
+                
+                daily_data.append({
+                    "date": date_str,
+                    "trades": trades,
+                    "pnl": daily_pnl,
+                    "win_rate": 0,  # Calculate from win/loss ratio
+                    "capital_used": row[2] or 0,
+                    "roi_percent": round((daily_pnl / max(row[2] or 1, 1)) * 100, 2)
+                })
         
         summary = {
             "user_id": user_id,
             "total_trades": total_trades,
             "total_pnl": total_pnl,
-            "avg_win_rate": avg_win_rate,
-            "best_day": max(d["pnl"] for d in report_data),
-            "worst_day": min(d["pnl"] for d in report_data),
-            "total_capital_used": max(d["capital_used"] for d in report_data),
-            "avg_roi": sum(d["roi_percent"] for d in report_data) / len(report_data)
+            "avg_win_rate": 0,  # Calculate from actual results
+            "best_day": max([d["pnl"] for d in daily_data]) if daily_data else 0,
+            "worst_day": min([d["pnl"] for d in daily_data]) if daily_data else 0,
+            "total_capital_used": sum([d["capital_used"] for d in daily_data]),
+            "avg_roi": sum([d["roi_percent"] for d in daily_data]) / len(daily_data) if daily_data else 0
         }
         
         return {
             "success": True,
             "report": {
                 "summary": summary,
-                "daily_data": report_data
+                "daily_data": daily_data
             }
         }
         
@@ -1424,30 +1524,24 @@ async def get_user_report(user_id: str, report_type: str):
 
 @api_router.get("/users/list")
 async def get_users_list():
-    """Get list of all users for reports"""
+    """Get list of all users for reports - REAL DATA ONLY"""
     try:
+        if not db_pool:
+            return {"success": False, "error": "Database not connected"}
+        
+        users_result = await execute_db_query("""
+            SELECT DISTINCT user_id, full_name FROM users
+            WHERE status != 'TERMINATED'
+            ORDER BY user_id
+        """)
+        
         users = []
-        
-        if db_pool:
-            users_result = await execute_db_query("""
-                SELECT DISTINCT user_id FROM orders
-                ORDER BY user_id
-            """)
-            
-            if users_result:
-                for row in users_result:
-                    users.append({
-                        "user_id": row[0],
-                        "name": f"Autonomous Trader {row[0][-3:]}"
-                    })
-        
-        # Add demo users if no data
-        if not users:
-            users = [
-                {"user_id": "USER001", "name": "Autonomous Trader 001"},
-                {"user_id": "USER002", "name": "Autonomous Trader 002"},
-                {"user_id": "USER003", "name": "Autonomous Trader 003"}
-            ]
+        if users_result:
+            for row in users_result:
+                users.append({
+                    "user_id": row[0],
+                    "name": row[1] or f"User {row[0]}"
+                })
         
         return {"success": True, "users": users}
         
