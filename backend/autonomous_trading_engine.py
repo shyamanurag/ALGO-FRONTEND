@@ -820,6 +820,37 @@ class AutonomousTradeEngine:
     
     def get_strategy_performance(self) -> Dict:
         """Get current strategy performance data"""
+        # If market is closed (weekends), return clean inactive state
+        if not self._is_market_open():
+            strategies_data = []
+            strategy_config = {
+                "MomentumSurfer": 15, "NewsImpactScalper": 12, "VolatilityExplosion": 18,
+                "ConfluenceAmplifier": 20, "PatternHunter": 16, "LiquidityMagnet": 14, "VolumeProfileScalper": 5
+            }
+            
+            for name, allocation in strategy_config.items():
+                strategies_data.append({
+                    "name": name,
+                    "status": "INACTIVE",
+                    "trades_today": 0,
+                    "win_rate": 0.0,
+                    "pnl": 0.0,
+                    "allocation": allocation
+                })
+            
+            current_day = datetime.now().weekday()
+            if current_day >= 5:  # Weekend
+                message = "Market closed (Weekend) - All strategies on standby"
+            else:
+                message = "Market closed (After hours) - All strategies on standby"
+                
+            return {
+                "strategies": strategies_data,
+                "message": message,
+                "data_source": "AUTONOMOUS_ENGINE"
+            }
+        
+        # During market hours, return actual strategy data
         strategies_data = []
         for name, data in self.strategies.items():
             strategies_data.append({
