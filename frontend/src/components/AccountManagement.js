@@ -73,7 +73,7 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
         risk_percentage: 2.0,
         notes: ''
       });
-      alert('Zerodha account onboarded successfully! (Multi-Account Mode)');
+      alert('Zerodha account onboarded successfully! (Real Data Only)');
     } finally {
       setLoading(false);
     }
