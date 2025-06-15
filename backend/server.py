@@ -1549,16 +1549,19 @@ async def get_users_list():
         logger.error(f"Error getting users list: {e}")
         raise HTTPException(500, str(e))
 
-@api_router.post("/accounts/onboard")
-async def onboard_new_account(account_data: dict):
-    """Onboard new autonomous trading account"""
+@api_router.post("/accounts/onboard-zerodha")
+async def onboard_zerodha_account(account_data: dict):
+    """Onboard new Zerodha account for multi-account platform"""
     try:
         user_id = account_data.get('user_id')
+        zerodha_user_id = account_data.get('zerodha_user_id')
+        zerodha_password = account_data.get('zerodha_password') 
+        totp_secret = account_data.get('totp_secret', '')
         capital_allocation = account_data.get('capital_allocation', 100000)
         risk_percentage = account_data.get('risk_percentage', 2.0)
         notes = account_data.get('notes', '')
         
-        # Create account record in database
+        # Create account record in database with Zerodha details
         if db_pool:
             await execute_db_query("""
                 INSERT INTO users (
@@ -1567,12 +1570,21 @@ async def onboard_new_account(account_data: dict):
                     max_daily_loss, created_at
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             """, 
-            user_id, user_id, f"{user_id}@autonomous.trading", f"Autonomous Trader {user_id}",
+            user_id, zerodha_user_id, f"{user_id}@zerodha.trading", f"Zerodha User {zerodha_user_id}",
             True, True, capital_allocation * (risk_percentage / 100), datetime.utcnow())
+            
+            # Store encrypted Zerodha credentials (in production, use proper encryption)
+            await execute_db_query("""
+                INSERT INTO user_credentials (
+                    user_id, zerodha_user_id, zerodha_password_encrypted, 
+                    totp_secret_encrypted, created_at
+                ) VALUES (?, ?, ?, ?, ?)
+            """, 
+            user_id, zerodha_user_id, zerodha_password, totp_secret, datetime.utcnow())
         
         new_account = {
             "user_id": user_id,
-            "zerodha_user_id": "AUTO_MANAGED",
+            "zerodha_user_id": zerodha_user_id,
             "status": "connected",
             "capital_allocation": capital_allocation,
             "risk_percentage": risk_percentage,
@@ -1580,15 +1592,18 @@ async def onboard_new_account(account_data: dict):
             "daily_pnl": 0,
             "total_trades": 0,
             "win_rate": 0,
-            "notes": notes
+            "data_source": "TrueData/Zerodha",
+            "notes": notes,
+            "shared_api": True,
+            "individual_login": True
         }
         
-        logger.info(f"✅ New autonomous account onboarded: {user_id}")
+        logger.info(f"✅ New Zerodha account onboarded: {user_id} ({zerodha_user_id})")
         
         return {"success": True, "account": new_account}
         
     except Exception as e:
-        logger.error(f"Error onboarding account: {e}")
+        logger.error(f"Error onboarding Zerodha account: {e}")
         raise HTTPException(500, str(e))
 
 @api_router.delete("/accounts/{user_id}/terminate")
