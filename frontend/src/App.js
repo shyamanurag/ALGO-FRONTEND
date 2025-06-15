@@ -375,6 +375,12 @@ function App() {
                 <EliteRecommendations />
               } 
             />
+            <Route 
+              path="/analytics" 
+              element={
+                <AnalyticsReports />
+              } 
+            />
             
             {/* Default redirect */}
             <Route path="*" element={<Navigate to="/" replace />} />
