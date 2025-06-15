@@ -500,7 +500,24 @@ async def create_database_schema():
                     )
                 """)
                 
-                # 8. System Metrics
+                # 8. User Credentials (for multi-account Zerodha management)
+                await db.execute("""
+                    CREATE TABLE IF NOT EXISTS user_credentials (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        user_id TEXT NOT NULL,
+                        zerodha_user_id TEXT NOT NULL,
+                        zerodha_password_encrypted TEXT NOT NULL,
+                        totp_secret_encrypted TEXT,
+                        api_key_used TEXT DEFAULT 'SHARED',
+                        last_login_attempt TIMESTAMP,
+                        login_status TEXT DEFAULT 'PENDING',
+                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                        FOREIGN KEY (user_id) REFERENCES users (user_id)
+                    )
+                """)
+                
+                # 9. System Metrics
                 await db.execute("""
                     CREATE TABLE IF NOT EXISTS system_metrics (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
