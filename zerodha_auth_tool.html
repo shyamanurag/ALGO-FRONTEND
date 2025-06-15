@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Zerodha Authentication for Deployed App</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; }
+        .container { background: #f5f5f5; padding: 20px; border-radius: 8px; }
+        button { background: #ff6600; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #e55500; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        input { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ccc; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Zerodha Authentication for Deployed App</h1>
+        <p><strong>Target:</strong> https://fresh-start-13.emergent.host/</p>
+        
+        <h2>Step 1: Get Fresh Request Token</h2>
+        <button onclick="window.open('https://kite.zerodha.com/connect/login?api_key=sylcoq492qz6f7ej&v=3', '_blank')">
+            🔗 Login to Zerodha
+        </button>
+        <p><small>After login, copy the request_token from the redirect URL</small></p>
+        
+        <h2>Step 2: Authenticate Deployed App</h2>
+        <input type="text" id="requestToken" placeholder="Paste request_token here..." />
+        <button onclick="authenticateApp()">🚀 Authenticate Deployed App</button>
+        
+        <div id="result"></div>
+        
+        <h2>Step 3: Verify Authentication</h2>
+        <button onclick="verifyAuth()">✅ Check Authentication Status</button>
+    </div>
+
+    <script>
+        async function authenticateApp() {
+            const token = document.getElementById('requestToken').value.trim();
+            const resultDiv = document.getElementById('result');
+            
+            if (!token) {
+                resultDiv.innerHTML = '<div class="error">Please enter a request token first!</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '<div>🔄 Authenticating...</div>';
+            
+            try {
+                const response = await fetch('https://fresh-start-13.emergent.host/api/system/zerodha-authenticate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        request_token: token
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Authentication Successful!</h3>
+                            <p>Zerodha is now authenticated for your deployed app.</p>
+                            <p><strong>Status:</strong> ${JSON.stringify(data.status || data.message)}</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>❌ Authentication Failed</h3>
+                            <p><strong>Error:</strong> ${data.error || data.message}</p>
+                            <p>Try getting a fresh request token.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Network Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>Check if the deployed app is accessible.</p>
+                    </div>
+                `;
+            }
+        }
+        
+        async function verifyAuth() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div>🔍 Checking authentication status...</div>';
+            
+            try {
+                const response = await fetch('https://fresh-start-13.emergent.host/api/system/zerodha-auth-status');
+                const data = await response.json();
+                
+                const isAuthenticated = data.zerodha_status?.authenticated;
+                
+                if (isAuthenticated) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>✅ Authentication Verified!</h3>
+                            <p>Zerodha is successfully authenticated.</p>
+                            <p><strong>Status:</strong> Ready for live trading</p>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="error">
+                            <h3>⚠️ Not Authenticated</h3>
+                            <p>Zerodha authentication is still pending.</p>
+                            <p>Please complete the authentication process above.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>❌ Verification Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
