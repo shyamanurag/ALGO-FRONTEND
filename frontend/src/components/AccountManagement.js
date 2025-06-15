@@ -48,7 +48,7 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
       }
     } catch (error) {
       console.error('Onboarding error:', error);
-      // For demo purposes, add account locally
+      // NO MOCK DATA - use real form data only
       const newAccount = {
         user_id: onboardingForm.user_id,
         zerodha_user_id: onboardingForm.zerodha_user_id,
@@ -56,9 +56,9 @@ function AccountManagement({ connectedAccounts, setConnectedAccounts }) {
         capital_allocation: onboardingForm.capital_allocation,
         risk_percentage: onboardingForm.risk_percentage,
         created_at: new Date().toISOString(),
-        daily_pnl: Math.floor(Math.random() * 5000) - 1000,
-        total_trades: Math.floor(Math.random() * 20),
-        win_rate: Math.floor(Math.random() * 40) + 60,
+        daily_pnl: 0,  // REAL DATA - no trades yet
+        total_trades: 0,  // REAL DATA - no trades yet
+        win_rate: 0,  // REAL DATA - no trades yet
         data_source: 'TrueData/Zerodha',
         last_login: new Date().toISOString()
       };
