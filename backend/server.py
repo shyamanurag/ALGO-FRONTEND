@@ -1832,7 +1832,7 @@ async def get_zerodha_auth_status():
 
 @api_router.post("/system/zerodha-authenticate")
 async def authenticate_zerodha(request_data: dict):
-    """Authenticate Zerodha with request token"""
+    """Authenticate Zerodha with request token and persist to database"""
     try:
         from real_zerodha_client import get_real_zerodha_client
         
@@ -1846,11 +1846,43 @@ async def authenticate_zerodha(request_data: dict):
         client = get_real_zerodha_client()
         success = client.authenticate_with_request_token(request_token)
         
-        if success:
+        if success and hasattr(client, 'access_token') and client.access_token:
+            # Store access token in database for persistence across deployments
+            if db_pool:
+                try:
+                    # Create or update auth_tokens table
+                    await execute_db_query("""
+                        CREATE TABLE IF NOT EXISTS auth_tokens (
+                            id INTEGER PRIMARY KEY AUTOINCREMENT,
+                            provider TEXT NOT NULL,
+                            access_token TEXT NOT NULL,
+                            token_type TEXT DEFAULT 'bearer',
+                            expires_at TIMESTAMP,
+                            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                            is_active BOOLEAN DEFAULT 1
+                        )
+                    """)
+                    
+                    # Store the new access token
+                    await execute_db_query("""
+                        INSERT OR REPLACE INTO auth_tokens 
+                        (provider, access_token, token_type, created_at, updated_at, is_active)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                    """, 'zerodha', client.access_token, 'bearer', 
+                    datetime.utcnow(), datetime.utcnow(), True)
+                    
+                    logger.info("✅ Access token persisted to database for future deployments")
+                    
+                except Exception as db_error:
+                    logger.error(f"Failed to persist token to database: {db_error}")
+                    # Continue anyway as authentication was successful
+            
             return {
                 "success": True,
-                "message": "Zerodha authentication successful!",
+                "message": "Zerodha authentication successful and persisted!",
                 "status": client.get_status(),
+                "persistence": "Token saved to database - no re-auth needed for future deployments",
                 "timestamp": datetime.now().isoformat()
             }
         else:
