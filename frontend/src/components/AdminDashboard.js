@@ -646,6 +646,11 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
             </table>
           </div>
         </div>
+
+        {/* Zerodha Authentication Setup */}
+        <div className="mb-8">
+          <ZerodhaAuthSetup />
+        </div>
       </div>
     </div>
   );
