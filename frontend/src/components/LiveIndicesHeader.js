@@ -123,7 +123,7 @@ function LiveIndicesHeader() {
                       </div>
                       <div className="flex items-center space-x-1">
                         <span className="text-sm font-bold text-gray-900">
-                          {data.ltp > 0 ? `₹${(data.ltp/1000).toFixed(1)}k` : 'N/A'}
+                          {data.ltp > 0 ? `₹${data.ltp.toLocaleString('en-IN', {maximumFractionDigits: 2})}` : 'N/A'}
                         </span>
                         {data.change !== 0 && (
                           <span className={`text-xs font-medium ${
