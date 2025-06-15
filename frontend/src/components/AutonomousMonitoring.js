@@ -109,12 +109,18 @@ function AutonomousMonitoring({ systemStatus, connectedAccounts, realTimeData })
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/autonomous/emergency-stop`, {
+      // Use real system stop endpoint
+      const response = await fetch(`${BACKEND_URL}/api/system/emergency-stop`, {
         method: 'POST',
       });
 
       if (response.ok) {
         alert('Emergency stop activated successfully!');
+        // Refresh all data after emergency stop
+        fetchStrategyPerformance();
+        fetchActiveOrders(); 
+        fetchRiskMetrics();
+        fetchSystemStatus();
       } else {
         alert('Failed to activate emergency stop');
       }
