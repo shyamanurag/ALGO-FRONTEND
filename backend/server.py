@@ -200,13 +200,14 @@ order_manager = None
 app = FastAPI(title="Elite Autonomous Algo Trading Platform", version="2.0.0")
 api_router = APIRouter(prefix="/api")
 
-# CORS middleware
+# CORS middleware - MUST be added BEFORE other middleware
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=["*"],  # In production, specify exact origins
     allow_credentials=True,
-    allow_origins=["*"],
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
+    expose_headers=["*"]
 )
 
 # Global variables
