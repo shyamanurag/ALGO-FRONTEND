@@ -10,6 +10,7 @@ import LiveIndicesHeader from './components/LiveIndicesHeader';
 import LiveAutonomousStatus from './components/LiveAutonomousStatus';
 import StrategyMonitoring from './components/StrategyMonitoring';
 import AccountManagement from './components/AccountManagement';
+import AnalyticsReports from './components/AnalyticsReports';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
