@@ -86,8 +86,7 @@ function AutonomousMonitoring({ systemStatus, connectedAccounts, realTimeData })
     }
 
     try {
-      // Use real system stop endpoint
-      const response = await fetch(`${BACKEND_URL}/api/system/emergency-stop`, {
+      const response = await fetch(`${BACKEND_URL}/api/autonomous/emergency-stop`, {
         method: 'POST',
       });
 
