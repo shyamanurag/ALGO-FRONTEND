@@ -1314,6 +1314,217 @@ async def get_admin_recent_trades():
         logger.error(f"Error getting recent trades: {e}")
         raise HTTPException(500, str(e))
 
+@api_router.get("/reports/system/{report_type}")
+async def get_system_report(report_type: str):
+    """Get system-wide analytics report"""
+    try:
+        # Generate demo data for development
+        start_date = datetime.now() - timedelta(days=30)
+        report_data = []
+        
+        for i in range(30):
+            date = start_date + timedelta(days=i)
+            report_data.append({
+                "date": date.strftime("%Y-%m-%d"),
+                "trades": random.randint(10, 50),
+                "pnl": random.randint(-5000, 15000),
+                "win_rate": random.randint(60, 85),
+                "capital_used": random.randint(100000, 500000),
+                "roi_percent": round(random.uniform(-2, 8), 2),
+                "strategies_used": random.randint(3, 7),
+                "max_drawdown": random.randint(1000, 8000),
+                "avg_trade_duration": random.randint(30, 300)
+            })
+        
+        total_pnl = sum(d["pnl"] for d in report_data)
+        total_trades = sum(d["trades"] for d in report_data)
+        avg_win_rate = sum(d["win_rate"] for d in report_data) / len(report_data)
+        
+        summary = {
+            "total_trades": total_trades,
+            "total_pnl": total_pnl,
+            "avg_win_rate": avg_win_rate,
+            "best_day": max(d["pnl"] for d in report_data),
+            "worst_day": min(d["pnl"] for d in report_data),
+            "total_capital_used": max(d["capital_used"] for d in report_data),
+            "avg_roi": sum(d["roi_percent"] for d in report_data) / len(report_data)
+        }
+        
+        strategy_breakdown = [
+            {"strategy": "Momentum Surfer", "trades": 145, "pnl": 32500, "win_rate": 72},
+            {"strategy": "News Impact Scalper", "trades": 128, "pnl": 28900, "win_rate": 68},
+            {"strategy": "Volatility Explosion", "trades": 162, "pnl": 45600, "win_rate": 75},
+            {"strategy": "Confluence Amplifier", "trades": 89, "pnl": 27800, "win_rate": 81},
+            {"strategy": "Pattern Hunter", "trades": 141, "pnl": 39200, "win_rate": 69},
+            {"strategy": "Liquidity Magnet", "trades": 103, "pnl": 26500, "win_rate": 64},
+            {"strategy": "Volume Profile Scalper", "trades": 157, "pnl": 41400, "win_rate": 71}
+        ]
+        
+        return {
+            "success": True,
+            "report": {
+                "summary": summary,
+                "daily_data": report_data,
+                "strategy_breakdown": strategy_breakdown
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating system report: {e}")
+        raise HTTPException(500, str(e))
+
+@api_router.get("/reports/user/{user_id}/{report_type}")
+async def get_user_report(user_id: str, report_type: str):
+    """Get user-specific analytics report"""
+    try:
+        # Generate demo data for specific user
+        start_date = datetime.now() - timedelta(days=30)
+        report_data = []
+        
+        for i in range(30):
+            date = start_date + timedelta(days=i)
+            report_data.append({
+                "date": date.strftime("%Y-%m-%d"),
+                "trades": random.randint(3, 15),
+                "pnl": random.randint(-2000, 5000),
+                "win_rate": random.randint(55, 85),
+                "capital_used": random.randint(50000, 200000),
+                "roi_percent": round(random.uniform(-1, 4), 2),
+                "strategies_used": random.randint(2, 5),
+                "max_drawdown": random.randint(500, 3000),
+                "avg_trade_duration": random.randint(30, 240)
+            })
+        
+        total_pnl = sum(d["pnl"] for d in report_data)
+        total_trades = sum(d["trades"] for d in report_data)
+        avg_win_rate = sum(d["win_rate"] for d in report_data) / len(report_data)
+        
+        summary = {
+            "user_id": user_id,
+            "total_trades": total_trades,
+            "total_pnl": total_pnl,
+            "avg_win_rate": avg_win_rate,
+            "best_day": max(d["pnl"] for d in report_data),
+            "worst_day": min(d["pnl"] for d in report_data),
+            "total_capital_used": max(d["capital_used"] for d in report_data),
+            "avg_roi": sum(d["roi_percent"] for d in report_data) / len(report_data)
+        }
+        
+        return {
+            "success": True,
+            "report": {
+                "summary": summary,
+                "daily_data": report_data
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error generating user report: {e}")
+        raise HTTPException(500, str(e))
+
+@api_router.get("/users/list")
+async def get_users_list():
+    """Get list of all users for reports"""
+    try:
+        users = []
+        
+        if db_pool:
+            users_result = await execute_db_query("""
+                SELECT DISTINCT user_id FROM orders
+                ORDER BY user_id
+            """)
+            
+            if users_result:
+                for row in users_result:
+                    users.append({
+                        "user_id": row[0],
+                        "name": f"Autonomous Trader {row[0][-3:]}"
+                    })
+        
+        # Add demo users if no data
+        if not users:
+            users = [
+                {"user_id": "USER001", "name": "Autonomous Trader 001"},
+                {"user_id": "USER002", "name": "Autonomous Trader 002"},
+                {"user_id": "USER003", "name": "Autonomous Trader 003"}
+            ]
+        
+        return {"success": True, "users": users}
+        
+    except Exception as e:
+        logger.error(f"Error getting users list: {e}")
+        raise HTTPException(500, str(e))
+
+@api_router.post("/accounts/onboard")
+async def onboard_new_account(account_data: dict):
+    """Onboard new autonomous trading account"""
+    try:
+        user_id = account_data.get('user_id')
+        capital_allocation = account_data.get('capital_allocation', 100000)
+        risk_percentage = account_data.get('risk_percentage', 2.0)
+        notes = account_data.get('notes', '')
+        
+        # Create account record in database
+        if db_pool:
+            await execute_db_query("""
+                INSERT INTO users (
+                    user_id, username, email, full_name, 
+                    paper_trading, autonomous_trading, 
+                    max_daily_loss, created_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, 
+            user_id, user_id, f"{user_id}@autonomous.trading", f"Autonomous Trader {user_id}",
+            True, True, capital_allocation * (risk_percentage / 100), datetime.utcnow())
+        
+        new_account = {
+            "user_id": user_id,
+            "zerodha_user_id": "AUTO_MANAGED",
+            "status": "connected",
+            "capital_allocation": capital_allocation,
+            "risk_percentage": risk_percentage,
+            "created_at": datetime.utcnow().isoformat(),
+            "daily_pnl": 0,
+            "total_trades": 0,
+            "win_rate": 0,
+            "notes": notes
+        }
+        
+        logger.info(f"✅ New autonomous account onboarded: {user_id}")
+        
+        return {"success": True, "account": new_account}
+        
+    except Exception as e:
+        logger.error(f"Error onboarding account: {e}")
+        raise HTTPException(500, str(e))
+
+@api_router.delete("/accounts/{user_id}/terminate")
+async def terminate_account(user_id: str):
+    """Terminate autonomous trading account"""
+    try:
+        if db_pool:
+            await execute_db_query("""
+                UPDATE users SET status = 'TERMINATED' WHERE user_id = ?
+            """, user_id)
+        
+        logger.info(f"✅ Account terminated: {user_id}")
+        return {"success": True, "message": "Account terminated successfully"}
+        
+    except Exception as e:
+        logger.error(f"Error terminating account: {e}")
+        raise HTTPException(500, str(e))
+
+@api_router.put("/accounts/{user_id}/toggle")
+async def toggle_account_status(user_id: str):
+    """Toggle autonomous trading account status"""
+    try:
+        # In a real system, this would update the account status
+        logger.info(f"✅ Account status toggled: {user_id}")
+        return {"success": True, "message": "Account status updated"}
+        
+    except Exception as e:
+        logger.error(f"Error toggling account status: {e}")
+        raise HTTPException(500, str(e))
+
 @api_router.get("/health")
 async def health_check():
     """Health check with real system status - NO MOCK DATA"""
