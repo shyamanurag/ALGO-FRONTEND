@@ -27,6 +27,25 @@ import random
 
 ROOT_DIR = Path(__file__).parent
 
+# SACRED DATABASE PROTECTION
+def validate_data_purity(data: Dict, data_type: str = "unknown"):
+    """Validate that incoming data is not mock/demo/test data"""
+    contamination_keywords = ['mock', 'demo', 'test', 'fake', 'sample']
+    
+    def check_contamination(value: str) -> bool:
+        if not isinstance(value, str):
+            return False
+        return any(keyword in value.lower() for keyword in contamination_keywords)
+    
+    for key, value in data.items():
+        if isinstance(value, str) and check_contamination(value):
+            logger.error(f"🚫 SACRED DATABASE PROTECTION: Contaminated {data_type} data blocked - {key}: {value}")
+            raise ValueError(f"Sacred Database Protection: Mock/Demo data detected in {data_type}")
+        elif isinstance(value, dict):
+            validate_data_purity(value, f"{data_type}.{key}")
+    
+    return True
+
 async def get_live_market_data(symbol: str):
     """Get live market data from TrueData - NO FALLBACK DATA"""
     global market_data_last_update, truedata_connected
