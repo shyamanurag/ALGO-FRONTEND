@@ -112,10 +112,46 @@ class AutonomousTradeEngine:
             asyncio.create_task(self._trading_loop())
             logger.info("🤖 Autonomous Trading Engine started")
             
-    async def stop_autonomous_trading(self):
-        """Stop autonomous trading"""
+    async def emergency_stop(self):
+        """Emergency stop - immediately halt all trading and close positions"""
+        logger.critical("🚨 EMERGENCY STOP ACTIVATED - Halting autonomous trading engine")
+        
+        # Stop the trading loop
         self.running = False
-        logger.info("⏹️ Autonomous Trading Engine stopped")
+        
+        # Close all active positions immediately
+        positions_to_close = list(self.active_positions.keys())
+        for trade_id in positions_to_close:
+            try:
+                position = self.active_positions[trade_id]
+                symbol = position["symbol"]
+                
+                # Get current price for closing
+                current_price = position["entry_price"]  # Fallback to entry price
+                if symbol in self.market_data_buffer and self.market_data_buffer[symbol]:
+                    current_price = self.market_data_buffer[symbol][-1]["ltp"]
+                
+                await self._close_position(trade_id, current_price, "EMERGENCY_STOP")
+                logger.critical(f"🚨 Emergency closed position: {trade_id}")
+                
+            except Exception as e:
+                logger.error(f"Error emergency closing position {trade_id}: {e}")
+        
+        # Clear active positions
+        self.active_positions.clear()
+        
+        # Deactivate all strategies
+        for strategy_name in self.strategies:
+            self.strategies[strategy_name]["active"] = False
+        
+        logger.critical("🚨 EMERGENCY STOP COMPLETE - All trading halted")
+        
+        return {
+            "success": True,
+            "message": "Emergency stop completed",
+            "positions_closed": len(positions_to_close),
+            "strategies_deactivated": len(self.strategies)
+        }
         
     async def _trading_loop(self):
         """Main trading loop - analyzes market and executes trades"""
