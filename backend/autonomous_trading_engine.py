@@ -121,10 +121,18 @@ class AutonomousTradeEngine:
         """Main trading loop - analyzes market and executes trades"""
         while self.running:
             try:
-                # Only trade during market hours
+                # Only trade during market hours and weekdays
                 if self._is_market_open():
                     await self._analyze_and_trade()
                     await self._manage_positions()
+                    logger.info("🤖 Autonomous engine analyzing market data...")
+                else:
+                    # Market is closed - just log status
+                    current_day = datetime.now().weekday()
+                    if current_day >= 5:  # Weekend
+                        logger.info("📅 Market closed (Weekend) - Autonomous engine on standby")
+                    else:
+                        logger.info("🕐 Market closed (After hours) - Autonomous engine on standby")
                 
                 # Check every 30 seconds during market hours, 5 minutes after hours
                 sleep_time = 30 if self._is_market_open() else 300
