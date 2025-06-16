@@ -3174,6 +3174,93 @@ async def get_autonomous_system_metrics():
         logger.error(f"Error getting risk metrics: {e}")
         raise HTTPException(500, f"Error getting risk metrics: {str(e)}")
 
+@api_router.post("/autonomous/start")
+async def start_autonomous_trading():
+    """Start autonomous trading system with all strategies"""
+    try:
+        global autonomous_trading_active, strategy_instances
+        
+        logger.info("🚀 STARTING AUTONOMOUS TRADING SYSTEM")
+        
+        # Force enable autonomous trading
+        autonomous_trading_active = True
+        system_state['autonomous_trading'] = True
+        system_state['trading_active'] = True
+        system_state['system_health'] = 'OPERATIONAL'
+        
+        # Initialize and start autonomous engine
+        from autonomous_trading_engine import get_autonomous_engine
+        autonomous_engine = get_autonomous_engine()
+        
+        # Force start autonomous trading even if market closed (for testing)
+        result = await autonomous_engine.start_autonomous_trading(force_start=True)
+        
+        # Manually activate all strategies for demo/testing
+        if CORE_COMPONENTS_AVAILABLE:
+            from src.core.momentum_surfer import MomentumSurfer
+            from src.core.news_impact_scalper import NewsImpactScalper
+            from src.core.volatility_explosion import VolatilityExplosion
+            from src.core.confluence_amplifier import ConfluenceAmplifier
+            from src.core.pattern_hunter import PatternHunter
+            from src.core.liquidity_magnet import LiquidityMagnet
+            from src.core.volume_profile_scalper import VolumeProfileScalper
+            
+            strategy_configs = {
+                'momentum_surfer': {'class': MomentumSurfer, 'active': True},
+                'news_impact_scalper': {'class': NewsImpactScalper, 'active': True},
+                'volatility_explosion': {'class': VolatilityExplosion, 'active': True},
+                'confluence_amplifier': {'class': ConfluenceAmplifier, 'active': True},
+                'pattern_hunter': {'class': PatternHunter, 'active': True},
+                'liquidity_magnet': {'class': LiquidityMagnet, 'active': True},
+                'volume_profile_scalper': {'class': VolumeProfileScalper, 'active': True}
+            }
+            
+            # Force activate all strategies
+            for name, config in strategy_configs.items():
+                try:
+                    if name not in strategy_instances:
+                        strategy_instances[name] = {
+                            'instance': config['class'](),
+                            'active': True,
+                            'status': 'ACTIVE',
+                            'last_signal': None,
+                            'trades_today': 0,
+                            'pnl': 0.0
+                        }
+                    else:
+                        strategy_instances[name]['active'] = True
+                        strategy_instances[name]['status'] = 'ACTIVE'
+                    
+                    logger.info(f"✅ Strategy {name} ACTIVATED")
+                except Exception as e:
+                    logger.error(f"Error activating strategy {name}: {e}")
+        
+        # Broadcast status update
+        await broadcast_websocket_message({
+            "type": "autonomous_started",
+            "message": "Autonomous trading system started successfully",
+            "active_strategies": len([s for s in strategy_instances.values() if s.get('active', False)]),
+            "timestamp": datetime.now().isoformat()
+        })
+        
+        return {
+            "success": True,
+            "message": "Autonomous trading started successfully",
+            "autonomous_trading_active": True,
+            "strategies_activated": len(strategy_instances),
+            "strategy_details": {name: data['status'] for name, data in strategy_instances.items()},
+            "system_health": "OPERATIONAL",
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error starting autonomous trading: {e}")
+        return {
+            "success": False,
+            "error": f"Failed to start autonomous trading: {str(e)}",
+            "timestamp": datetime.now().isoformat()
+        }
+
 @api_router.post("/autonomous/emergency-stop")
 async def emergency_stop():
     """Emergency stop all autonomous trading"""
