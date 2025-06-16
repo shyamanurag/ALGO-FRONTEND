@@ -1935,6 +1935,83 @@ async def get_truedata_config():
             "error": str(e)
         }
 
+@api_router.post("/system/test-truedata-connection")
+async def test_truedata_connection():
+    """Test TrueData connection with current credentials"""
+    try:
+        import socket
+        
+        # Get current config
+        username = TRUEDATA_USERNAME
+        password = TRUEDATA_PASSWORD
+        host = TRUEDATA_URL
+        port = TRUEDATA_PORT
+        sandbox = TRUEDATA_SANDBOX
+        
+        logger.info(f"🧪 Testing TrueData connection: {username}@{host}:{port} (sandbox: {sandbox})")
+        
+        # Test basic TCP connection
+        test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        test_socket.settimeout(10)
+        
+        try:
+            test_socket.connect((host, port))
+            
+            # Send authentication
+            auth_message = f"LOGIN {username} {password}\r\n"
+            test_socket.send(auth_message.encode())
+            
+            # Wait for response
+            response = test_socket.recv(1024).decode()
+            test_socket.close()
+            
+            logger.info(f"📨 TrueData raw response: {response.strip()}")
+            
+            if "LOGIN OK" in response or "SUCCESS" in response or "OK" in response:
+                return {
+                    "success": True,
+                    "message": "TrueData connection successful",
+                    "response": response.strip(),
+                    "config": {
+                        "username": username,
+                        "host": host,
+                        "port": port,
+                        "sandbox": sandbox
+                    }
+                }
+            else:
+                return {
+                    "success": False,
+                    "message": "TrueData authentication failed",
+                    "response": response.strip(),
+                    "config": {
+                        "username": username,
+                        "host": host,
+                        "port": port,
+                        "sandbox": sandbox
+                    }
+                }
+                
+        except Exception as conn_error:
+            test_socket.close()
+            return {
+                "success": False,
+                "message": f"Connection failed: {str(conn_error)}",
+                "config": {
+                    "username": username,
+                    "host": host,
+                    "port": port,
+                    "sandbox": sandbox
+                }
+            }
+            
+    except Exception as e:
+        logger.error(f"Error testing TrueData connection: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @api_router.get("/system/truedata-status")
 async def get_truedata_status():
     """Get REAL TrueData connection status"""
