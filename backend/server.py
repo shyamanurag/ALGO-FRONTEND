@@ -3241,7 +3241,7 @@ async def start_autonomous_trading():
         autonomous_engine = get_autonomous_engine()
         
         # Force start autonomous trading even if market closed (for testing)
-        result = await autonomous_engine.start_autonomous_trading(force_start=True)
+        result = await autonomous_engine.start_autonomous_trading()
         
         # Manually activate all strategies for demo/testing
         if CORE_COMPONENTS_AVAILABLE:
