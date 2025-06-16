@@ -2062,16 +2062,13 @@ async def test_truedata_protocol():
 async def connect_truedata_official():
     """Connect to TrueData using the official Python package"""
     try:
-        from truedata import TrueDataWS
+        from truedata.websocket import TD_ws
         import asyncio
         
         username = "tdwsp607"
         password = "shyam@697"
         
         logger.info(f"🚀 Connecting to TrueData using official library: {username}")
-        
-        # Initialize TrueData WebSocket client
-        td = TrueDataWS(username, password)
         
         # Test variables to track connection
         connection_status = {"connected": False, "error": None, "data_received": []}
@@ -2086,43 +2083,46 @@ async def connect_truedata_official():
         
         def on_data(data):
             logger.info(f"📈 TrueData data received: {data}")
-            connection_status["data_received"].append(data)
+            connection_status["data_received"].append(str(data)[:200])  # Truncate for logging
             
         def on_disconnect():
             logger.info("🔌 TrueData WebSocket disconnected")
         
-        # Set up event handlers
-        td.on_connect = on_connect
-        td.on_error = on_error
-        td.on_data = on_data
-        td.on_disconnect = on_disconnect
-        
-        # Attempt connection
+        # Initialize TrueData WebSocket client
         try:
+            td = TD_ws(username=username, password=password)
+            
+            # Set up event handlers
+            td.on_connect = on_connect
+            td.on_error = on_error  
+            td.on_data = on_data
+            td.on_disconnect = on_disconnect
+            
+            # Attempt connection
             td.connect()
             
             # Wait a bit for connection to establish
-            await asyncio.sleep(5)
+            await asyncio.sleep(8)
             
-            # Subscribe to NIFTY for testing
+            # Subscribe to NIFTY for testing if connected
             if connection_status["connected"]:
-                td.subscribe_symbols(['NIFTY'])
+                td.subscribe(['NIFTY'])
                 logger.info("📊 Subscribed to NIFTY for testing")
                 
                 # Wait for data
-                await asyncio.sleep(3)
+                await asyncio.sleep(5)
             
             # Disconnect
             td.disconnect()
             
             return {
                 "success": connection_status["connected"],
-                "message": "TrueData official library connection successful" if connection_status["connected"] else "Connection failed",
+                "message": "TrueData official library connection successful" if connection_status["connected"] else f"Connection failed: {connection_status.get('error', 'Unknown error')}",
                 "connection_status": connection_status,
                 "credentials": {
                     "username": username,
                     "library": "truedata official package",
-                    "version": "latest"
+                    "class": "TD_ws"
                 },
                 "data_received": len(connection_status["data_received"]),
                 "sample_data": connection_status["data_received"][:2] if connection_status["data_received"] else None,
@@ -2143,9 +2143,9 @@ async def connect_truedata_official():
     except ImportError as import_error:
         return {
             "success": False,
-            "message": "TrueData package not installed properly",
+            "message": "TrueData package import error",
             "error": str(import_error),
-            "suggestion": "pip install truedata"
+            "suggestion": "Check truedata package installation"
         }
     except Exception as e:
         logger.error(f"Error in official TrueData connection: {e}")
