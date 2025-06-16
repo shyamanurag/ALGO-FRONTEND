@@ -2058,6 +2058,102 @@ async def test_truedata_protocol():
             "error": str(e)
         }
 
+@api_router.post("/system/connect-truedata-official")
+async def connect_truedata_official():
+    """Connect to TrueData using the official Python package"""
+    try:
+        from truedata import TrueDataWS
+        import asyncio
+        
+        username = "tdwsp607"
+        password = "shyam@697"
+        
+        logger.info(f"🚀 Connecting to TrueData using official library: {username}")
+        
+        # Initialize TrueData WebSocket client
+        td = TrueDataWS(username, password)
+        
+        # Test variables to track connection
+        connection_status = {"connected": False, "error": None, "data_received": []}
+        
+        def on_connect():
+            logger.info("✅ TrueData WebSocket connected successfully!")
+            connection_status["connected"] = True
+        
+        def on_error(error):
+            logger.error(f"❌ TrueData WebSocket error: {error}")
+            connection_status["error"] = str(error)
+        
+        def on_data(data):
+            logger.info(f"📈 TrueData data received: {data}")
+            connection_status["data_received"].append(data)
+            
+        def on_disconnect():
+            logger.info("🔌 TrueData WebSocket disconnected")
+        
+        # Set up event handlers
+        td.on_connect = on_connect
+        td.on_error = on_error
+        td.on_data = on_data
+        td.on_disconnect = on_disconnect
+        
+        # Attempt connection
+        try:
+            td.connect()
+            
+            # Wait a bit for connection to establish
+            await asyncio.sleep(5)
+            
+            # Subscribe to NIFTY for testing
+            if connection_status["connected"]:
+                td.subscribe_symbols(['NIFTY'])
+                logger.info("📊 Subscribed to NIFTY for testing")
+                
+                # Wait for data
+                await asyncio.sleep(3)
+            
+            # Disconnect
+            td.disconnect()
+            
+            return {
+                "success": connection_status["connected"],
+                "message": "TrueData official library connection successful" if connection_status["connected"] else "Connection failed",
+                "connection_status": connection_status,
+                "credentials": {
+                    "username": username,
+                    "library": "truedata official package",
+                    "version": "latest"
+                },
+                "data_received": len(connection_status["data_received"]),
+                "sample_data": connection_status["data_received"][:2] if connection_status["data_received"] else None,
+                "timestamp": datetime.now().isoformat()
+            }
+            
+        except Exception as connection_error:
+            return {
+                "success": False,
+                "message": f"TrueData connection error: {str(connection_error)}",
+                "error": str(connection_error),
+                "credentials": {
+                    "username": username,
+                    "library": "truedata official package"
+                }
+            }
+            
+    except ImportError as import_error:
+        return {
+            "success": False,
+            "message": "TrueData package not installed properly",
+            "error": str(import_error),
+            "suggestion": "pip install truedata"
+        }
+    except Exception as e:
+        logger.error(f"Error in official TrueData connection: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @api_router.post("/system/test-truedata-websocket-formats")
 async def test_truedata_websocket_formats():
     """Test different WebSocket URL formats for TrueData"""
