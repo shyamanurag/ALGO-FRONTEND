@@ -2090,7 +2090,9 @@ async def connect_truedata_official():
         
         # Initialize TrueData WebSocket client
         try:
-            td = TD_ws(username=username, password=password)
+            from truedata.websocket.TD_ws import LiveClient
+            
+            td = LiveClient(username=username, password=password)
             
             # Set up event handlers
             td.on_connect = on_connect
