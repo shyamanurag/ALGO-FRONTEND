@@ -1935,6 +1935,73 @@ async def get_truedata_config():
             "error": str(e)
         }
 
+@api_router.post("/system/test-truedata-websocket")
+async def test_truedata_websocket():
+    """Test TrueData WebSocket connection"""
+    try:
+        import websockets
+        import asyncio
+        
+        username = TRUEDATA_USERNAME
+        password = TRUEDATA_PASSWORD
+        host = TRUEDATA_URL
+        port = TRUEDATA_PORT
+        
+        # Try WebSocket connection to TrueData
+        ws_url = f"ws://{host}:{port}/socket.io/?transport=websocket"
+        
+        logger.info(f"🌐 Testing TrueData WebSocket: {ws_url}")
+        
+        try:
+            # Test WebSocket connection with timeout
+            async with websockets.connect(ws_url, timeout=10) as websocket:
+                # Send authentication message
+                auth_msg = {
+                    "event": "login",
+                    "data": {
+                        "username": username,
+                        "password": password
+                    }
+                }
+                
+                await websocket.send(json.dumps(auth_msg))
+                
+                # Wait for response
+                response = await asyncio.wait_for(websocket.recv(), timeout=5)
+                
+                logger.info(f"📨 WebSocket response: {response}")
+                
+                return {
+                    "success": True,
+                    "message": "WebSocket connection successful",
+                    "response": response,
+                    "url": ws_url,
+                    "config": {
+                        "username": username,
+                        "host": host,
+                        "port": port
+                    }
+                }
+                
+        except Exception as ws_error:
+            return {
+                "success": False,
+                "message": f"WebSocket connection failed: {str(ws_error)}",
+                "url": ws_url,
+                "config": {
+                    "username": username,
+                    "host": host,
+                    "port": port
+                }
+            }
+            
+    except Exception as e:
+        logger.error(f"Error testing WebSocket connection: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @api_router.post("/system/test-truedata-connection")
 async def test_truedata_connection():
     """Test TrueData connection with current credentials"""
