@@ -2058,6 +2058,57 @@ async def test_truedata_protocol():
             "error": str(e)
         }
 
+@api_router.post("/system/test-alternate-truedata-ports")
+async def test_alternate_truedata_ports():
+    """Test TrueData connection on different ports"""
+    try:
+        import socket
+        
+        username = "tdwsp607"
+        password = "shyam@697"
+        host = "push.truedata.in"
+        test_ports = [8084, 8086, 8088]
+        
+        results = {}
+        
+        for port in test_ports:
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(10)
+                sock.connect((host, port))
+                
+                # Try simple login
+                login_cmd = f"LOGIN {username} {password}\r\n"
+                sock.send(login_cmd.encode())
+                
+                response = sock.recv(1024).decode()
+                sock.close()
+                
+                results[port] = {
+                    "status": "success",
+                    "response": response.strip(),
+                    "length": len(response)
+                }
+                
+            except Exception as e:
+                results[port] = {
+                    "status": "failed",
+                    "error": str(e)
+                }
+        
+        return {
+            "success": True,
+            "host": host,
+            "username": username,
+            "test_results": results
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @api_router.post("/system/scan-truedata-ports")
 async def scan_truedata_ports():
     """Scan common TrueData ports to find the correct one"""
