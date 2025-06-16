@@ -2323,88 +2323,102 @@ async def test_market_data_feed():
 
 @api_router.get("/market-data/indices")
 async def get_market_indices():
-    """Get live market indices from TrueData - shows connection status"""
+    """Get live market indices - Zerodha primary, TrueData fallback"""
     try:
-        current_time = datetime.now()
-        current_timestamp = datetime.utcnow().isoformat()
+        import pytz
+        ist_tz = pytz.timezone('Asia/Kolkata')
+        current_time_ist = datetime.now(ist_tz)
         
-        # Check TrueData connection status from global state
-        if truedata_connected and DATA_PROVIDER_ENABLED:
-            # Return live connection status with indices data
-            indices = {
-                "NIFTY": {
-                    "symbol": "NIFTY",
-                    "ltp": 0,
-                    "change": 0,
-                    "change_percent": 0,
-                    "volume": 0,
-                    "high": 0,
-                    "low": 0,
-                    "open": 0,
-                    "data_source": "TRUEDATA_LIVE",
-                    "connection_status": "CONNECTING",
-                    "timestamp": current_timestamp
-                },
-                "BANKNIFTY": {
-                    "symbol": "BANKNIFTY", 
-                    "ltp": 0,
-                    "change": 0,
-                    "change_percent": 0,
-                    "volume": 0,
-                    "high": 0,
-                    "low": 0,
-                    "open": 0,
-                    "data_source": "TRUEDATA_LIVE",
-                    "connection_status": "CONNECTING",
-                    "timestamp": current_timestamp
-                },
-                "FINNIFTY": {
-                    "symbol": "FINNIFTY",
-                    "ltp": 0,
-                    "change": 0,
-                    "change_percent": 0,
-                    "volume": 0,
-                    "high": 0,
-                    "low": 0,
-                    "open": 0,
-                    "data_source": "TRUEDATA_LIVE",
-                    "connection_status": "CONNECTING",
-                    "timestamp": current_timestamp
-                }
-            }
+        # Try to get live data from Zerodha if available
+        live_indices_data = {}
+        data_source = "NO_DATA"
+        connection_status = "DISCONNECTED"
+        provider_name = "TrueData"
+        
+        try:
+            from real_zerodha_client import get_real_zerodha_client
+            zerodha_client = get_real_zerodha_client()
+            status = zerodha_client.get_status()
             
-            return {
-                "status": "success",
-                "timestamp": current_timestamp,
-                "market_status": "OPEN" if is_market_open() else "CLOSED",
-                "data_source": "TRUEDATA_LIVE",
-                "connection_status": "CONNECTING",
-                "provider": {
-                    "name": "TrueData",
-                    "url": f"{TRUEDATA_URL}:{TRUEDATA_PORT}",
-                    "username": TRUEDATA_USERNAME,
-                    "status": "CONNECTING"
-                },
-                "last_update": current_time.strftime("%I:%M:%S %p"),
-                "indices": indices
-            }
-        else:
-            # Return disconnected status
-            return {
-                "status": "connecting",
-                "timestamp": current_timestamp,
-                "market_status": "OPEN" if is_market_open() else "CLOSED",
-                "data_source": "NO_DATA",
-                "connection_status": "DISCONNECTED",
-                "provider": {
-                    "name": "TrueData",
-                    "url": f"{TRUEDATA_URL}:{TRUEDATA_PORT}" if TRUEDATA_URL else None,
-                    "username": TRUEDATA_USERNAME,
-                    "status": "DISCONNECTED"
-                },
-                "last_update": current_time.strftime("%I:%M:%S %p"),
-                "indices": {}
-            }
+            if status.get('authenticated', False):
+                # Get live data from Zerodha
+                kite = zerodha_client.kite
+                if kite:
+                    # Get indices data
+                    instruments = [
+                        "NSE:NIFTY 50",
+                        "NSE:NIFTY BANK", 
+                        "NSE:NIFTY FIN SERVICE"
+                    ]
+                    
+                    quotes = kite.quote(instruments)
+                    
+                    # Map to our format
+                    if "NSE:NIFTY 50" in quotes:
+                        nifty_data = quotes["NSE:NIFTY 50"]
+                        live_indices_data["NIFTY"] = {
+                            "symbol": "NIFTY",
+                            "ltp": nifty_data.get("last_price", 0),
+                            "change": nifty_data.get("net_change", 0),
+                            "change_percent": nifty_data.get("percentage_change", 0),
+                            "volume": nifty_data.get("volume", 0),
+                            "open": nifty_data.get("ohlc", {}).get("open", 0),
+                            "high": nifty_data.get("ohlc", {}).get("high", 0),
+                            "low": nifty_data.get("ohlc", {}).get("low", 0),
+                            "timestamp": current_time_ist.isoformat()
+                        }
+                    
+                    if "NSE:NIFTY BANK" in quotes:
+                        banknifty_data = quotes["NSE:NIFTY BANK"]
+                        live_indices_data["BANKNIFTY"] = {
+                            "symbol": "BANKNIFTY",
+                            "ltp": banknifty_data.get("last_price", 0),
+                            "change": banknifty_data.get("net_change", 0),
+                            "change_percent": banknifty_data.get("percentage_change", 0),
+                            "volume": banknifty_data.get("volume", 0),
+                            "open": banknifty_data.get("ohlc", {}).get("open", 0),
+                            "high": banknifty_data.get("ohlc", {}).get("high", 0),
+                            "low": banknifty_data.get("ohlc", {}).get("low", 0),
+                            "timestamp": current_time_ist.isoformat()
+                        }
+                    
+                    if "NSE:NIFTY FIN SERVICE" in quotes:
+                        finnifty_data = quotes["NSE:NIFTY FIN SERVICE"]
+                        live_indices_data["FINNIFTY"] = {
+                            "symbol": "FINNIFTY",
+                            "ltp": finnifty_data.get("last_price", 0),
+                            "change": finnifty_data.get("net_change", 0),
+                            "change_percent": finnifty_data.get("percentage_change", 0),
+                            "volume": finnifty_data.get("volume", 0),
+                            "open": finnifty_data.get("ohlc", {}).get("open", 0),
+                            "high": finnifty_data.get("ohlc", {}).get("high", 0),
+                            "low": finnifty_data.get("ohlc", {}).get("low", 0),
+                            "timestamp": current_time_ist.isoformat()
+                        }
+                    
+                    if live_indices_data:
+                        data_source = "ZERODHA_LIVE"
+                        connection_status = "CONNECTED"
+                        provider_name = "Zerodha"
+                        logger.info(f"📈 Live indices data from Zerodha: {len(live_indices_data)} indices")
+                    
+        except Exception as zerodha_error:
+            logger.warning(f"Zerodha data fetch failed: {zerodha_error}")
+        
+        # Return response
+        return {
+            "status": "live" if live_indices_data else "no_data",
+            "timestamp": current_time_ist.isoformat(),
+            "market_status": "OPEN" if is_market_open() else "CLOSED",
+            "data_source": data_source,
+            "connection_status": connection_status,
+            "provider": {
+                "name": provider_name,
+                "status": connection_status
+            },
+            "last_update": current_time_ist.strftime("%I:%M:%S %p IST"),
+            "indices": live_indices_data
+        }
         
     except Exception as e:
         logger.error(f"Error getting market indices: {e}")
