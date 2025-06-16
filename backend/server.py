@@ -5222,13 +5222,33 @@ from zerodha_integration import zerodha_manager
 
 @api_router.get("/admin/zerodha/status")
 async def get_zerodha_status():
-    """Get Zerodha connection status for admin panel"""
+    """Get Zerodha connection status for admin panel - consistent with auth status"""
     try:
-        status = await zerodha_manager.get_connection_status()
+        # Use the same real_zerodha_client that system/zerodha-auth-status uses
+        from real_zerodha_client import get_real_zerodha_client
+        zerodha_client = get_real_zerodha_client()
+        auth_status = zerodha_client.get_status()
+        
+        # Map to admin panel format but use real auth status
+        admin_status = {
+            "connected": auth_status.get('authenticated', False),
+            "status": "CONNECTED" if auth_status.get('authenticated', False) else "DISCONNECTED",
+            "message": "Connected to Zerodha" if auth_status.get('authenticated', False) else "Not connected to Zerodha",
+            "account_name": "Shyam anurag",
+            "api_key": "sylcoq49...",
+            "client_id": "ZD7832",
+            "authenticated": auth_status.get('authenticated', False),
+            "api_key_configured": auth_status.get('api_key_configured', False),
+            "access_token_available": auth_status.get('access_token_available', False),
+            "last_attempt": None,
+            "error": None
+        }
+        
         return {
             "success": True,
-            "zerodha": status
+            "zerodha": admin_status
         }
+        
     except Exception as e:
         logger.error(f"Error getting Zerodha status: {e}")
         return {
@@ -5237,7 +5257,12 @@ async def get_zerodha_status():
             "zerodha": {
                 "connected": False,
                 "status": "ERROR",
-                "message": f"Error getting status: {str(e)}"
+                "message": f"Error getting status: {str(e)}",
+                "account_name": "Shyam anurag",
+                "api_key": "sylcoq49...",
+                "client_id": "ZD7832",
+                "authenticated": False,
+                "error": str(e)
             }
         }
 
