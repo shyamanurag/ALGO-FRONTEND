@@ -2058,6 +2058,95 @@ async def test_truedata_protocol():
             "error": str(e)
         }
 
+@api_router.post("/system/connect-truedata-websocket")
+async def connect_truedata_websocket():
+    """Connect to TrueData using WebSocket on port 8084"""
+    try:
+        import websockets
+        import asyncio
+        import json
+        
+        username = "tdwsp607"
+        password = "shyam@697"
+        host = "push.truedata.in"
+        port = 8084
+        
+        # Construct WebSocket URL for TrueData
+        ws_url = f"ws://{host}:{port}"
+        
+        logger.info(f"🌐 Connecting to TrueData WebSocket: {ws_url}")
+        
+        try:
+            # Connect to TrueData WebSocket
+            async with websockets.connect(ws_url, timeout=15) as websocket:
+                logger.info("✅ WebSocket connection established")
+                
+                # Send authentication message
+                auth_message = {
+                    "action": "login",
+                    "username": username,
+                    "password": password
+                }
+                
+                await websocket.send(json.dumps(auth_message))
+                logger.info(f"📤 Sent auth: {auth_message}")
+                
+                # Wait for authentication response
+                response = await asyncio.wait_for(websocket.recv(), timeout=10)
+                logger.info(f"📥 Received: {response}")
+                
+                # Try to parse response
+                try:
+                    response_data = json.loads(response)
+                    success = response_data.get('status') == 'success' or 'success' in response.lower() or 'ok' in response.lower()
+                except:
+                    success = 'success' in response.lower() or 'ok' in response.lower() or 'authenticated' in response.lower()
+                
+                return {
+                    "success": success,
+                    "message": "TrueData WebSocket connection successful" if success else "Authentication failed",
+                    "websocket_url": ws_url,
+                    "auth_response": response,
+                    "credentials": {
+                        "username": username,
+                        "host": host,
+                        "port": port,
+                        "protocol": "WebSocket"
+                    },
+                    "timestamp": datetime.now().isoformat()
+                }
+                
+        except websockets.exceptions.ConnectionClosed as e:
+            return {
+                "success": False,
+                "message": f"WebSocket connection closed: {e}",
+                "websocket_url": ws_url,
+                "error_type": "connection_closed"
+            }
+        except asyncio.TimeoutError:
+            return {
+                "success": False,
+                "message": "WebSocket connection timeout",
+                "websocket_url": ws_url,
+                "error_type": "timeout"
+            }
+        except Exception as ws_error:
+            return {
+                "success": False,
+                "message": f"WebSocket error: {str(ws_error)}",
+                "websocket_url": ws_url,
+                "error_type": "websocket_error",
+                "error_details": str(ws_error)
+            }
+            
+    except Exception as e:
+        logger.error(f"Error in TrueData WebSocket connection: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "error_type": "general_error"
+        }
+
 @api_router.post("/system/test-alternate-truedata-ports")
 async def test_alternate_truedata_ports():
     """Test TrueData connection on different ports"""
