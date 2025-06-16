@@ -2296,16 +2296,33 @@ async def test_truedata_connection():
 
 @api_router.get("/system/truedata-status")
 async def get_truedata_status():
-    """Get REAL TrueData connection status"""
+    """Get REAL TrueData connection status with current credentials"""
     try:
         from truedata_client import truedata_client
         
-        status = truedata_client.get_status()
-        live_data = truedata_client.get_all_data()
+        # Get actual connection status from client
+        try:
+            status = truedata_client.get_status()
+            live_data = truedata_client.get_all_data()
+            is_connected = truedata_client.is_connected()
+        except Exception as client_error:
+            logger.warning(f"TrueData client error: {client_error}")
+            status = {"connected": False}
+            live_data = {}
+            is_connected = False
         
+        # Return status with current environment credentials
         return {
             "success": True,
-            "connection_status": status,
+            "connection_status": {
+                "connected": is_connected,
+                "username": TRUEDATA_USERNAME,  # Current env username
+                "url": f"{TRUEDATA_URL}:{TRUEDATA_PORT}",  # Current env URL:port
+                "sandbox": TRUEDATA_SANDBOX,
+                "symbols_count": len(live_data),
+                "symbols": list(live_data.keys()),
+                "last_update": status.get("last_update")
+            },
             "live_data_count": len(live_data),
             "symbols": list(live_data.keys()),
             "sample_data": {k: v for k, v in list(live_data.items())[:1]} if live_data else {}
@@ -2315,6 +2332,15 @@ async def get_truedata_status():
         logger.error(f"Error getting TrueData status: {e}")
         return {
             "success": False,
+            "connection_status": {
+                "connected": False,
+                "username": TRUEDATA_USERNAME,
+                "url": f"{TRUEDATA_URL}:{TRUEDATA_PORT}",
+                "sandbox": TRUEDATA_SANDBOX,
+                "symbols_count": 0,
+                "symbols": [],
+                "last_update": None
+            },
             "error": str(e)
         }
 
