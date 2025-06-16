@@ -641,41 +641,55 @@ async def initialize_elite_trading_system():
         analyzers = {}
 
 async def _get_current_market_data():
-    """Get current market data for autonomous engine"""
+    """Get current REAL market data for autonomous engine - NO ARTIFICIAL DATA"""
     try:
-        current_time = datetime.now()
-        base_prices = {"NIFTY": 19567.50, "BANKNIFTY": 43842.30, "FINNIFTY": 18905.75}
+        # Try to get REAL market data from Zerodha or TrueData
+        try:
+            from real_zerodha_client import get_real_zerodha_client
+            zerodha_client = get_real_zerodha_client()
+            status = zerodha_client.get_status()
+            
+            if status.get('authenticated', False):
+                kite = zerodha_client.kite
+                if kite:
+                    # Get real indices data from Zerodha
+                    instruments = ["NSE:NIFTY 50", "NSE:NIFTY BANK", "NSE:NIFTY FIN SERVICE"]
+                    quotes = kite.quote(instruments)
+                    
+                    market_data = {"indices": {}}
+                    
+                    if "NSE:NIFTY 50" in quotes:
+                        nifty_data = quotes["NSE:NIFTY 50"]
+                        market_data["indices"]["NIFTY"] = {
+                            "ltp": nifty_data.get("last_price", 0),
+                            "open": nifty_data.get("ohlc", {}).get("open", 0),
+                            "high": nifty_data.get("ohlc", {}).get("high", 0),
+                            "low": nifty_data.get("ohlc", {}).get("low", 0),
+                            "change_percent": nifty_data.get("percentage_change", 0),
+                            "volume": nifty_data.get("volume", 0)
+                        }
+                    
+                    if "NSE:NIFTY BANK" in quotes:
+                        banknifty_data = quotes["NSE:NIFTY BANK"]
+                        market_data["indices"]["BANKNIFTY"] = {
+                            "ltp": banknifty_data.get("last_price", 0),
+                            "open": banknifty_data.get("ohlc", {}).get("open", 0),
+                            "high": banknifty_data.get("ohlc", {}).get("high", 0),
+                            "low": banknifty_data.get("ohlc", {}).get("low", 0),
+                            "change_percent": banknifty_data.get("percentage_change", 0),
+                            "volume": banknifty_data.get("volume", 0)
+                        }
+                    
+                    if market_data["indices"]:
+                        logger.info(f"📈 REAL market data retrieved for autonomous engine: {len(market_data['indices'])} indices")
+                        return market_data
         
-        market_data = {"indices": {}}
+        except Exception as e:
+            logger.warning(f"Real market data fetch failed: {e}")
         
-        for symbol, base_price in base_prices.items():
-            time_factor = (current_time.hour * 60 + current_time.minute) / 10
-            price_variation = np.sin(time_factor / 100) * 0.01 + np.random.normal(0, 0.005)
-            
-            current_price = base_price * (1 + price_variation)
-            open_price = base_price * (1 + np.random.normal(0, 0.003))
-            
-            volatility = 0.02 if symbol == "NIFTY" else 0.025 if symbol == "BANKNIFTY" else 0.03
-            high_price = current_price * (1 + volatility * np.random.random() * 0.5)
-            low_price = current_price * (1 - volatility * np.random.random() * 0.5)
-            
-            change = current_price - open_price
-            change_percent = (change / open_price) * 100
-            
-            base_volume = 1000000 if symbol == "NIFTY" else 800000 if symbol == "BANKNIFTY" else 600000
-            time_of_day_factor = 1.5 if 9 <= current_time.hour <= 10 or 14 <= current_time.hour <= 15 else 1.0
-            volume = int(base_volume * time_of_day_factor * (0.8 + 0.4 * np.random.random()))
-            
-            market_data["indices"][symbol] = {
-                "ltp": round(current_price, 2),
-                "open": round(open_price, 2),
-                "high": round(high_price, 2),
-                "low": round(low_price, 2),
-                "change_percent": round(change_percent, 2),
-                "volume": volume
-            }
-        
-        return market_data
+        # If no real data available, return None - NO ARTIFICIAL DATA
+        logger.info("❌ No real market data available for autonomous engine")
+        return None
         
     except Exception as e:
         logger.error(f"Error getting market data: {e}")
