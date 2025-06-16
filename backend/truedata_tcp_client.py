@@ -8,6 +8,7 @@ import json
 import threading
 import time
 import logging
+import os
 from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
@@ -16,10 +17,10 @@ class TrueDataTCPClient:
     """Simple TrueData TCP client"""
     
     def __init__(self):
-        self.host = "push.truedata.in"
-        self.port = 8086
-        self.username = "Trial106"
-        self.password = "shyam106"
+        self.host = os.environ.get('TRUEDATA_URL', 'push.truedata.in')
+        self.port = int(os.environ.get('TRUEDATA_PORT', '8084'))
+        self.username = os.environ.get('TRUEDATA_USERNAME', 'tdwsp607')
+        self.password = os.environ.get('TRUEDATA_PASSWORD', 'shyam@697')
         
         self.socket = None
         self.connected = False
