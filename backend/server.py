@@ -1935,6 +1935,109 @@ async def get_truedata_config():
             "error": str(e)
         }
 
+@api_router.post("/system/test-truedata-protocol")
+async def test_truedata_protocol():
+    """Test different TrueData connection protocols"""
+    try:
+        import socket
+        import struct
+        
+        host = TRUEDATA_URL
+        port = TRUEDATA_PORT
+        username = TRUEDATA_USERNAME
+        password = TRUEDATA_PASSWORD
+        
+        results = {}
+        
+        # Test 1: Simple LOGIN command
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(10)
+            sock.connect((host, port))
+            
+            # Try simple LOGIN command
+            login_cmd = f"LOGIN {username} {password}\r\n"
+            sock.send(login_cmd.encode())
+            
+            response = sock.recv(1024).decode()
+            sock.close()
+            
+            results["simple_login"] = {
+                "command": login_cmd.strip(),
+                "response": response.strip(),
+                "success": "OK" in response or "SUCCESS" in response or "CONNECTED" in response
+            }
+            
+        except Exception as e:
+            results["simple_login"] = {"error": str(e)}
+        
+        # Test 2: JSON format
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(10)
+            sock.connect((host, port))
+            
+            # Try JSON login
+            login_json = json.dumps({
+                "action": "login",
+                "username": username,
+                "password": password
+            }) + "\n"
+            
+            sock.send(login_json.encode())
+            response = sock.recv(1024).decode()
+            sock.close()
+            
+            results["json_login"] = {
+                "command": login_json.strip(),
+                "response": response.strip(),
+                "success": "success" in response.lower() or "ok" in response.lower()
+            }
+            
+        except Exception as e:
+            results["json_login"] = {"error": str(e)}
+        
+        # Test 3: Binary protocol
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(10)
+            sock.connect((host, port))
+            
+            # Try binary handshake (some TrueData APIs use this)
+            # Send username length + username + password length + password
+            username_bytes = username.encode()
+            password_bytes = password.encode()
+            
+            binary_login = struct.pack('<H', len(username_bytes)) + username_bytes + struct.pack('<H', len(password_bytes)) + password_bytes
+            sock.send(binary_login)
+            
+            response = sock.recv(1024)
+            sock.close()
+            
+            results["binary_login"] = {
+                "command": "binary_handshake",
+                "response": response.hex() if response else "no_response",
+                "response_length": len(response) if response else 0
+            }
+            
+        except Exception as e:
+            results["binary_login"] = {"error": str(e)}
+        
+        return {
+            "success": True,
+            "host": host,
+            "port": port,
+            "username": username,
+            "protocol_tests": results
+        }
+        
+    except Exception as e:
+        logger.error(f"Error testing protocols: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @api_router.post("/system/scan-truedata-ports")
 async def scan_truedata_ports():
     """Scan common TrueData ports to find the correct one"""
