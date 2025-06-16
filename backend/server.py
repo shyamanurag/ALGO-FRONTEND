@@ -3593,8 +3593,9 @@ async def get_recent_trades():
 
 @api_router.get("/autonomous/strategy-performance")
 async def get_autonomous_strategy_performance():
-    """Get real-time autonomous strategy performance"""
+    """Get real-time autonomous strategy performance - NO CACHE"""
     try:
+        from fastapi.responses import JSONResponse
         global strategy_instances, autonomous_trading_active
         
         strategies = []
@@ -3608,8 +3609,9 @@ async def get_autonomous_strategy_performance():
         
         for i, name in enumerate(strategy_names):
             # Get status from strategy_instances if available
-            if name.lower().replace(' ', '_') in strategy_instances:
-                strategy_data = strategy_instances[name.lower().replace(' ', '_')]
+            strategy_key = name.lower().replace(' ', '_')
+            if strategy_key in strategy_instances:
+                strategy_data = strategy_instances[strategy_key]
                 status = "ACTIVE" if strategy_data.get('active', False) and autonomous_active else "INACTIVE"
                 trades_today = strategy_data.get('trades_today', 0)
                 pnl = strategy_data.get('pnl', 0.0)
@@ -3640,13 +3642,25 @@ async def get_autonomous_strategy_performance():
         else:
             message = "Autonomous strategies ACTIVE - Monitoring market for signals"
         
-        return {
+        response_data = {
             "strategies": strategies,
             "message": message,
             "autonomous_active": autonomous_trading_active,
             "market_open": market_open,
-            "data_source": "LIVE_SYSTEM"
+            "data_source": "LIVE_SYSTEM",
+            "timestamp": datetime.now().isoformat(),
+            "cache_buster": int(datetime.now().timestamp())
         }
+        
+        # Return with no-cache headers
+        return JSONResponse(
+            content=response_data,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
         
     except Exception as e:
         logger.error(f"Error getting strategy performance: {e}")
