@@ -2058,6 +2058,76 @@ async def test_truedata_protocol():
             "error": str(e)
         }
 
+@api_router.post("/system/start-truedata-service")
+async def start_truedata_service():
+    """Start TrueData service for autonomous trading"""
+    try:
+        from truedata_live_client import truedata_live_client
+        
+        # Connect to TrueData
+        success = truedata_live_client.connect()
+        
+        if success:
+            # Subscribe to key indices for autonomous trading
+            symbols = ['NIFTY', 'BANKNIFTY', 'FINNIFTY']
+            truedata_live_client.subscribe_symbols(symbols)
+            
+            # Set up data callback for autonomous system
+            def market_data_callback(symbol, data):
+                logger.info(f"📈 Market data for {symbol}: ₹{data['ltp']}")
+                # Update global market data for autonomous trading
+                global live_market_data
+                live_market_data[symbol] = data
+            
+            truedata_live_client.set_data_callback(market_data_callback)
+            
+            status = truedata_live_client.get_status()
+            
+            return {
+                "success": True,
+                "message": "TrueData service started successfully!",
+                "status": status,
+                "symbols_subscribed": symbols,
+                "autonomous_integration": "ACTIVE",
+                "timestamp": datetime.now().isoformat()
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Failed to connect to TrueData",
+                "error": "Connection failed"
+            }
+            
+    except Exception as e:
+        logger.error(f"Error starting TrueData service: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+@api_router.get("/system/truedata-live-status")
+async def get_truedata_live_status():
+    """Get TrueData live service status"""
+    try:
+        from truedata_live_client import truedata_live_client
+        
+        status = truedata_live_client.get_status()
+        live_data = truedata_live_client.get_all_data()
+        
+        return {
+            "success": True,
+            "status": status,
+            "live_data_sample": {k: v for k, v in list(live_data.items())[:3]},
+            "total_symbols": len(live_data),
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @api_router.post("/system/connect-truedata-live")
 async def connect_truedata_live():
     """Connect to TrueData and start receiving live market data"""
