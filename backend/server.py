@@ -3377,10 +3377,45 @@ async def reset_autonomous_session():
 async def toggle_autonomous_strategy(strategy_name: str):
     """Toggle autonomous strategy"""
     try:
-        return await toggle_strategy(strategy_name)
+        global strategy_instances
+        
+        # Convert frontend strategy name to backend key
+        strategy_key = strategy_name.lower().replace(' ', '_')
+        
+        if strategy_key not in strategy_instances:
+            # Initialize if not exists
+            strategy_instances[strategy_key] = {
+                'active': True,
+                'status': 'ACTIVE',
+                'trades_today': 0,
+                'pnl': 0.0,
+                'win_rate': 0.0
+            }
+        
+        # Toggle the strategy
+        current_active = strategy_instances[strategy_key].get('active', True)
+        new_active = not current_active
+        
+        strategy_instances[strategy_key]['active'] = new_active
+        strategy_instances[strategy_key]['status'] = 'ACTIVE' if new_active else 'INACTIVE'
+        
+        logger.info(f"✅ Strategy {strategy_name} {'ACTIVATED' if new_active else 'DEACTIVATED'}")
+        
+        return {
+            "success": True,
+            "strategy": strategy_name,
+            "status": "ACTIVE" if new_active else "INACTIVE",
+            "active": new_active,
+            "message": f"Strategy {strategy_name} {'activated' if new_active else 'deactivated'} successfully"
+        }
+        
     except Exception as e:
-        logger.error(f"Error toggling autonomous strategy: {e}")
-        raise HTTPException(500, f"Error toggling autonomous strategy: {str(e)}")
+        logger.error(f"Error toggling autonomous strategy {strategy_name}: {e}")
+        return {
+            "success": False,
+            "error": f"Error toggling strategy: {str(e)}",
+            "strategy": strategy_name
+        }
 
 @api_router.get("/users/{user_id}/metrics")
 async def get_user_metrics(user_id: str):
