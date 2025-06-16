@@ -3094,14 +3094,62 @@ async def get_recent_trades():
 async def get_autonomous_strategy_performance():
     """Get real-time autonomous strategy performance"""
     try:
-        from autonomous_trading_engine import get_autonomous_engine
-        autonomous_engine = get_autonomous_engine()
+        global strategy_instances, autonomous_trading_active
         
-        return autonomous_engine.get_strategy_performance()
+        strategies = []
+        strategy_names = ["MomentumSurfer", "NewsImpactScalper", "VolatilityExplosion", 
+                         "ConfluenceAmplifier", "PatternHunter", "LiquidityMagnet", "VolumeProfileScalper"]
+        allocations = [15, 12, 18, 20, 16, 14, 5]
+        
+        # Check if autonomous trading is active
+        market_open = is_market_open()
+        autonomous_active = autonomous_trading_active and (market_open or PAPER_TRADING)
+        
+        for i, name in enumerate(strategy_names):
+            # Get status from strategy_instances if available
+            if name.lower().replace(' ', '_') in strategy_instances:
+                strategy_data = strategy_instances[name.lower().replace(' ', '_')]
+                status = "ACTIVE" if strategy_data.get('active', False) and autonomous_active else "INACTIVE"
+                trades_today = strategy_data.get('trades_today', 0)
+                pnl = strategy_data.get('pnl', 0.0)
+                win_rate = strategy_data.get('win_rate', 0.0)
+            else:
+                # Default status based on autonomous trading state
+                status = "ACTIVE" if autonomous_active else "INACTIVE"
+                trades_today = 0
+                pnl = 0.0
+                win_rate = 0.0
+            
+            strategies.append({
+                "name": name,
+                "status": status,
+                "trades_today": trades_today,
+                "win_rate": win_rate,
+                "pnl": pnl,
+                "allocation": allocations[i]
+            })
+        
+        # Determine message based on system state
+        if not autonomous_trading_active:
+            message = "Autonomous trading system stopped - Use /start to activate"
+        elif not market_open and not PAPER_TRADING:
+            message = "Market closed (After hours) - All strategies on standby"
+        elif not truedata_connected and not PAPER_TRADING:
+            message = "No market data connection - Strategies waiting for data feed"
+        else:
+            message = "Autonomous strategies ACTIVE - Monitoring market for signals"
+        
+        return {
+            "strategies": strategies,
+            "message": message,
+            "autonomous_active": autonomous_trading_active,
+            "market_open": market_open,
+            "data_source": "LIVE_SYSTEM"
+        }
         
     except Exception as e:
         logger.error(f"Error getting strategy performance: {e}")
-        # Fallback to show strategies are active
+        # Error fallback
         strategies = []
         strategy_names = ["MomentumSurfer", "NewsImpactScalper", "VolatilityExplosion", 
                          "ConfluenceAmplifier", "PatternHunter", "LiquidityMagnet", "VolumeProfileScalper"]
@@ -3110,17 +3158,17 @@ async def get_autonomous_strategy_performance():
         for i, name in enumerate(strategy_names):
             strategies.append({
                 "name": name,
-                "status": "ACTIVE",
+                "status": "ERROR",
                 "trades_today": 0,
-                "win_rate": 0,
-                "pnl": 0,
+                "win_rate": 0.0,
+                "pnl": 0.0,
                 "allocation": allocations[i]
             })
         
         return {
             "strategies": strategies,
-            "message": "Autonomous strategies initialized - waiting for market signals",
-            "data_source": "AUTONOMOUS_ENGINE"
+            "message": f"Error loading strategy performance: {str(e)}",
+            "data_source": "ERROR_FALLBACK"
         }
 
 @api_router.get("/autonomous/active-orders")
