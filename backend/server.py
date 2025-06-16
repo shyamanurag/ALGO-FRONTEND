@@ -1254,22 +1254,30 @@ async def update_trading_metrics(metric_name: str, value: float):
         logger.error(f"Error updating metrics: {e}")
 
 def is_market_open() -> bool:
-    """Check if market is currently open"""
+    """Check if Indian market is currently open (IST timezone)"""
     from datetime import datetime, time
+    import pytz
     
-    # Get current time and day
-    current_time = datetime.now().time()
-    current_day = datetime.now().weekday()  # 0=Monday, 6=Sunday
+    # Get current IST time
+    ist_tz = pytz.timezone('Asia/Kolkata')
+    current_ist = datetime.now(ist_tz)
+    current_time = current_ist.time()
+    current_day = current_ist.weekday()  # 0=Monday, 6=Sunday
     
     # Market is closed on weekends (Saturday=5, Sunday=6)
     if current_day >= 5:  # Saturday or Sunday
         return False
     
-    # Market hours: 9:15 AM to 3:30 PM IST on weekdays
+    # Indian market hours: 9:15 AM to 3:30 PM IST on weekdays
     market_open = time(9, 15)
     market_close = time(15, 30)
     
-    return market_open <= current_time <= market_close
+    is_open = market_open <= current_time <= market_close
+    
+    # Log for debugging
+    logger.info(f"🕐 IST Time: {current_ist.strftime('%H:%M:%S')}, Market Open: {is_open}")
+    
+    return is_open
 
 async def broadcast_elite_recommendations(recommendations):
     """Broadcast elite recommendations to websocket clients"""
