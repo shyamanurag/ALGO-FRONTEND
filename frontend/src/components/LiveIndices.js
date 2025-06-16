@@ -61,9 +61,9 @@ function LiveIndices() {
       
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching live indices:', error);
+      console.warn('⚠️ Market data connection issue:', error.message);
       
-      // NO FALLBACK DATA - set empty state
+      // NO FALLBACK DATA - Analytics integrity is critical
       setIndices({});
       setLoading(false);
     }
