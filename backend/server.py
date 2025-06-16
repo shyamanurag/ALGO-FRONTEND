@@ -1791,7 +1791,10 @@ async def generate_contamination_report():
 async def health_check():
     """Health check with real system status - NO MOCK DATA"""
     try:
-        current_time = datetime.now()
+        # Use IST timezone for Indian markets
+        import pytz
+        ist_tz = pytz.timezone('Asia/Kolkata')
+        current_time_ist = datetime.now(ist_tz)
         
         health_data = {
             "status": "healthy",
@@ -1804,8 +1807,8 @@ async def health_check():
             "autonomous_trading": autonomous_trading_active,
             "paper_trading": PAPER_TRADING,
             "market_status": "OPEN" if is_market_open() else "CLOSED",
-            "current_time": current_time.strftime("%I:%M:%S %p"),
-            "last_update": current_time.strftime("%I:%M:%S %p"),
+            "current_time": current_time_ist.strftime("%I:%M:%S %p IST"),
+            "last_update": current_time_ist.strftime("%I:%M:%S %p IST"),
             "symbols_tracked": len(live_market_data),
             
             # TrueData Status (real connection only)
