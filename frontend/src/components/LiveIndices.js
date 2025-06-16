@@ -57,6 +57,7 @@ function LiveIndices() {
         // Only log the issue, don't throw error for analytics integrity
         console.warn('⚠️ Waiting for real market data connection...');
         setIndices({});
+        setLastUpdate(new Date());
       }
       
       setLoading(false);
