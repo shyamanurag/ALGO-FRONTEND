@@ -5220,6 +5220,62 @@ async def get_trading_orders():
 
 from zerodha_integration import zerodha_manager
 
+@api_router.get("/debug/all-status")
+async def debug_all_status():
+    """Debug endpoint to check all status sources for consistency"""
+    try:
+        import pytz
+        ist_tz = pytz.timezone('Asia/Kolkata')
+        current_time_ist = datetime.now(ist_tz)
+        
+        # Test all status sources
+        health_response = {
+            "market_status": "OPEN" if is_market_open() else "CLOSED",
+            "current_time": current_time_ist.strftime("%I:%M:%S %p IST"),
+            "autonomous_trading": autonomous_trading_active
+        }
+        
+        # TrueData status
+        try:
+            from truedata_client import truedata_client
+            truedata_status = {
+                "username": TRUEDATA_USERNAME,
+                "url": f"{TRUEDATA_URL}:{TRUEDATA_PORT}",
+                "connected": truedata_client.is_connected() if hasattr(truedata_client, 'is_connected') else False
+            }
+        except Exception as e:
+            truedata_status = {"error": str(e), "username": TRUEDATA_USERNAME, "url": f"{TRUEDATA_URL}:{TRUEDATA_PORT}"}
+        
+        # Zerodha status  
+        try:
+            from real_zerodha_client import get_real_zerodha_client
+            zerodha_client = get_real_zerodha_client()
+            zerodha_auth_status = zerodha_client.get_status()
+        except Exception as e:
+            zerodha_auth_status = {"error": str(e)}
+        
+        return {
+            "success": True,
+            "timestamp": current_time_ist.isoformat(),
+            "debug_info": {
+                "health_endpoint": health_response,
+                "truedata_status": truedata_status,
+                "zerodha_auth_status": zerodha_auth_status,
+                "environment_vars": {
+                    "TRUEDATA_USERNAME": TRUEDATA_USERNAME,
+                    "TRUEDATA_URL": TRUEDATA_URL,
+                    "TRUEDATA_PORT": TRUEDATA_PORT,
+                    "TRUEDATA_SANDBOX": TRUEDATA_SANDBOX
+                }
+            }
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @api_router.get("/admin/zerodha/status")
 async def get_zerodha_status():
     """Get Zerodha connection status for admin panel - consistent with auth status"""
