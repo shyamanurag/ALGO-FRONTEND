@@ -2436,7 +2436,7 @@ async def get_market_indices():
         
         # Return response
         return {
-            "status": "live" if live_indices_data else "no_data",
+            "status": "success" if live_indices_data else "connecting",
             "timestamp": current_time_ist.isoformat(),
             "market_status": "OPEN" if is_market_open() else "CLOSED",
             "data_source": data_source,
