@@ -1935,6 +1935,53 @@ async def get_truedata_config():
             "error": str(e)
         }
 
+@api_router.post("/system/scan-truedata-ports")
+async def scan_truedata_ports():
+    """Scan common TrueData ports to find the correct one"""
+    try:
+        import socket
+        
+        host = TRUEDATA_URL
+        common_ports = [8084, 8085, 8086, 8087, 8088, 3000, 3001, 80, 443]
+        results = {}
+        
+        logger.info(f"🔍 Scanning TrueData ports on {host}")
+        
+        for port in common_ports:
+            try:
+                test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                test_socket.settimeout(3)
+                
+                result = test_socket.connect_ex((host, port))
+                test_socket.close()
+                
+                if result == 0:
+                    results[port] = "OPEN"
+                    logger.info(f"✅ Port {port}: OPEN")
+                else:
+                    results[port] = "CLOSED"
+                    
+            except Exception as e:
+                results[port] = f"ERROR: {str(e)}"
+                
+        return {
+            "success": True,
+            "host": host,
+            "port_scan_results": results,
+            "open_ports": [port for port, status in results.items() if status == "OPEN"],
+            "current_config": {
+                "username": TRUEDATA_USERNAME,
+                "configured_port": TRUEDATA_PORT
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error scanning ports: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @api_router.post("/system/force-truedata-connect")
 async def force_truedata_connect():
     """Force TrueData connection with detailed logging"""
