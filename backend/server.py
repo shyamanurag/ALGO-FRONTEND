@@ -2058,6 +2058,80 @@ async def test_truedata_protocol():
             "error": str(e)
         }
 
+@api_router.post("/system/test-truedata-websocket-formats")
+async def test_truedata_websocket_formats():
+    """Test different WebSocket URL formats for TrueData"""
+    try:
+        import websockets
+        import asyncio
+        import json
+        
+        username = "tdwsp607"
+        password = "shyam@697"
+        host = "push.truedata.in"
+        port = 8084
+        
+        # Try different WebSocket URL formats
+        test_urls = [
+            f"ws://{host}:{port}",
+            f"ws://{host}:{port}/",
+            f"ws://{host}:{port}/websocket",
+            f"ws://{host}:{port}/socket.io",
+            f"ws://{host}:{port}/realtime",
+            f"ws://{host}:{port}/data",
+            f"wss://{host}:{port}",  # Try secure WebSocket
+        ]
+        
+        results = {}
+        
+        for ws_url in test_urls:
+            try:
+                logger.info(f"🧪 Testing: {ws_url}")
+                
+                # Test connection with short timeout
+                async with websockets.connect(ws_url, timeout=5) as websocket:
+                    # Try to send authentication
+                    auth_msg = json.dumps({
+                        "action": "login",
+                        "username": username,
+                        "password": password
+                    })
+                    
+                    await websocket.send(auth_msg)
+                    
+                    # Wait for response
+                    response = await asyncio.wait_for(websocket.recv(), timeout=3)
+                    
+                    results[ws_url] = {
+                        "status": "connected",
+                        "response": response[:200],  # Truncate long responses
+                        "response_length": len(response)
+                    }
+                    
+            except websockets.exceptions.InvalidURI:
+                results[ws_url] = {"status": "invalid_uri"}
+            except websockets.exceptions.ConnectionClosed as e:
+                results[ws_url] = {"status": "connection_closed", "code": e.code, "reason": e.reason}
+            except asyncio.TimeoutError:
+                results[ws_url] = {"status": "timeout"}
+            except Exception as e:
+                results[ws_url] = {"status": "error", "error": str(e)[:100]}
+        
+        return {
+            "success": True,
+            "host": host,
+            "port": port,
+            "username": username,
+            "test_results": results,
+            "successful_urls": [url for url, result in results.items() if result.get("status") == "connected"]
+        }
+        
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @api_router.post("/system/connect-truedata-websocket")
 async def connect_truedata_websocket():
     """Connect to TrueData using WebSocket on port 8084"""
