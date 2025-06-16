@@ -2099,6 +2099,61 @@ async def scan_truedata_ports():
             "error": str(e)
         }
 
+@api_router.post("/system/connect-truedata-manual")
+async def connect_truedata_manual():
+    """Connect to TrueData using correct credentials manually"""
+    try:
+        from truedata_client import truedata_client
+        import asyncio
+        
+        # Set correct credentials manually
+        correct_username = "tdwsp607"
+        correct_password = "shyam@697"
+        correct_url = "push.truedata.in"
+        correct_port = 8084
+        correct_sandbox = True
+        
+        logger.info(f"🚀 Manually connecting to TrueData: {correct_username}@{correct_url}:{correct_port}")
+        
+        # Update client credentials
+        truedata_client.username = correct_username
+        truedata_client.password = correct_password
+        truedata_client.url = correct_url
+        truedata_client.port = correct_port
+        truedata_client.sandbox = correct_sandbox
+        
+        # Start connection
+        success = truedata_client.start_connection()
+        
+        # Wait for connection
+        await asyncio.sleep(5)
+        
+        # Check status
+        status = truedata_client.get_status()
+        is_connected = truedata_client.is_connected() if hasattr(truedata_client, 'is_connected') else False
+        
+        return {
+            "success": success,
+            "message": "TrueData manual connection initiated",
+            "connected": is_connected,
+            "status": status,
+            "credentials_used": {
+                "username": correct_username,
+                "url": correct_url,
+                "port": correct_port,
+                "sandbox": correct_sandbox
+            },
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in manual TrueData connect: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
+
 @api_router.post("/system/force-truedata-connect")
 async def force_truedata_connect():
     """Force TrueData connection with detailed logging"""
