@@ -19,7 +19,7 @@ function LiveIndices() {
       const response = await fetch(`${BACKEND_URL}/api/market-data/indices`);
       const data = await response.json();
       
-      if (data.status === 'success') {
+      if (data.status === 'success' && data.indices && Object.keys(data.indices).length > 0) {
         const processedIndices = {};
         
         // Process NIFTY and BANKNIFTY from the response
@@ -34,7 +34,7 @@ function LiveIndices() {
               volume: symbolData.volume || 0,
               high: symbolData.high || symbolData.ltp || 0,
               low: symbolData.low || symbolData.ltp || 0,
-              dataSource: symbolData.data_source === 'TRUEDATA_LIVE' ? 'LIVE' : 'NO_DATA',
+              dataSource: symbolData.data_source === 'ZERODHA_LIVE' ? 'LIVE' : 'NO_DATA',
               isMarketHours: symbolData.market_status === 'OPEN',
               timestamp: symbolData.timestamp || new Date().toISOString()
             };
@@ -48,8 +48,15 @@ function LiveIndices() {
         Object.entries(processedIndices).forEach(([symbol, symbolData]) => {
           console.log(`📈 ${symbol}: ₹${symbolData.ltp} (${symbolData.dataSource})`);
         });
+      } else if (data.status === 'no_data') {
+        // No real data available - clear display
+        console.log('⚠️ No real market data available');
+        setIndices({});
+        setLastUpdate(new Date());
       } else {
-        throw new Error('Failed to fetch indices data');
+        // Only log the issue, don't throw error for analytics integrity
+        console.warn('⚠️ Waiting for real market data connection...');
+        setIndices({});
       }
       
       setLoading(false);
