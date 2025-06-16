@@ -1828,7 +1828,13 @@ async def health_check():
             # TrueData Status (real connection only)
             "truedata": {
                 "connected": truedata_connected,
-                "status": "CONNECTED" if truedata_connected else "DISCONNECTED"
+                "status": "CONNECTED" if truedata_connected else "DISCONNECTED",
+                "message": "Connected to TrueData" if truedata_connected else f"Disconnected - Configured: {TRUEDATA_USERNAME}@{TRUEDATA_URL}:{TRUEDATA_PORT}",
+                "details": {
+                    "username": TRUEDATA_USERNAME,
+                    "server": f"{TRUEDATA_URL}:{TRUEDATA_PORT}",
+                    "sandbox": TRUEDATA_SANDBOX
+                }
             }
         }
         
