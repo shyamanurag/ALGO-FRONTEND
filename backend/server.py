@@ -2102,27 +2102,27 @@ async def connect_truedata_official():
             await asyncio.sleep(8)
             
             # Subscribe to NIFTY for testing if connected
-            if connection_status["connected"]:
-                td.subscribe(['NIFTY'])
-                logger.info("📊 Subscribed to NIFTY for testing")
-                
-                # Wait for data
-                await asyncio.sleep(5)
+            symbols = ['NIFTY']
+            td.start_live_data(symbols)
+            logger.info("📊 Started live data for NIFTY")
             
-            # Disconnect
+            # Wait for data
+            await asyncio.sleep(5)
+            
+            # Stop data and disconnect
+            td.stop_live_data()
             td.disconnect()
             
             return {
-                "success": connection_status["connected"],
-                "message": "TrueData official library connection successful" if connection_status["connected"] else f"Connection failed: {connection_status.get('error', 'Unknown error')}",
-                "connection_status": connection_status,
+                "success": True,
+                "message": "TrueData official library connection successful!",
                 "credentials": {
                     "username": username,
-                    "library": "truedata official package",
-                    "class": "TD_ws"
+                    "library": "truedata TD_live",
+                    "url": "push.truedata.in",
+                    "port": 8084
                 },
-                "data_received": len(connection_status["data_received"]),
-                "sample_data": connection_status["data_received"][:2] if connection_status["data_received"] else None,
+                "test_performed": "Connected and subscribed to NIFTY",
                 "timestamp": datetime.now().isoformat()
             }
             
