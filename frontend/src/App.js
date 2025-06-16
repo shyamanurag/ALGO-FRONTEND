@@ -105,6 +105,29 @@ function App() {
               case 'pong':
                 // Keep-alive response
                 break;
+              case 'system_status_update':
+                // Handle system status updates
+                if (data.system_health || data.autonomous_trading !== undefined) {
+                  setSystemStatus(prev => ({
+                    ...prev,
+                    system_health: data.system_health || prev.system_health,
+                    autonomous_trading: data.autonomous_trading !== undefined ? data.autonomous_trading : prev.autonomous_trading,
+                    trading_active: data.trading_active !== undefined ? data.trading_active : prev.trading_active,
+                    last_update: new Date().toISOString()
+                  }));
+                }
+                break;
+              case 'autonomous_started':
+                // Handle autonomous system start notification
+                console.log('✅ Autonomous trading started:', data.message);
+                setSystemStatus(prev => ({
+                  ...prev,
+                  autonomous_trading: true,
+                  trading_active: true,
+                  system_health: 'OPERATIONAL',
+                  last_update: new Date().toISOString()
+                }));
+                break;
               default:
                 console.log('Unknown autonomous data type:', data.type);
             }
