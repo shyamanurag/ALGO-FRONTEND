@@ -1913,6 +1913,28 @@ async def start_truedata_tcp_connection():
             "timestamp": datetime.now().isoformat()
         }
 
+@api_router.get("/system/truedata-config")
+async def get_truedata_config():
+    """Get current TrueData configuration (for debugging)"""
+    try:
+        return {
+            "success": True,
+            "config": {
+                "username": TRUEDATA_USERNAME,
+                "url": TRUEDATA_URL,
+                "port": TRUEDATA_PORT,
+                "sandbox": TRUEDATA_SANDBOX,
+                "data_provider_enabled": DATA_PROVIDER_ENABLED
+            },
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error getting TrueData config: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 @api_router.get("/system/truedata-status")
 async def get_truedata_status():
     """Get REAL TrueData connection status"""
