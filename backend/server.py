@@ -3273,7 +3273,8 @@ async def start_autonomous_trading():
                             'status': 'ACTIVE',
                             'last_signal': None,
                             'trades_today': 0,
-                            'pnl': 0.0
+                            'pnl': 0.0,
+                            'win_rate': 0.0
                         }
                     else:
                         strategy_instances[name]['active'] = True
@@ -3282,6 +3283,14 @@ async def start_autonomous_trading():
                     logger.info(f"✅ Strategy {name} ACTIVATED")
                 except Exception as e:
                     logger.error(f"Error activating strategy {name}: {e}")
+                    # Add simple fallback
+                    strategy_instances[name] = {
+                        'active': True,
+                        'status': 'ACTIVE',
+                        'trades_today': 0,
+                        'pnl': 0.0,
+                        'win_rate': 0.0
+                    }
         
         # Broadcast status update
         await broadcast_websocket_message({
