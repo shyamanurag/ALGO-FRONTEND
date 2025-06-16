@@ -2776,11 +2776,11 @@ async def get_market_indices():
         if not live_indices_data and is_market_open():
             # Generate realistic demo data for testing
             import random
-            base_prices = {"NIFTY": 19567.50, "BANKNIFTY": 43842.30, "FINNIFTY": 18905.75}
+            base_prices = {"NIFTY": 24905.55, "BANKNIFTY": 55753.85, "FINNIFTY": 26494.05}
             
             for symbol, base_price in base_prices.items():
                 # Simulate realistic price movement
-                change_percent = random.uniform(-2.5, 2.5)
+                change_percent = random.uniform(-1.5, 1.5)
                 change = base_price * (change_percent / 100)
                 current_price = base_price + change
                 
@@ -2793,13 +2793,38 @@ async def get_market_indices():
                     "open": round(base_price * random.uniform(0.995, 1.005), 2),
                     "high": round(current_price * random.uniform(1.001, 1.015), 2),
                     "low": round(current_price * random.uniform(0.985, 0.999), 2),
-                    "timestamp": current_time_ist.isoformat()
+                    "timestamp": current_time_ist.isoformat(),
+                    "data_source": "LIVE_DEMO",
+                    "market_status": "OPEN"
                 }
             
-            data_source = "DEMO_DATA"
+            data_source = "LIVE_DEMO"
             connection_status = "CONNECTED"
             provider_name = "Demo"
             logger.info(f"📊 Demo indices data generated: {len(live_indices_data)} indices")
+        
+        elif not live_indices_data:
+            # Provide basic demo data even when market is closed
+            base_prices = {"NIFTY": 24905.55, "BANKNIFTY": 55753.85, "FINNIFTY": 26494.05}
+            
+            for symbol, base_price in base_prices.items():
+                live_indices_data[symbol] = {
+                    "symbol": symbol,
+                    "ltp": base_price,
+                    "change": 0,
+                    "change_percent": 0,
+                    "volume": 0,
+                    "open": base_price,
+                    "high": base_price,
+                    "low": base_price,
+                    "timestamp": current_time_ist.isoformat(),
+                    "data_source": "STATIC_DEMO",
+                    "market_status": "CLOSED"
+                }
+            
+            data_source = "STATIC_DEMO"
+            connection_status = "CONNECTED"
+            provider_name = "Demo"
         
         # Return response
         return {
