@@ -1935,6 +1935,65 @@ async def get_truedata_config():
             "error": str(e)
         }
 
+@api_router.post("/system/force-truedata-connect")
+async def force_truedata_connect():
+    """Force TrueData connection with detailed logging"""
+    try:
+        from truedata_client import truedata_client
+        
+        logger.info(f"🚀 Force connecting to TrueData with credentials: {TRUEDATA_USERNAME}")
+        
+        # Initialize with current environment variables
+        truedata_client.username = TRUEDATA_USERNAME
+        truedata_client.password = TRUEDATA_PASSWORD
+        truedata_client.url = TRUEDATA_URL
+        truedata_client.port = TRUEDATA_PORT
+        
+        # Attempt connection
+        success = truedata_client.connect()
+        
+        if success:
+            # Get status after connection
+            status = truedata_client.get_status()
+            
+            return {
+                "success": True,
+                "message": "TrueData force connection successful",
+                "status": status,
+                "credentials_used": {
+                    "username": TRUEDATA_USERNAME,
+                    "url": TRUEDATA_URL,
+                    "port": TRUEDATA_PORT,
+                    "sandbox": TRUEDATA_SANDBOX
+                },
+                "timestamp": datetime.now().isoformat()
+            }
+        else:
+            return {
+                "success": False,
+                "message": "TrueData force connection failed",
+                "credentials_used": {
+                    "username": TRUEDATA_USERNAME,
+                    "url": TRUEDATA_URL,
+                    "port": TRUEDATA_PORT,
+                    "sandbox": TRUEDATA_SANDBOX
+                },
+                "timestamp": datetime.now().isoformat()
+            }
+            
+    except Exception as e:
+        logger.error(f"Error in force TrueData connect: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "credentials_used": {
+                "username": TRUEDATA_USERNAME,
+                "url": TRUEDATA_URL,
+                "port": TRUEDATA_PORT,
+                "sandbox": TRUEDATA_SANDBOX
+            }
+        }
+
 @api_router.post("/system/test-truedata-websocket")
 async def test_truedata_websocket():
     """Test TrueData WebSocket connection"""
