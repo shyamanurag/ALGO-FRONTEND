@@ -3293,12 +3293,15 @@ async def start_autonomous_trading():
                     }
         
         # Broadcast status update
-        await broadcast_websocket_message({
-            "type": "autonomous_started",
-            "message": "Autonomous trading system started successfully",
-            "active_strategies": len([s for s in strategy_instances.values() if s.get('active', False)]),
-            "timestamp": datetime.now().isoformat()
-        })
+        try:
+            await broadcast_websocket_message({
+                "type": "autonomous_started",
+                "message": "Autonomous trading system started successfully",
+                "active_strategies": len([s for s in strategy_instances.values() if s.get('active', False)]),
+                "timestamp": datetime.now().isoformat()
+            })
+        except Exception as ws_error:
+            logger.warning(f"WebSocket broadcast failed: {ws_error}")
         
         return {
             "success": True,
