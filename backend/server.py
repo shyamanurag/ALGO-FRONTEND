@@ -2058,6 +2058,80 @@ async def test_truedata_protocol():
             "error": str(e)
         }
 
+@api_router.post("/system/connect-truedata-live")
+async def connect_truedata_live():
+    """Connect to TrueData and start receiving live market data"""
+    try:
+        from truedata import TD_live
+        import asyncio
+        
+        username = "tdwsp697"  # Correct username
+        password = "shyam@697"
+        
+        logger.info(f"🚀 Connecting to TrueData with correct credentials: {username}")
+        
+        # Track connection and data
+        status = {"connected": False, "data_received": [], "symbols_subscribed": []}
+        
+        # Initialize TrueData client
+        td = TD_live(
+            login_id=username, 
+            password=password, 
+            url="push.truedata.in", 
+            live_port=8084, 
+            compression=False  # Disable compression to avoid errors
+        )
+        
+        # Set up data callback
+        def data_callback(data):
+            logger.info(f"📈 TrueData live data: {data}")
+            status["data_received"].append(str(data)[:100])
+        
+        td.trade_callback = data_callback
+        
+        # Connect
+        td.connect()
+        await asyncio.sleep(3)
+        status["connected"] = True
+        
+        # Subscribe to key indices
+        symbols = ['NIFTY', 'BANKNIFTY']
+        td.start_live_data(symbols)
+        status["symbols_subscribed"] = symbols
+        logger.info(f"📊 Subscribed to symbols: {symbols}")
+        
+        # Wait for data
+        await asyncio.sleep(8)
+        
+        # Stop data and disconnect
+        td.stop_live_data(symbols)
+        td.disconnect()
+        
+        return {
+            "success": True,
+            "message": "TrueData connection successful!",
+            "credentials": {
+                "username": username,
+                "server": "push.truedata.in:8084",
+                "compression": False
+            },
+            "status": status,
+            "data_samples": len(status["data_received"]),
+            "symbols_tested": symbols,
+            "timestamp": datetime.now().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in TrueData live connection: {e}")
+        return {
+            "success": False,
+            "error": str(e),
+            "credentials": {
+                "username": "tdwsp697",
+                "server": "push.truedata.in:8084"
+            }
+        }
+
 @api_router.post("/system/connect-truedata-official")
 async def connect_truedata_official():
     """Connect to TrueData using the official Python package"""
