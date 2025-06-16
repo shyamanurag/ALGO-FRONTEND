@@ -1943,43 +1943,35 @@ async def force_truedata_connect():
         
         logger.info(f"🚀 Force connecting to TrueData with credentials: {TRUEDATA_USERNAME}")
         
-        # Initialize with current environment variables
+        # Update credentials
         truedata_client.username = TRUEDATA_USERNAME
         truedata_client.password = TRUEDATA_PASSWORD
         truedata_client.url = TRUEDATA_URL
         truedata_client.port = TRUEDATA_PORT
         
-        # Attempt connection
-        success = truedata_client.connect()
+        # Start connection
+        success = truedata_client.start_connection()
         
-        if success:
-            # Get status after connection
-            status = truedata_client.get_status()
-            
-            return {
-                "success": True,
-                "message": "TrueData force connection successful",
-                "status": status,
-                "credentials_used": {
-                    "username": TRUEDATA_USERNAME,
-                    "url": TRUEDATA_URL,
-                    "port": TRUEDATA_PORT,
-                    "sandbox": TRUEDATA_SANDBOX
-                },
-                "timestamp": datetime.now().isoformat()
-            }
-        else:
-            return {
-                "success": False,
-                "message": "TrueData force connection failed",
-                "credentials_used": {
-                    "username": TRUEDATA_USERNAME,
-                    "url": TRUEDATA_URL,
-                    "port": TRUEDATA_PORT,
-                    "sandbox": TRUEDATA_SANDBOX
-                },
-                "timestamp": datetime.now().isoformat()
-            }
+        # Wait a moment for connection to establish
+        await asyncio.sleep(3)
+        
+        # Get connection status
+        status = truedata_client.get_status()
+        is_connected = truedata_client.is_connected()
+        
+        return {
+            "success": success,
+            "message": "TrueData connection initiated" if success else "TrueData connection failed",
+            "connected": is_connected,
+            "status": status,
+            "credentials_used": {
+                "username": TRUEDATA_USERNAME,
+                "url": TRUEDATA_URL,
+                "port": TRUEDATA_PORT,
+                "sandbox": TRUEDATA_SANDBOX
+            },
+            "timestamp": datetime.now().isoformat()
+        }
             
     except Exception as e:
         logger.error(f"Error in force TrueData connect: {e}")
