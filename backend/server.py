@@ -2090,17 +2090,12 @@ async def connect_truedata_official():
         
         # Initialize TrueData WebSocket client
         try:
-            from truedata.websocket.TD_ws import LiveClient
+            from truedata import TD_live
             
-            td = LiveClient(username=username, password=password)
+            # Note: TD_live uses port 3082 by default, but we can specify our port
+            td = TD_live(login_id=username, password=password, url="push.truedata.in", live_port=8084)
             
-            # Set up event handlers
-            td.on_connect = on_connect
-            td.on_error = on_error  
-            td.on_data = on_data
-            td.on_disconnect = on_disconnect
-            
-            # Attempt connection
+            # Connect to TrueData
             td.connect()
             
             # Wait a bit for connection to establish
