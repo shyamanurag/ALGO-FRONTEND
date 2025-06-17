@@ -3441,52 +3441,23 @@ async def get_market_indices():
 
 @api_router.get("/market-data/live")
 async def get_live_market_data():
-    """Get REAL live market data - TrueData primary, Zerodha fallback"""
+    """Get REAL live market data using FIXED TrueData implementation"""
     try:
-        from hybrid_data_provider import hybrid_data_provider
+        from fixed_truedata_integration import get_live_market_data_fixed
         
-        # Initialize if not already done
-        if not hybrid_data_provider.current_provider:
-            await hybrid_data_provider.initialize()
+        logger.info("📊 Getting live market data using FIXED TrueData")
+        result = get_live_market_data_fixed()
         
-        # Get real market data
-        real_data = await hybrid_data_provider.get_live_market_data()
-        
-        if not real_data:
-            # Get provider status for detailed error
-            status = hybrid_data_provider.get_provider_status()
-            
-            return {
-                "success": False,
-                "error": f"No real market data available - Provider status: {status['current_provider']}",
-                "data_provider_status": "NO_REAL_DATA",
-                "provider_details": status,
-                "indices": {},
-                "message": "TrueData and Zerodha both unavailable"
-            }
-        
-        # Determine provider status
-        provider_status = "REAL_TRUEDATA" if hybrid_data_provider.current_provider == "TRUEDATA" else "REAL_ZERODHA"
-        
-        return {
-            "success": True,
-            "timestamp": datetime.now().isoformat(),
-            "market_status": "OPEN" if hybrid_data_provider._is_market_open() else "CLOSED",
-            "data_provider_status": provider_status,
-            "active_provider": hybrid_data_provider.current_provider,
-            "indices": real_data,
-            "connection_status": f"Real data from {hybrid_data_provider.current_provider}",
-            "data_integrity": "100% REAL DATA - NO SIMULATION"
-        }
+        return result
         
     except Exception as e:
-        logger.error(f"Error in hybrid market data: {e}")
+        logger.error(f"Error getting live market data: {e}")
         return {
-            "success": False, 
-            "error": f"Hybrid data provider error: {str(e)}", 
-            "data_provider_status": "ERROR",
+            "success": False,
+            "error": str(e),
+            "data_source": "FIXED_TRUEDATA_ERROR",
             "indices": {},
-            "message": "System error - check logs"
+            "timestamp": datetime.now().isoformat()
         }
 
 @api_router.get("/trading-signals/active")
