@@ -4,10 +4,30 @@ Common helper functions for the trading system
 """
 
 import logging
+import asyncio
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Callable
+from functools import wraps
 
 logger = logging.getLogger(__name__)
+
+def retry_with_backoff(max_retries: int = 3, backoff_factor: float = 1.0):
+    """Decorator to retry function calls with exponential backoff"""
+    def decorator(func: Callable):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            for attempt in range(max_retries):
+                try:
+                    return await func(*args, **kwargs)
+                except Exception as e:
+                    if attempt == max_retries - 1:
+                        raise e
+                    wait_time = backoff_factor * (2 ** attempt)
+                    logger.warning(f"Retry {attempt + 1}/{max_retries} for {func.__name__}: {e}")
+                    await asyncio.sleep(wait_time)
+            return None
+        return wrapper
+    return decorator
 
 def get_atm_strike(spot_price: float, base: int = 50) -> float:
     """Get At-The-Money strike price"""
