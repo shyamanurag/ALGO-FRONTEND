@@ -301,3 +301,51 @@ class ConditionalOrder:
     created_at: datetime = field(default_factory=datetime.now)
     metadata: Dict[str, Any] = field(default_factory=dict)
 
+@dataclass
+class Trade:
+    """Trade execution record"""
+    trade_id: str
+    user_id: str
+    order_id: str
+    symbol: str
+    option_type: OptionType
+    strike: float
+    quantity: int
+    order_type: str  # MARKET, LIMIT, STOP
+    side: OrderSide
+    entry_price: float
+    execution_price: float
+    limit_price: Optional[float] = None
+    stop_price: Optional[float] = None
+    exit_price: Optional[float] = None
+    fees: float = 0.0
+    pnl: float = 0.0
+    strategy_name: Optional[str] = None
+    executed_at: datetime = field(default_factory=datetime.now)
+    closed_at: Optional[datetime] = None
+    metadata: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict:
+        return {
+            'trade_id': self.trade_id,
+            'user_id': self.user_id,
+            'order_id': self.order_id,
+            'symbol': self.symbol,
+            'option_type': self.option_type.value,
+            'strike': self.strike,
+            'quantity': self.quantity,
+            'order_type': self.order_type,
+            'side': self.side.value,
+            'entry_price': self.entry_price,
+            'execution_price': self.execution_price,
+            'limit_price': self.limit_price,
+            'stop_price': self.stop_price,
+            'exit_price': self.exit_price,
+            'fees': self.fees,
+            'pnl': self.pnl,
+            'strategy_name': self.strategy_name,
+            'executed_at': self.executed_at.isoformat(),
+            'closed_at': self.closed_at.isoformat() if self.closed_at else None,
+            'metadata': self.metadata
+        }
+
