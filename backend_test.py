@@ -170,6 +170,42 @@ class AlgoTradingAPITester:
         
         # Test elite recommendations
         self.run_test("Elite Recommendations", "GET", "/api/elite-recommendations")
+        
+    def test_autonomous_trading_endpoints(self):
+        """Test autonomous trading endpoints"""
+        print("\n🔍 Testing Autonomous Trading Endpoints...")
+        
+        # Test autonomous trading status
+        self.run_test("Autonomous Trading Status", "GET", "/api/autonomous/status")
+        
+        # Test autonomous strategy performance
+        self.run_test("Autonomous Strategy Performance", "GET", "/api/autonomous/strategy-performance")
+        
+        # Test autonomous active orders
+        self.run_test("Autonomous Active Orders", "GET", "/api/autonomous/active-orders")
+        
+        # Test autonomous system metrics
+        self.run_test("Autonomous System Metrics", "GET", "/api/autonomous/system-metrics")
+        
+    def test_strategy_endpoints(self):
+        """Test strategy endpoints"""
+        print("\n🔍 Testing Strategy Endpoints...")
+        
+        # Test all strategies
+        self.run_test("All Strategies", "GET", "/api/strategies")
+        
+        # Test strategy metrics
+        self.run_test("Strategy Metrics", "GET", "/api/strategies/metrics")
+        
+        # Test strategy performance
+        self.run_test("Strategy Performance", "GET", "/api/strategies/performance")
+        
+        # Test specific strategies
+        strategies = ["MomentumSurfer", "NewsImpactScalper", "VolatilityExplosion", 
+                      "ConfluenceAmplifier", "PatternHunter", "LiquidityMagnet", "VolumeProfileScalper"]
+        
+        for strategy in strategies:
+            self.run_test(f"{strategy} Details", "GET", f"/api/strategies/{strategy}/details")
 
     def test_truedata_integration(self):
         """Test TrueData integration"""
