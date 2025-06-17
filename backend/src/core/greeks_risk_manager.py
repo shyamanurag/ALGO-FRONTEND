@@ -11,8 +11,9 @@ logger = logging.getLogger(__name__)
 class GreeksRiskManager:
     """Minimal Greeks Risk Management"""
     
-    def __init__(self):
+    def __init__(self, config=None):
         self.enabled = True
+        self.config = config or {}
         
     def calculate_portfolio_greeks(self, positions) -> Dict[str, float]:
         """Calculate portfolio Greeks"""
