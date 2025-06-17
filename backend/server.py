@@ -949,7 +949,7 @@ async def execute_strategy_loop():
                 
                 # Initialize components
                 await order_manager.initialize()
-                await risk_manager.initialize()
+                # risk_manager doesn't have initialize method
                 # position_tracker doesn't have initialize method
                 
                 # Set up FastAPI dependency injection
