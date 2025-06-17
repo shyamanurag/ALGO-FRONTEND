@@ -949,7 +949,7 @@ async def execute_strategy_loop():
                 order_manager = OrderManager(basic_config, risk_manager=risk_manager, position_tracker=position_tracker)
                 
                 # Initialize components
-                await order_manager.initialize()
+                # order_manager initializes automatically in constructor
                 # risk_manager doesn't have initialize method
                 # position_tracker doesn't have initialize method
                 
