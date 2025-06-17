@@ -643,7 +643,35 @@ async def initialize_elite_trading_system():
 async def _get_current_market_data():
     """Get current REAL market data for autonomous engine - NO ARTIFICIAL DATA"""
     try:
-        # Try to get REAL market data from Zerodha or TrueData
+        # PRIORITY 1: Try TrueData first (fastest, most reliable)
+        try:
+            from truedata_client import truedata_client
+            
+            if truedata_client.is_connected():
+                live_data = truedata_client.get_all_data()
+                if live_data:
+                    market_data = {"indices": {}}
+                    
+                    # Convert TrueData format to our format
+                    for symbol, data in live_data.items():
+                        if symbol in ['NIFTY', 'BANKNIFTY', 'FINNIFTY']:
+                            market_data["indices"][symbol] = {
+                                "ltp": data.get("ltp", 0),
+                                "open": data.get("open", 0),
+                                "high": data.get("high", 0),
+                                "low": data.get("low", 0),
+                                "change_percent": data.get("change_percent", 0),
+                                "volume": data.get("volume", 0)
+                            }
+                    
+                    if market_data["indices"]:
+                        logger.info(f"📈 REAL TrueData retrieved for autonomous engine: {len(market_data['indices'])} indices")
+                        return market_data
+                        
+        except Exception as e:
+            logger.warning(f"TrueData fetch failed: {e}")
+        
+        # PRIORITY 2: Try Zerodha as fallback
         try:
             from real_zerodha_client import get_real_zerodha_client
             zerodha_client = get_real_zerodha_client()
@@ -681,11 +709,11 @@ async def _get_current_market_data():
                         }
                     
                     if market_data["indices"]:
-                        logger.info(f"📈 REAL market data retrieved for autonomous engine: {len(market_data['indices'])} indices")
+                        logger.info(f"📈 REAL Zerodha data retrieved for autonomous engine: {len(market_data['indices'])} indices")
                         return market_data
         
         except Exception as e:
-            logger.warning(f"Real market data fetch failed: {e}")
+            logger.warning(f"Zerodha market data fetch failed: {e}")
         
         # If no real data available, return None - NO ARTIFICIAL DATA
         logger.info("❌ No real market data available for autonomous engine")
