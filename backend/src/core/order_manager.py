@@ -18,6 +18,7 @@ from .trade_allocator import TradeAllocator
 from .exceptions import OrderError
 from .system_evolution import SystemEvolution
 from .capital_manager import CapitalManager
+from .mock_risk_manager import MockRiskManager
 from ..models.schema import Trade
 
 logger = logging.getLogger(__name__)
