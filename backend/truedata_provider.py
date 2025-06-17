@@ -83,12 +83,13 @@ class TrueDataProvider:
             return False
         
         try:
-            # Initialize live data connection with compression enabled
+            # Initialize live data connection with compression disabled (bug fix)
             self.td_live = TD_live(
                 self.login_id, 
                 self.password,
                 live_port=self.live_port,
-                log_level=logging.INFO
+                log_level=logging.INFO,
+                compression=False  # Disable compression due to library bug
             )
             
             # Initialize historical data connection
