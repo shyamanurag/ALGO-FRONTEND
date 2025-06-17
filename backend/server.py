@@ -5121,101 +5121,28 @@ async def get_truedata_status():
 
 @api_router.post("/truedata/connect")
 async def connect_truedata():
-    """Connect to TrueData with Zerodha fallback capability"""
+    """Connect to TrueData using FIXED implementation"""
     try:
-        # Check if credentials are configured
-        if not TRUEDATA_USERNAME or not TRUEDATA_PASSWORD:
-            # Check if Zerodha is available as fallback
-            if system_state.get('zerodha_connected'):
-                system_state['active_data_source'] = 'zerodha'
-                system_state['data_source_fallback_active'] = True
-                logger.info("🔄 TrueData not configured - using Zerodha as data source")
-                
-                return {
-                    "success": True,
-                    "message": "TrueData not configured - using Zerodha as fallback data source",
-                    "status": "fallback_active",
-                    "primary_source": "truedata",
-                    "active_source": "zerodha",
-                    "fallback_mode": True,
-                    "help": "Set TRUEDATA_USERNAME and TRUEDATA_PASSWORD for primary data source"
-                }
-            else:
-                return {
-                    "success": False,
-                    "message": "TrueData credentials not configured and Zerodha fallback not available",
-                    "status": "disconnected",
-                    "username_configured": bool(TRUEDATA_USERNAME),
-                    "password_configured": bool(TRUEDATA_PASSWORD),
-                    "zerodha_available": system_state.get('zerodha_connected', False),
-                    "help": "Configure TrueData credentials OR authenticate Zerodha account for fallback"
-                }
+        from fixed_truedata_integration import connect_truedata_fixed
         
-        # Attempt TrueData connection
-        logger.info(f"Attempting TrueData connection to {TRUEDATA_URL}:{TRUEDATA_PORT}")
+        logger.info("🚀 Connecting TrueData using FIXED implementation")
+        result = await connect_truedata_fixed()
         
-        try:
-            # Simulate connection validation
-            await asyncio.sleep(1)  # Simulate connection delay
-            
+        if result.get('success'):
             # Update system state
             system_state['truedata_connected'] = True
-            system_state['active_data_source'] = 'truedata'
+            system_state['active_data_source'] = 'truedata_fixed'
             system_state['data_source_fallback_active'] = False
-            system_state['last_updated'] = datetime.utcnow().isoformat()
             
-            logger.info("✅ TrueData connection established successfully")
-            
-            return {
-                "success": True,
-                "message": f"TrueData connected successfully to {TRUEDATA_URL}:{TRUEDATA_PORT}",
-                "status": "connected",
-                "primary_source": "truedata",
-                "active_source": "truedata",
-                "fallback_mode": False,
-                "username": TRUEDATA_USERNAME[:4] + "...",  # Partial username for security
-                "url": TRUEDATA_URL,
-                "port": TRUEDATA_PORT,
-                "zerodha_backup": system_state.get('zerodha_connected', False),
-                "connected_at": system_state['last_updated']
-            }
-            
-        except Exception as connection_error:
-            logger.error(f"TrueData connection failed: {connection_error}")
-            
-            # Auto-fallback to Zerodha if available
-            if system_state.get('zerodha_connected'):
-                system_state['active_data_source'] = 'zerodha'
-                system_state['data_source_fallback_active'] = True
-                system_state['last_data_source_switch'] = datetime.utcnow().isoformat()
-                
-                logger.info("🔄 TrueData failed - automatically switched to Zerodha fallback")
-                
-                return {
-                    "success": True,
-                    "message": "TrueData connection failed - automatically switched to Zerodha fallback",
-                    "status": "fallback_active",
-                    "primary_source": "truedata",
-                    "active_source": "zerodha",
-                    "fallback_mode": True,
-                    "fallback_reason": str(connection_error),
-                    "switched_at": system_state['last_data_source_switch']
-                }
-            else:
-                return {
-                    "success": False,
-                    "message": f"TrueData connection failed and no Zerodha fallback available",
-                    "status": "disconnected",
-                    "error": str(connection_error),
-                    "zerodha_available": False
-                }
+        return result
         
     except Exception as e:
-        logger.error(f"TrueData connection error: {e}")
+        logger.error(f"Error connecting TrueData: {e}")
         return {
             "success": False,
-            "message": f"Connection error: {str(e)}",
-            "status": "disconnected"
+            "message": "TrueData connection failed",
+            "error": str(e),
+            "implementation": "FIXED_TRUEDATA"
         }
 
 @api_router.post("/truedata/disconnect")
