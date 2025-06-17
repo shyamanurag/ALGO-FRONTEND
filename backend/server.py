@@ -918,17 +918,20 @@ async def execute_strategy_loop():
                 from src.core.risk_manager import RiskManager  
                 from src.core.position_tracker import PositionTracker
                 
-                # Create basic config for components
+                # Create basic config for components (fixed redis_url format)
                 basic_config = {
-                    'redis': {
-                        'host': 'localhost',
-                        'port': 6379,
-                        'db': 0
-                    },
+                    'redis_url': 'redis://localhost:6379/0',
                     'trading': {
                         'paper_trading': PAPER_TRADING,
                         'max_daily_loss': 50000,
                         'position_size_limit': 100000
+                    },
+                    'trade_rotation': {
+                        'min_interval_seconds': 300,
+                        'max_position_size_percent': 0.1
+                    },
+                    'margin': {
+                        'requirement_percent': 0.2
                     }
                 }
                 
