@@ -17,6 +17,25 @@ from ..utils import get_atm_strike, get_strike_with_offset
 
 logger = logging.getLogger(__name__)
 
+class BaseBroker(ABC):
+    """Base broker interface for trading integrations"""
+    
+    @abstractmethod
+    async def place_order(self, symbol: str, quantity: int, transaction_type: str, 
+                         order_type: str, price: float = 0, **kwargs):
+        """Place an order with the broker"""
+        pass
+        
+    @abstractmethod
+    async def get_positions(self):
+        """Get current positions"""
+        pass
+        
+    @abstractmethod
+    async def get_order_status(self, order_id: str):
+        """Get order status"""
+        pass
+
 @dataclass
 class StrategyMetrics:
     """Unified metrics tracking for all strategies"""
