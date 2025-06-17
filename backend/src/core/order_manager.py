@@ -565,7 +565,12 @@ class OrderManager:
 
     def _start_background_tasks(self):
         """Start background monitoring tasks"""
-        asyncio.create_task(self._monitor_bracket_orders())
-        asyncio.create_task(self._monitor_conditional_orders())
+        if self.redis:
+            asyncio.create_task(self._monitor_bracket_orders())
+            asyncio.create_task(self._monitor_conditional_orders())
+            logger.info("✅ Redis-based monitoring tasks started")
+        else:
+            logger.info("⚠️ Redis not available - skipping monitoring tasks")
+            
         asyncio.create_task(self.capital_manager.end_of_day_update())
         # Start other background tasks... 
