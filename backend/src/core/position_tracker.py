@@ -1,6 +1,4 @@
-<file>
-      <absolute_file_name>/app/backend/src/core/position_tracker.py</absolute_file_name>
-      <# f_and_o_scalping_system/core/position_tracker.py
+# f_and_o_scalping_system/core/position_tracker.py
 """
 Position Tracking and Management System
 Handles all position lifecycle operations with proper state management
