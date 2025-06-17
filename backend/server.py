@@ -613,35 +613,38 @@ async def initialize_elite_trading_system():
     global elite_engine, analyzers, truedata_connected
     
     try:
-        # Initialize proper TrueData provider first
-        from truedata_provider import initialize_truedata, truedata_provider
+        # Initialize proper TrueData client (bypassing buggy library)
+        from proper_truedata_client import initialize_proper_truedata, proper_truedata_client
         
-        logger.info("🚀 Initializing TrueData provider with compression...")
-        truedata_success = await initialize_truedata()
+        logger.info("🚀 Initializing PROPER TrueData WebSocket client...")
+        truedata_success = initialize_proper_truedata()
         
         if truedata_success:
             truedata_connected = True
-            logger.info("✅ TrueData connected with lz4 compression")
+            logger.info("✅ Proper TrueData connected - following exact specifications")
             
             # Set up market data callback for autonomous engine
             def market_data_callback(market_update):
                 try:
-                    # Forward market data to autonomous engine
-                    if 'autonomous_engine' in globals():
-                        autonomous_engine.update_market_data({
-                            'indices': {
-                                market_update.symbol: {
-                                    'ltp': market_update.ltp,
-                                    'volume': market_update.volume,
-                                    'change_percent': market_update.change_percent
-                                }
-                            }
-                        })
+                    # Forward market data to autonomous engine if available
+                    logger.info(f"📊 Market Update: {market_update.symbol} - LTP: {market_update.ltp}")
+                    
+                    # Update global live market data
+                    live_market_data[market_update.symbol] = {
+                        'symbol': market_update.symbol,
+                        'ltp': market_update.ltp,
+                        'volume': market_update.volume,
+                        'oi': market_update.oi,
+                        'change_percent': market_update.change_percent,
+                        'timestamp': market_update.timestamp,
+                        'data_source': 'TRUEDATA_WEBSOCKET_DIRECT'
+                    }
+                    
                 except Exception as e:
                     logger.error(f"Error forwarding market data: {e}")
             
-            # Add callback to TrueData provider
-            truedata_provider.add_data_callback(market_data_callback)
+            # Add callback to proper TrueData client
+            proper_truedata_client.add_data_callback(market_data_callback)
             
         else:
             logger.warning("⚠️ TrueData connection failed - autonomous trading may have limited data")
