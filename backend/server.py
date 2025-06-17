@@ -1043,31 +1043,59 @@ async def get_real_market_data(symbol: str) -> Optional[Dict]:
     """Get real market data from database or API"""
     try:
         if db_pool:
-            async with db_pool.acquire() as conn:
-                # Get latest market data from database
-                result = await conn.fetchrow("""
-                    SELECT symbol, ltp, bid, ask, volume, oi, timestamp, 
-                           open_price, high_price, low_price, change_percent
-                    FROM market_data_live 
-                    WHERE symbol = $1 
-                    ORDER BY timestamp DESC 
-                    LIMIT 1
-                """, symbol)
-                
-                if result:
-                    return {
-                        'symbol': result['symbol'],
-                        'ltp': result['ltp'],
-                        'bid': result['bid'],
-                        'ask': result['ask'], 
-                        'volume': result['volume'],
-                        'oi': result['oi'],
-                        'open': result['open_price'],
-                        'high': result['high_price'],
-                        'low': result['low_price'],
-                        'change_percent': result['change_percent'],
-                        'timestamp': result['timestamp']
-                    }
+            if isinstance(db_pool, str):  # SQLite database
+                async with aiosqlite.connect(db_pool) as db:
+                    # Get latest market data from SQLite database
+                    cursor = await db.execute("""
+                        SELECT symbol, ltp, bid, ask, volume, oi, timestamp, 
+                               open_price, high_price, low_price, change_percent
+                        FROM market_data_live 
+                        WHERE symbol = ? 
+                        ORDER BY timestamp DESC 
+                        LIMIT 1
+                    """, (symbol,))
+                    result = await cursor.fetchone()
+                    
+                    if result:
+                        return {
+                            'symbol': result[0],
+                            'ltp': result[1],
+                            'bid': result[2],
+                            'ask': result[3], 
+                            'volume': result[4],
+                            'oi': result[5],
+                            'open': result[6],
+                            'high': result[7],
+                            'low': result[8],
+                            'change_percent': result[9],
+                            'timestamp': result[5]
+                        }
+            else:  # PostgreSQL pool
+                async with db_pool.acquire() as conn:
+                    # Get latest market data from database
+                    result = await conn.fetchrow("""
+                        SELECT symbol, ltp, bid, ask, volume, oi, timestamp, 
+                               open_price, high_price, low_price, change_percent
+                        FROM market_data_live 
+                        WHERE symbol = $1 
+                        ORDER BY timestamp DESC 
+                        LIMIT 1
+                    """, symbol)
+                    
+                    if result:
+                        return {
+                            'symbol': result['symbol'],
+                            'ltp': result['ltp'],
+                            'bid': result['bid'],
+                            'ask': result['ask'], 
+                            'volume': result['volume'],
+                            'oi': result['oi'],
+                            'open': result['open_price'],
+                            'high': result['high_price'],
+                            'low': result['low_price'],
+                            'change_percent': result['change_percent'],
+                            'timestamp': result['timestamp']
+                        }
         
         # Fallback: Try to get from Zerodha API
         try:
@@ -1089,22 +1117,36 @@ async def get_real_market_data(symbol: str) -> Optional[Dict]:
                     
                     # Store in database for future use
                     if db_pool:
-                        async with db_pool.acquire() as conn:
-                            await conn.execute("""
-                                INSERT INTO market_data_live (
-                                    symbol, ltp, bid, ask, volume, oi, 
-                                    open_price, high_price, low_price, timestamp
-                                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                                ON CONFLICT (symbol, timestamp) DO UPDATE SET
-                                    ltp = EXCLUDED.ltp,
-                                    bid = EXCLUDED.bid,
-                                    ask = EXCLUDED.ask,
-                                    volume = EXCLUDED.volume
-                            """, symbol, quote['ltp'], quote.get('bid', 0), 
-                            quote.get('ask', 0), quote.get('volume', 0), 
-                            quote.get('oi', 0), quote.get('open', 0),
-                            quote.get('high', 0), quote.get('low', 0), 
-                            datetime.utcnow())
+                        if isinstance(db_pool, str):  # SQLite
+                            async with aiosqlite.connect(db_pool) as db:
+                                await db.execute("""
+                                    INSERT INTO market_data_live (
+                                        symbol, ltp, bid, ask, volume, oi, 
+                                        open_price, high_price, low_price, timestamp
+                                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                """, (symbol, quote['ltp'], quote.get('bid', 0), 
+                                quote.get('ask', 0), quote.get('volume', 0), 
+                                quote.get('oi', 0), quote.get('open', 0),
+                                quote.get('high', 0), quote.get('low', 0), 
+                                datetime.utcnow()))
+                                await db.commit()
+                        else:  # PostgreSQL
+                            async with db_pool.acquire() as conn:
+                                await conn.execute("""
+                                    INSERT INTO market_data_live (
+                                        symbol, ltp, bid, ask, volume, oi, 
+                                        open_price, high_price, low_price, timestamp
+                                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                                    ON CONFLICT (symbol, timestamp) DO UPDATE SET
+                                        ltp = EXCLUDED.ltp,
+                                        bid = EXCLUDED.bid,
+                                        ask = EXCLUDED.ask,
+                                        volume = EXCLUDED.volume
+                                """, symbol, quote['ltp'], quote.get('bid', 0), 
+                                quote.get('ask', 0), quote.get('volume', 0), 
+                                quote.get('oi', 0), quote.get('open', 0),
+                                quote.get('high', 0), quote.get('low', 0), 
+                                datetime.utcnow())
                     
                     return quote
             
