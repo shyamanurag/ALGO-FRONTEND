@@ -15,9 +15,8 @@ import pandas as pd
 
 from .models import Position, PositionStatus
 from ..events import EventBus, EventType, TradingEvent
-from ..utils.decorators import synchronized_state
 
-logger = logging.getLogger(__name__
+logger = logging.getLogger(__name__)
 class PositionTracker:
     """
     Centralized position tracking with:
