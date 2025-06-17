@@ -252,6 +252,12 @@ class AlgoTradingAPITester:
         # Trading endpoints
         self.test_trading_endpoints()
         
+        # Autonomous trading endpoints
+        self.test_autonomous_trading_endpoints()
+        
+        # Strategy endpoints
+        self.test_strategy_endpoints()
+        
         # TrueData integration
         self.test_truedata_integration()
         
