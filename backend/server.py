@@ -609,33 +609,54 @@ async def fetch_one_db(query: str, *params):
 
 # Elite trading system initialization
 async def initialize_elite_trading_system():
-    """Initialize elite autonomous trading system"""
-    global elite_engine, analyzers
+    """Initialize elite autonomous trading system with proper TrueData"""
+    global elite_engine, analyzers, truedata_connected
     
     try:
-        # Initialize autonomous trading engine
-        from autonomous_trading_engine import get_autonomous_engine
+        # Initialize proper TrueData provider first
+        from truedata_provider import initialize_truedata, truedata_provider
         
-        autonomous_engine = get_autonomous_engine()
-        await autonomous_engine.start_autonomous_trading()
+        logger.info("🚀 Initializing TrueData provider with compression...")
+        truedata_success = await initialize_truedata()
         
-        # Set up market data integration
-        async def update_engine_with_market_data():
-            while True:
+        if truedata_success:
+            truedata_connected = True
+            logger.info("✅ TrueData connected with lz4 compression")
+            
+            # Set up market data callback for autonomous engine
+            def market_data_callback(market_update):
                 try:
-                    # Get current market data
-                    market_data = await _get_current_market_data()
-                    if market_data:
-                        autonomous_engine.update_market_data(market_data)
-                    await asyncio.sleep(30)  # Update every 30 seconds
+                    # Forward market data to autonomous engine
+                    if 'autonomous_engine' in globals():
+                        autonomous_engine.update_market_data({
+                            'indices': {
+                                market_update.symbol: {
+                                    'ltp': market_update.ltp,
+                                    'volume': market_update.volume,
+                                    'change_percent': market_update.change_percent
+                                }
+                            }
+                        })
                 except Exception as e:
-                    logger.error(f"Error updating market data: {e}")
-                    await asyncio.sleep(60)
+                    logger.error(f"Error forwarding market data: {e}")
+            
+            # Add callback to TrueData provider
+            truedata_provider.add_data_callback(market_data_callback)
+            
+        else:
+            logger.warning("⚠️ TrueData connection failed - autonomous trading may have limited data")
         
-        # Start market data updater
-        asyncio.create_task(update_engine_with_market_data())
-        
-        logger.info("✅ Elite Autonomous Trading System initialized and ACTIVE")
+        # Initialize autonomous trading engine
+        try:
+            from autonomous_trading_engine import get_autonomous_engine
+            
+            autonomous_engine = get_autonomous_engine()
+            await autonomous_engine.start_autonomous_trading()
+            
+            logger.info("✅ Elite Autonomous Trading System initialized and ACTIVE")
+            
+        except ImportError:
+            logger.warning("Autonomous engine not available - using basic mode")
         
     except Exception as e:
         logger.error(f"Error initializing elite trading system: {e}")
