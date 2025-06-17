@@ -15,7 +15,7 @@ from .user_tracker import UserTracker
 from .risk_manager import RiskManager
 from .notification_manager import NotificationManager
 from .trade_allocator import TradeAllocator
-from core.exceptions import OrderError
+from .exceptions import OrderError
 from .system_evolution import SystemEvolution
 from .capital_manager import CapitalManager
 from ..models.schema import Trade
