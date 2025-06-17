@@ -3,14 +3,12 @@ REAL TrueData WebSocket Client
 Connects to actual TrueData push.truedata.in servers with Trial106 credentials
 """
 import asyncio
-import threading
-import logging
-import time
-from datetime import datetime
-import os
-from typing import Dict, Any, Optional
 import websockets
 import json
+import threading
+import logging
+from datetime import datetime
+import os
 
 logger = logging.getLogger(__name__)
 
