@@ -287,5 +287,3 @@ class PositionTracker:
             logger.info("Daily metrics reset successfully")
         except Exception as e:
             logger.error(f"Error resetting daily metrics: {e}")
-</content>
-    </file>
