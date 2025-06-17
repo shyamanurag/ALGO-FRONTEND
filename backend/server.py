@@ -5147,26 +5147,27 @@ async def connect_truedata():
 
 @api_router.post("/truedata/disconnect")
 async def disconnect_truedata():
-    """Disconnect from TrueData with enhanced status tracking"""
+    """Disconnect from TrueData using FIXED implementation"""
     try:
+        from fixed_truedata_integration import disconnect_truedata_fixed
+        
+        logger.info("🔴 Disconnecting TrueData using FIXED implementation")
+        result = await disconnect_truedata_fixed()
+        
         # Update system state
         system_state['truedata_connected'] = False
+        system_state['active_data_source'] = None
         system_state['last_updated'] = datetime.utcnow().isoformat()
         
-        logger.info("TrueData disconnected successfully")
-        
-        return {
-            "success": True,
-            "message": "TrueData disconnected successfully",
-            "status": "disconnected",
-            "disconnected_at": system_state['last_updated']
-        }
+        return result
         
     except Exception as e:
         logger.error(f"Error disconnecting TrueData: {e}")
         return {
             "success": False,
-            "message": f"Error disconnecting TrueData: {str(e)}"
+            "message": "TrueData disconnect failed",
+            "error": str(e),
+            "implementation": "FIXED_TRUEDATA"
         }
 
 # ================================
