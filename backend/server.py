@@ -917,6 +917,7 @@ async def execute_strategy_loop():
                 from src.core.order_manager import OrderManager
                 from src.core.risk_manager import RiskManager  
                 from src.core.position_tracker import PositionTracker
+                from src.events import EventBus
                 
                 # Create basic config for components (both redis formats)
                 basic_config = {
@@ -940,16 +941,18 @@ async def execute_strategy_loop():
                     }
                 }
                 
+                # Initialize with proper dependencies
+                event_bus = EventBus()
+                position_tracker = PositionTracker(event_bus=event_bus)
+                risk_manager = RiskManager(config=basic_config, position_tracker=position_tracker, event_bus=event_bus)
                 order_manager = OrderManager(basic_config)
-                risk_manager = RiskManager(event_bus=None, config=basic_config)
-                position_tracker = PositionTracker(event_bus=None)
                 
                 # Initialize components
                 await order_manager.initialize()
                 await risk_manager.initialize()
                 # position_tracker doesn't have initialize method
                 
-                logger.info("✅ Real trading components initialized")
+                logger.info("✅ Real trading components initialized with proper architecture")
             except Exception as e:
                 logger.error(f"Failed to initialize trading components: {e}")
                 return
