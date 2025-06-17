@@ -952,6 +952,21 @@ async def execute_strategy_loop():
                 await risk_manager.initialize()
                 # position_tracker doesn't have initialize method
                 
+                # Set up FastAPI dependency injection
+                from fastapi import Depends
+                
+                def get_risk_manager():
+                    return risk_manager
+                
+                def get_position_tracker():
+                    return position_tracker
+                
+                def get_order_manager():
+                    return order_manager
+                
+                # Override dependency functions globally
+                app.dependency_overrides[RiskManager] = get_risk_manager
+                
                 logger.info("✅ Real trading components initialized with proper architecture")
             except Exception as e:
                 logger.error(f"Failed to initialize trading components: {e}")
