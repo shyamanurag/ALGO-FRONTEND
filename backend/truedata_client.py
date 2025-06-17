@@ -1,6 +1,6 @@
 """
-TrueData Client with Live Market Data Feed
-Provides real market data for autonomous trading
+CORRECT TrueData Integration using Official API
+Based on official documentation: https://pypi.org/project/truedata/
 """
 import threading
 import logging
@@ -8,7 +8,14 @@ import time
 from datetime import datetime
 import os
 from typing import Dict, Any, Optional
-import random
+
+# Import official TrueData library
+try:
+    from truedata import TD_live
+    print("✅ TrueData library imported successfully")
+except ImportError as e:
+    TD_live = None
+    print(f"❌ TrueData library import failed: {e}")
 
 logger = logging.getLogger(__name__)
 
@@ -16,87 +23,206 @@ class TrueDataClient:
     def __init__(self):
         self.login_id = os.environ.get('TRUEDATA_USERNAME', 'tdwsp697')
         self.password = os.environ.get('TRUEDATA_PASSWORD', 'shyam@697')
-        self.port = int(os.environ.get('TRUEDATA_PORT', '8084'))
         
+        self.td_obj = None
         self.connected = False
         self.live_data = {}
         self.connection_thread = None
         self.running = False
         
-        # Base prices for realistic simulation
-        self.base_prices = {
-            'NIFTY': 23050.0,
-            'BANKNIFTY': 49250.0,
-            'FINNIFTY': 21875.0
-        }
+        # Symbols to subscribe (TrueData format)
+        self.symbols = ['NIFTY 50', 'NIFTY BANK', 'NIFTY FIN SERVICE']
         
-        # Start connection automatically
-        self.start_connection()
+        # Initialize TrueData connection
+        self._initialize_truedata()
 
-    def start_connection(self):
-        """Start TrueData connection simulation"""
-        if self.running:
-            logger.warning("TrueData connection already running")
+    def _initialize_truedata(self):
+        """Initialize TrueData using correct API"""
+        try:
+            if TD_live is None:
+                logger.error("❌ TrueData library not available")
+                return
+                
+            # Correct initialization as per documentation
+            self.td_obj = TD_live(self.login_id, self.password)
+            
+            # Set up callback functions
+            self._setup_callbacks()
+            
+            logger.info(f"✅ TrueData TD_live initialized for user: {self.login_id}")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize TrueData: {e}")
+            self.td_obj = None
+
+    def _setup_callbacks(self):
+        """Setup TrueData callback functions"""
+        if not self.td_obj:
             return
             
-        self.running = True
-        self.connection_thread = threading.Thread(target=self._connection_loop, daemon=True)
-        self.connection_thread.start()
-        logger.info("🔗 Starting TrueData live market data feed")
+        try:
+            # Trade callback for tick data
+            @self.td_obj.trade_callback
+            def my_tick_data(tick_data):
+                """Handle tick data from TrueData"""
+                try:
+                    symbol = tick_data.get('symbol', '')
+                    
+                    # Map TrueData symbols to our format
+                    if 'NIFTY 50' in symbol or 'NIFTY' in symbol:
+                        our_symbol = 'NIFTY'
+                    elif 'NIFTY BANK' in symbol or 'BANKNIFTY' in symbol:
+                        our_symbol = 'BANKNIFTY'
+                    elif 'NIFTY FIN' in symbol or 'FINNIFTY' in symbol:
+                        our_symbol = 'FINNIFTY'
+                    else:
+                        our_symbol = symbol
+                    
+                    # Update live data with tick information
+                    self.live_data[our_symbol] = {
+                        'ltp': tick_data.get('price', tick_data.get('ltp', 0)),
+                        'volume': tick_data.get('volume', 0),
+                        'timestamp': datetime.now().isoformat(),
+                        'data_source': 'TRUEDATA_TICK',
+                        'raw_data': tick_data
+                    }
+                    
+                    logger.debug(f"📊 Tick data for {our_symbol}: {tick_data.get('price', 0)}")
+                    
+                except Exception as e:
+                    logger.error(f"❌ Error processing tick data: {e}")
 
-    def _connection_loop(self):
-        """Simulate live market data connection"""
-        # Simulate connection delay
-        time.sleep(2)
-        
-        self.connected = True
-        logger.info("✅ TrueData connected successfully! (Live Market Data Active)")
-        
+            # Bid-Ask callback for spread data  
+            @self.td_obj.bidask_callback
+            def my_bidask_data(bidask_data):
+                """Handle bid-ask data from TrueData"""
+                try:
+                    symbol = bidask_data.get('symbol', '')
+                    
+                    # Map symbol
+                    if 'NIFTY 50' in symbol:
+                        our_symbol = 'NIFTY'
+                    elif 'NIFTY BANK' in symbol:
+                        our_symbol = 'BANKNIFTY'
+                    elif 'NIFTY FIN' in symbol:
+                        our_symbol = 'FINNIFTY'
+                    else:
+                        our_symbol = symbol
+                    
+                    # Update with bid-ask data
+                    if our_symbol in self.live_data:
+                        self.live_data[our_symbol].update({
+                            'bid': bidask_data.get('bid_price', 0),
+                            'ask': bidask_data.get('ask_price', 0),
+                            'bid_qty': bidask_data.get('bid_qty', 0),
+                            'ask_qty': bidask_data.get('ask_qty', 0)
+                        })
+                    else:
+                        self.live_data[our_symbol] = {
+                            'bid': bidask_data.get('bid_price', 0),
+                            'ask': bidask_data.get('ask_price', 0),
+                            'bid_qty': bidask_data.get('bid_qty', 0),
+                            'ask_qty': bidask_data.get('ask_qty', 0),
+                            'timestamp': datetime.now().isoformat(),
+                            'data_source': 'TRUEDATA_BIDASK'
+                        }
+                    
+                    logger.debug(f"📈 Bid-Ask for {our_symbol}: {bidask_data.get('bid_price', 0)}-{bidask_data.get('ask_price', 0)}")
+                    
+                except Exception as e:
+                    logger.error(f"❌ Error processing bid-ask data: {e}")
+
+            logger.info("✅ TrueData callbacks configured")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to setup TrueData callbacks: {e}")
+
+    def start_connection(self):
+        """Start TrueData connection using correct API"""
+        if not self.td_obj:
+            logger.error("❌ TrueData TD_live not initialized")
+            return False
+            
+        if self.running:
+            logger.warning("⚠️ TrueData connection already running")
+            return True
+            
+        try:
+            self.running = True
+            
+            # Start live data subscription using correct method
+            logger.info(f"🔗 Starting TrueData live data for symbols: {self.symbols}")
+            
+            # Use correct method as per documentation
+            self.td_obj.start_live_data(self.symbols)
+            
+            # Mark as connected
+            self.connected = True
+            logger.info("✅ TrueData live data started successfully!")
+            
+            # Start monitoring thread
+            self.connection_thread = threading.Thread(target=self._monitor_connection, daemon=True)
+            self.connection_thread.start()
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to start TrueData live data: {e}")
+            self.connected = False
+            self.running = False
+            return False
+
+    def _monitor_connection(self):
+        """Monitor TrueData connection"""
         while self.running:
             try:
-                self._update_live_data()
-                time.sleep(1)  # Update every second for real-time feel
+                # Check if we're still getting data
+                if self.live_data:
+                    # Update connection status based on recent data
+                    latest_timestamp = max([
+                        datetime.fromisoformat(data.get('timestamp', '1970-01-01T00:00:00'))
+                        for data in self.live_data.values()
+                        if data.get('timestamp')
+                    ], default=datetime.min)
+                    
+                    # If no data in last 60 seconds, mark as disconnected
+                    if (datetime.now() - latest_timestamp).total_seconds() > 60:
+                        logger.warning("⚠️ No TrueData updates in 60 seconds")
+                        
+                # Log status every 30 seconds
+                logger.info(f"📊 TrueData Status: Connected={self.connected}, Symbols={len(self.live_data)}")
+                for symbol, data in self.live_data.items():
+                    ltp = data.get('ltp', 0)
+                    if ltp > 0:
+                        logger.info(f"   {symbol}: {ltp}")
+                
+                time.sleep(30)
                 
             except Exception as e:
-                logger.error(f"❌ Error in TrueData data update: {e}")
-                time.sleep(5)
+                logger.error(f"❌ Error in TrueData monitoring: {e}")
+                time.sleep(10)
 
-    def _update_live_data(self):
-        """Generate realistic live market data"""
-        current_time = datetime.now()
-        
-        for symbol, base_price in self.base_prices.items():
-            # Generate realistic price movements
-            price_change = random.uniform(-0.005, 0.005)  # ±0.5% max change
-            current_price = base_price * (1 + price_change)
+    def stop_connection(self):
+        """Stop TrueData connection using correct API"""
+        try:
+            self.running = False
             
-            # Calculate other realistic values
-            bid = current_price - random.uniform(0.25, 2.0)
-            ask = current_price + random.uniform(0.25, 2.0)
-            volume = random.randint(500000, 2000000)
+            if self.td_obj and self.connected:
+                # Stop live data using correct method
+                self.td_obj.stop_live_data(self.symbols)
+                
+                # Disconnect
+                self.td_obj.disconnect()
+                
+            self.connected = False
             
-            # Daily range simulation
-            day_change = random.uniform(-0.02, 0.02)  # ±2% daily range
-            open_price = base_price * (1 + day_change * 0.3)
-            high_price = current_price + random.uniform(0, base_price * 0.01)
-            low_price = current_price - random.uniform(0, base_price * 0.01)
+            if self.connection_thread:
+                self.connection_thread.join(timeout=5)
+                
+            logger.info("🔴 TrueData connection stopped")
             
-            self.live_data[symbol] = {
-                'ltp': round(current_price, 2),
-                'bid': round(bid, 2),
-                'ask': round(ask, 2),
-                'volume': volume,
-                'change_percent': round(day_change * 100, 2),
-                'open': round(open_price, 2),
-                'high': round(high_price, 2),
-                'low': round(low_price, 2),
-                'timestamp': current_time.isoformat(),
-                'data_source': 'TRUEDATA_LIVE',
-                'symbol': symbol
-            }
-            
-            # Update base price slowly to simulate trend
-            self.base_prices[symbol] = self.base_prices[symbol] * (1 + random.uniform(-0.0001, 0.0001))
+        except Exception as e:
+            logger.error(f"❌ Error stopping TrueData: {e}")
 
     def get_all_data(self):
         """Get all live market data"""
@@ -107,36 +233,48 @@ class TrueDataClient:
         return self.live_data.get(symbol)
 
     def is_connected(self):
-        """Check if connected"""
-        return self.connected
+        """Check if connected and receiving data"""
+        if not self.connected:
+            return False
+            
+        # Check if we have recent data
+        if not self.live_data:
+            return False
+            
+        # Check for recent updates (within last 5 minutes)
+        try:
+            latest_timestamp = max([
+                datetime.fromisoformat(data.get('timestamp', '1970-01-01T00:00:00'))
+                for data in self.live_data.values()
+                if data.get('timestamp')
+            ], default=datetime.min)
+            
+            return (datetime.now() - latest_timestamp).total_seconds() < 300
+            
+        except:
+            return self.connected
 
     def get_status(self):
-        """Get connection status"""
+        """Get detailed connection status"""
         return {
             'connected': self.connected,
             'login_id': self.login_id,
-            'port': self.port,
-            'symbols_count': len(self.live_data),
-            'symbols': list(self.live_data.keys()),
-            'last_update': datetime.now().isoformat() if self.live_data else None,
-            'data_source': 'TRUEDATA_LIVE'
+            'symbols_subscribed': self.symbols,
+            'symbols_receiving_data': list(self.live_data.keys()),
+            'data_count': len(self.live_data),
+            'last_update': max([
+                data.get('timestamp', '') for data in self.live_data.values()
+            ], default='Never') if self.live_data else 'Never',
+            'data_source': 'TRUEDATA_OFFICIAL_API'
         }
-
-    def stop_connection(self):
-        """Stop connection"""
-        self.running = False
-        self.connected = False
-        if self.connection_thread:
-            self.connection_thread.join(timeout=2)
-        logger.info("🔴 TrueData connection stopped")
 
 # Global instance
 truedata_client = TrueDataClient()
 
 # Helper functions for backward compatibility
 def initialize_truedata():
-    """Initialize TrueData"""
-    return True
+    """Initialize and start TrueData connection"""
+    return truedata_client.start_connection()
 
 def get_live_data(symbol=None):
     """Get live data"""
@@ -145,11 +283,13 @@ def get_live_data(symbol=None):
     return truedata_client.get_all_data()
 
 def is_connected():
-    """Check connection"""
+    """Check connection status"""
     return truedata_client.is_connected()
 
 def get_connection_status():
-    """Get status"""
+    """Get detailed status"""
     return truedata_client.get_status()
 
-logger.info("🚀 TrueData Live Market Data Feed initialized!")
+# Auto-start connection
+logger.info("🚀 TrueData Official API Client initialized")
+print("🚀 TrueData Official API Client ready to start")
