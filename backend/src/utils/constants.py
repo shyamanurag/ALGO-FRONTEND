@@ -19,6 +19,15 @@ LIMIT = "LIMIT"
 SL = "SL"
 SL_M = "SL-M"
 
+class OrderTypes:
+    """Order type constants"""
+    MARKET = "MARKET"
+    LIMIT = "LIMIT"
+    SL = "SL"
+    SL_M = "SL-M"
+    STOP_LOSS = "SL"
+    STOP_LOSS_MARKET = "SL-M"
+
 # Transaction types
 BUY = "BUY"
 SELL = "SELL"
