@@ -17,6 +17,7 @@ import json
 from datetime import datetime, time, timedelta
 import asyncpg
 import redis.asyncio as redis
+import aiosqlite
 from typing import List, Dict, Optional, Any
 from pydantic import BaseModel, Field
 import uuid
