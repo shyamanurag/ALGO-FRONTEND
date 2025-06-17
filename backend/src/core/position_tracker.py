@@ -187,12 +187,13 @@ for key, value in updates.items():
                         'daily_pnl': self.daily_pnl,
                         'pnl_percent': (total_pnl / self.capital) * 100,
                         'open_positions': len(self.positions),
-                        'total_trades': self.metrics['total_trades'},
-                        'win_rate': self._calculate_win_rate(],
+                        'total_trades': self.metrics['total_trades'],
+                        'win_rate': self._calculate_win_rate(),
                         'winners': self.metrics['winning_trades'],
                         'losers': self.metrics['losing_trades']
+                    }
 
-                        def get_risk_metrics(self) -> Dict:
+    def get_risk_metrics(self) -> Dict:
                             """Calculate risk metrics"""
                             # Position concentration
                             max_concentration = max(self.position_concentration.values()) if self.position_concentration else 0
