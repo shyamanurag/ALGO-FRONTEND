@@ -945,7 +945,7 @@ async def execute_strategy_loop():
                 event_bus = EventBus()
                 position_tracker = PositionTracker(event_bus=event_bus)
                 risk_manager = RiskManager(config=basic_config, position_tracker=position_tracker, event_bus=event_bus)
-                order_manager = OrderManager(basic_config)
+                order_manager = OrderManager(basic_config, risk_manager=risk_manager, position_tracker=position_tracker)
                 
                 # Initialize components
                 await order_manager.initialize()
