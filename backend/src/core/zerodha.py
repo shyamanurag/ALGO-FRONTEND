@@ -299,27 +299,42 @@ class ZerodhaIntegration(BaseBroker):
     async def get_orders(self) -> List[Dict]:
         """Get all orders for the day"""
         try:
+            if not self.is_authenticated:
+                logger.error("Not authenticated")
+                return []
+
             orders = await self._async_api_call(self.kite.orders)
-            # Process orders
-            processed_orders = []
-            for order in orders:
-                processed_orders.append({
-                    'user_id': self.user_id,
-                    'order_id': order['order_id'],
-                    'symbol': self._map_symbol_from_exchange(order['tradingsymbol']),
-                    'status': self._map_order_status(order['status']),
-                    'quantity': order['quantity'],
-                    'filled_quantity': order['filled_quantity'],
-                    'price': order['price'],
-                    'average_price': order['average_price'],
-                    'transaction_type': order['transaction_type'],
-                    'order_type': order['order_type'],
-                    'placed_at': order['order_timestamp']
-                })
-            return processed_orders
-        except Exception as e:
-            logger.error(f"Failed to fetch orders for user {self.user_id}: {e}")
+            if orders:
+                logger.info(f"Retrieved {len(orders)} orders")
+                return orders
             return []
+        except Exception as e:
+            logger.error(f"Failed to get orders: {e}")
+            return []
+
+    async def get_order_status(self, order_id: str) -> Dict:
+        """Get status of a specific order"""
+        try:
+            if not self.is_authenticated:
+                logger.error("Not authenticated")
+                return {}
+
+            # Get order history for specific order
+            order_history = await self.get_order_history(order_id)
+            if order_history:
+                # Return the latest status
+                return order_history[-1]
+            
+            # Fallback: get from all orders
+            all_orders = await self.get_orders()
+            for order in all_orders:
+                if order.get('order_id') == order_id:
+                    return order
+                    
+            return {}
+        except Exception as e:
+            logger.error(f"Failed to get order status for {order_id}: {e}")
+            return {}
 
     async def exit_position(self, symbol: str, quantity: Optional[float] = None) -> Optional[str]:
         """Exit a position"""
