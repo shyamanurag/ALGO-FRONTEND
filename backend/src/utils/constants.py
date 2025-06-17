@@ -39,6 +39,15 @@ COMPLETE = "COMPLETE"
 CANCELLED = "CANCELLED"
 REJECTED = "REJECTED"
 
+class OrderStatus:
+    """Order status constants"""
+    PENDING = "PENDING"
+    OPEN = "OPEN"
+    COMPLETE = "COMPLETE"
+    FILLED = "COMPLETE"
+    CANCELLED = "CANCELLED"
+    REJECTED = "REJECTED"
+
 # Exchanges
 NSE = "NSE"
 BSE = "BSE"
