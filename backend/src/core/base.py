@@ -20,6 +20,10 @@ logger = logging.getLogger(__name__)
 class BaseBroker(ABC):
     """Base broker interface for trading integrations"""
     
+    def __init__(self, config=None):
+        """Initialize base broker with optional config"""
+        self.config = config or {}
+    
     @abstractmethod
     async def place_order(self, symbol: str, quantity: int, transaction_type: str, 
                          order_type: str, price: float = 0, **kwargs):
