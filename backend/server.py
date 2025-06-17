@@ -918,14 +918,28 @@ async def execute_strategy_loop():
                 from src.core.risk_manager import RiskManager  
                 from src.core.position_tracker import PositionTracker
                 
-                order_manager = OrderManager()
-                risk_manager = RiskManager()
-                position_tracker = PositionTracker()
+                # Create basic config for components
+                basic_config = {
+                    'redis': {
+                        'host': 'localhost',
+                        'port': 6379,
+                        'db': 0
+                    },
+                    'trading': {
+                        'paper_trading': PAPER_TRADING,
+                        'max_daily_loss': 50000,
+                        'position_size_limit': 100000
+                    }
+                }
+                
+                order_manager = OrderManager(basic_config)
+                risk_manager = RiskManager(event_bus=None, config=basic_config)
+                position_tracker = PositionTracker(event_bus=None)
                 
                 # Initialize components
                 await order_manager.initialize()
                 await risk_manager.initialize()
-                await position_tracker.initialize()
+                # position_tracker doesn't have initialize method
                 
                 logger.info("✅ Real trading components initialized")
             except Exception as e:
