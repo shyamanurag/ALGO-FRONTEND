@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 class OrderManager:
     """Enhanced order manager with multi-user support, system evolution, and advanced order types"""
     
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any], risk_manager=None, position_tracker=None):
         self.config = config
         self.redis = redis.Redis(
             host=config['redis']['host'],
@@ -34,11 +34,13 @@ class OrderManager:
             db=config['redis']['db']
         )
         self.user_tracker = UserTracker(config)
-        self.risk_manager = RiskManager(config)
+        # Use provided risk_manager or create a simple one
+        self.risk_manager = risk_manager if risk_manager else MockRiskManager()
         self.notification_manager = NotificationManager(config)
         self.trade_allocator = TradeAllocator(config)
         self.system_evolution = SystemEvolution(config)
         self.capital_manager = CapitalManager(config)
+        self.position_tracker = position_tracker
         
         # Initialize order queues and locks
         self.order_queues = {}
