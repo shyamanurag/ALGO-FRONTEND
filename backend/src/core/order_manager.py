@@ -28,11 +28,19 @@ class OrderManager:
     
     def __init__(self, config: Dict[str, Any], risk_manager=None, position_tracker=None):
         self.config = config
-        self.redis = redis.Redis(
-            host=config['redis']['host'],
-            port=config['redis']['port'],
-            db=config['redis']['db']
-        )
+        self.redis = None
+        try:
+            self.redis = redis.Redis(
+                host=config['redis']['host'],
+                port=config['redis']['port'],
+                db=config['redis']['db']
+            )
+            # Test connection
+            self.redis.ping()
+            logger.info("✅ Redis connection established")
+        except Exception as e:
+            logger.warning(f"⚠️ Redis not available, running without persistence: {e}")
+            self.redis = None
         self.user_tracker = UserTracker(config)
         # Use provided risk_manager or create a simple one
         self.risk_manager = risk_manager if risk_manager else MockRiskManager()
