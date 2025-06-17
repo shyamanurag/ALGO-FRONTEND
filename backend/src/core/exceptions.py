@@ -11,6 +11,10 @@ class OrderException(TradingSystemException):
     """Exception for order-related errors"""
     pass
 
+class OrderError(OrderException):
+    """Alias for OrderException"""
+    pass
+
 class PositionException(TradingSystemException):
     """Exception for position-related errors"""
     pass
