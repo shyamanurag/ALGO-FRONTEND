@@ -142,10 +142,11 @@ class ProperTrueDataClient:
         """Listen for WebSocket messages using your exact format specification"""
         try:
             async for message in self.websocket:
+                logger.info(f"🔍 TrueData message received: {message}")
                 await self._process_message(message)
                 
-        except websockets.exceptions.ConnectionClosed:
-            logger.warning("TrueData WebSocket connection closed")
+        except websockets.exceptions.ConnectionClosed as e:
+            logger.warning(f"TrueData WebSocket connection closed: {e}")
             self.connected = False
             await self._auto_reconnect()
             
