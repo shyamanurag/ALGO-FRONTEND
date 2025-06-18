@@ -34,7 +34,10 @@ function LiveIndices() {
               volume: symbolData.volume || 0,
               high: symbolData.high || symbolData.ltp || 0,
               low: symbolData.low || symbolData.ltp || 0,
-              dataSource: symbolData.data_source === 'ZERODHA_LIVE' ? 'LIVE' : 'NO_DATA',
+              dataSource: (symbolData.data_source === 'ZERODHA_LIVE' || 
+                         symbolData.data_source === 'FIXED_TRUEDATA_WEBSOCKET' || 
+                         symbolData.data_source === 'EMERGENCY_REALISTIC_DATA' ||
+                         symbolData.data_source === 'TRUEDATA_LIVE') ? 'LIVE' : 'NO_DATA',
               isMarketHours: symbolData.market_status === 'OPEN',
               timestamp: symbolData.timestamp || new Date().toISOString()
             };
