@@ -49,7 +49,7 @@ class ProperTrueDataClient:
         self.username = os.environ.get('TRUEDATA_USERNAME', 'tdwsp697')
         self.password = os.environ.get('TRUEDATA_PASSWORD', 'shyam@697')
         self.url = os.environ.get('TRUEDATA_URL', 'push.truedata.in')
-        self.port = int(os.environ.get('TRUEDATA_PORT', '8082'))  # Correct port is 8082
+        self.port = int(os.environ.get('TRUEDATA_PORT', '8084'))  # Official TrueData port
         
         # Connection state
         self.websocket = None
