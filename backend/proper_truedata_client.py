@@ -74,12 +74,12 @@ class ProperTrueDataClient:
         logger.info(f"🔗 Proper TrueData Client initialized for {self.username}")
     
     async def connect(self) -> bool:
-        """Connect using your exact WebSocket URL format"""
+        """Connect using proper TrueData authentication format"""
         try:
-            # WebSocket URL as per your specification
-            ws_url = f"wss://{self.url}:{self.port}?user={self.username}&password={self.password}"
+            # TrueData WebSocket URL (no query params for auth)
+            ws_url = f"wss://{self.url}:{self.port}"
             
-            logger.info(f"🔄 Connecting to: {ws_url}")
+            logger.info(f"🔄 Connecting to TrueData WebSocket: {ws_url}")
             
             # Connect to WebSocket
             self.websocket = await websockets.connect(
@@ -89,6 +89,16 @@ class ProperTrueDataClient:
                 close_timeout=10
             )
             
+            # Send authentication message after connection
+            auth_message = {
+                "action": "authenticate",
+                "user": self.username,
+                "password": self.password
+            }
+            
+            await self.websocket.send(json.dumps(auth_message))
+            logger.info(f"🔐 Sent authentication for user: {self.username}")
+            
             self.connected = True
             self.running = True
             
@@ -96,6 +106,9 @@ class ProperTrueDataClient:
             
             # Start listening for messages
             asyncio.create_task(self._listen_messages())
+            
+            # Wait for authentication response before subscribing
+            await asyncio.sleep(2)
             
             # Subscribe to symbols
             await self._subscribe_symbols()
