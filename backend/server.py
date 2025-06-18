@@ -3352,7 +3352,8 @@ async def get_market_indices():
                         "high": data.get('high', 0),
                         "low": data.get('low', 0),
                         "open": data.get('open', 0),
-                        "timestamp": data.get('timestamp', current_time_ist.isoformat())
+                        "timestamp": data.get('timestamp', current_time_ist.isoformat()),
+                        "data_source": "FIXED_TRUEDATA_WEBSOCKET"  # Add data_source to each symbol
                     }
             
             return {
