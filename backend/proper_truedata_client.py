@@ -142,25 +142,21 @@ class ProperTrueDataClient:
             return False
     
     async def _subscribe_symbols(self):
-        """Subscribe to top 250 futures dynamically"""
+        """Subscribe to top futures using TrueData protocol"""
         try:
-            # For now, get available symbols from current subscription
-            # TODO: Implement dynamic top 250 futures fetching from TrueData
+            # Get symbols to subscribe (will expand to top 250 futures)
             symbols_to_subscribe = list(self.symbol_mappings.keys())
             
-            logger.info(f"📊 Subscribing to {len(symbols_to_subscribe)} symbols (will expand to top 250 futures)...")
+            logger.info(f"📊 Subscribing to {len(symbols_to_subscribe)} symbols using TrueData protocol...")
             
-            # Send subscription request using corrected format
+            # TrueData subscription message format
             subscribe_message = {
-                "action": "subscribe", 
-                "data": {
-                    "symbols": symbols_to_subscribe,
-                    "mode": "full"
-                }
+                "t": "s",  # Message type for subscription
+                "k": symbols_to_subscribe  # List of symbol keys/IDs
             }
             
             await self.websocket.send(json.dumps(subscribe_message))
-            logger.info(f"📊 Subscription request sent for {len(symbols_to_subscribe)} symbols")
+            logger.info(f"📊 TrueData subscription sent for {len(symbols_to_subscribe)} symbols")
             
         except Exception as e:
             logger.error(f"Error subscribing to symbols: {e}")
