@@ -2313,53 +2313,48 @@ async def connect_truedata_official():
         def on_disconnect():
             logger.info("🔌 TrueData WebSocket disconnected")
         
-        # Initialize TrueData WebSocket client
+        # Initialize FIXED TrueData implementation (no buggy library)
         try:
-            from truedata import TD_live
+            from fixed_truedata_integration import connect_truedata_fixed
             
-            # Note: TD_live uses port 3082 by default, but we can specify our port
-            td = TD_live(login_id=username, password=password, url="push.truedata.in", live_port=8084)
+            logger.info("🚀 Using FIXED TrueData implementation - no buggy library")
             
-            # Connect to TrueData
-            td.connect()
-            
-            # Wait a bit for connection to establish
-            await asyncio.sleep(8)
-            
-            # Subscribe to NIFTY for testing if connected
-            symbols = ['NIFTY']
-            td.start_live_data(symbols)
-            logger.info("📊 Started live data for NIFTY")
-            
-            # Wait for data
-            await asyncio.sleep(5)
-            
-            # Stop data and disconnect
-            td.stop_live_data()
-            td.disconnect()
-            
-            return {
-                "success": True,
-                "message": "TrueData official library connection successful!",
-                "credentials": {
-                    "username": username,
-                    "library": "truedata TD_live",
-                    "url": "push.truedata.in",
-                    "port": 8084
-                },
-                "test_performed": "Connected and subscribed to NIFTY",
-                "timestamp": datetime.now().isoformat()
+            # Initialize connection status
+            connection_status = {
+                "connected": False,
+                "symbols_subscribed": [],
+                "data_received": []
             }
             
-        except Exception as connection_error:
+            result = await connect_truedata_fixed()
+            
+            if result.get('success'):
+                logger.info("✅ FIXED TrueData connected successfully")
+                connection_status["connected"] = True
+                connection_status["symbols_subscribed"] = result.get('symbols', [])
+                
+                return {
+                    "success": True,
+                    "message": "TrueData connected using FIXED implementation",
+                    "connection_status": connection_status,
+                    "username": username,
+                    "implementation": "FIXED_TRUEDATA_WEBSOCKET",
+                    "port": 8084,
+                    "symbols_subscribed": result.get('symbols', []),
+                    "timestamp": datetime.now().isoformat()
+                }
+            else:
+                raise Exception("FIXED TrueData connection failed")
+                
+        except Exception as td_error:
+            logger.error(f"FIXED TrueData implementation error: {td_error}")
             return {
                 "success": False,
-                "message": f"TrueData connection error: {str(connection_error)}",
-                "error": str(connection_error),
-                "credentials": {
-                    "username": username,
-                    "library": "truedata official package"
-                }
+                "message": "FIXED TrueData implementation failed",
+                "error": str(td_error),
+                "username": username,
+                "implementation": "FIXED_TRUEDATA_ERROR",
+                "port": 8084
             }
             
     except ImportError as import_error:
