@@ -47,7 +47,47 @@ class HybridTrueDataClient:
             # Import the truedata-ws library
             from truedata_ws.websocket.TD import TD
             
-            logger.info(f"🚀 Starting Hybrid TrueData connection with {self.login_id}")
+            logger.info(f"🚀 Starting Hybrid TrueData connection with {self.login_id} on assigned port {self.assigned_port}")
+            
+            # First try TrueData assigned port 8084
+            try:
+                logger.info(f"🔗 Connecting to TrueData assigned port {self.assigned_port}...")
+                
+                # Initialize TrueData-WS for live data on assigned port
+                self.td_obj = TD(self.login_id, self.password, live_port=self.assigned_port)
+                
+                # Give it a moment to establish
+                time.sleep(5)
+                
+                # Test live data capability
+                logger.info("📊 Testing live data on assigned port...")
+                test_symbols = ['NIFTY', 'BANKNIFTY']
+                req_ids = self.td_obj.start_live_data(test_symbols)
+                
+                if req_ids and len(req_ids) > 0:
+                    logger.info(f"✅ TrueData LIVE connection successful on port {self.assigned_port}! Request IDs: {req_ids}")
+                    
+                    self.connected = True
+                    truedata_connection_status['connected'] = True
+                    truedata_connection_status['login_id'] = self.login_id
+                    truedata_connection_status['last_update'] = datetime.now().isoformat()
+                    truedata_connection_status['error'] = None
+                    truedata_connection_status['connection_type'] = f'real_truedata_live_port_{self.assigned_port}'
+                    truedata_connection_status['port'] = self.assigned_port
+                    
+                    # Start real data monitoring
+                    self._start_real_data_monitoring(req_ids)
+                    
+                    logger.info("🎯 REAL TrueData live connection established!")
+                    return True
+                else:
+                    logger.warning(f"❌ Live data failed on assigned port {self.assigned_port}")
+                    
+            except Exception as live_error:
+                logger.error(f"❌ TrueData live port {self.assigned_port} failed: {live_error}")
+            
+            # Fallback to historical + smart simulation
+            logger.info("🔄 Falling back to historical + smart simulation...")
             
             # Initialize TrueData-WS for historical data only (this works!)
             self.td_obj = TD(self.login_id, self.password, live_port=None)
