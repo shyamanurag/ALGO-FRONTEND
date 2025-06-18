@@ -23,8 +23,10 @@ truedata_connection_status = {
 
 class HybridTrueDataClient:
     def __init__(self):
+        # Environment variables with TrueData specified port
         self.login_id = os.environ.get('TRUEDATA_USERNAME', 'tdwsp697')
         self.password = os.environ.get('TRUEDATA_PASSWORD', 'shyam@697')
+        self.assigned_port = 8084  # TrueData specified port for this account
         
         self.td_obj = None
         self.connected = False
