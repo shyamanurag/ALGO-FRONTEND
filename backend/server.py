@@ -1986,46 +1986,46 @@ async def health_check():
 
 @api_router.post("/system/start-truedata")
 async def start_real_truedata():
-    """Start REAL TrueData connection with actual credentials"""
+    """Start REAL TrueData connection using FIXED implementation"""
     try:
-        from truedata_client import initialize_truedata, truedata_client
+        from fixed_truedata_integration import connect_truedata_fixed, get_truedata_status_fixed
         
-        logger.info("🚀 Starting REAL TrueData connection...")
+        logger.info("🚀 Starting REAL TrueData using FIXED implementation...")
         
-        # Initialize TrueData with real credentials
-        success = initialize_truedata()
+        # Use our fixed TrueData implementation
+        result = await connect_truedata_fixed()
         
-        if success:
-            # Wait for connection to establish
-            import asyncio
-            await asyncio.sleep(3)
-            
-            # Get connection status
-            status = truedata_client.get_status()
+        if result.get('success'):
+            # Get detailed status
+            status = get_truedata_status_fixed()
             
             return {
                 "success": True,
-                "message": "TrueData connection initiated",
+                "message": "TrueData connection initiated using FIXED implementation",
                 "status": status,
                 "credentials": {
-                    "username": truedata_client.username,
-                    "url": f"{truedata_client.url}:{truedata_client.port}"
+                    "username": "tdwsp697",
+                    "url": "push.truedata.in:8084",
+                    "implementation": "FIXED_TRUEDATA_WEBSOCKET"
                 },
+                "data_source": "FIXED_TRUEDATA_WEBSOCKET",
                 "timestamp": datetime.utcnow().isoformat()
             }
         else:
             return {
                 "success": False,
-                "message": "Failed to start TrueData connection",
-                "error": "Connection initialization failed"
+                "message": "Failed to start TrueData connection using FIXED implementation",
+                "error": result.get('error', 'Connection initialization failed'),
+                "implementation": "FIXED_TRUEDATA_ERROR"
             }
             
     except Exception as e:
-        logger.error(f"Error starting TrueData: {e}")
+        logger.error(f"TrueData startup error: {e}")
         return {
             "success": False,
             "message": "TrueData startup error",
-            "error": str(e)
+            "error": str(e),
+            "implementation": "FIXED_TRUEDATA_ERROR"
         }
 
 @api_router.post("/system/start-truedata-tcp")
