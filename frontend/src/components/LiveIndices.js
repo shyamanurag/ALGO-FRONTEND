@@ -226,7 +226,7 @@ function LiveIndices() {
       <div className="mt-4 p-3 bg-gray-50 rounded-lg">
         <div className="text-xs text-gray-600 space-y-1">
           <div><strong>Data Sources:</strong></div>
-          <div>🟢 LIVE - Real-time data from TrueData</div>
+          <div>🟢 LIVE - Real-time data from TrueData (Fixed WebSocket)</div>
           <div>🔴 NO DATA - No market data available</div>
         </div>
       </div>
