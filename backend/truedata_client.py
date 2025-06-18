@@ -35,43 +35,60 @@ class RealTrueDataClient:
         logger.info(f"🔗 Real TrueData-WS Client initialized for {self.login_id}")
 
     def start_connection(self):
-        """Start REAL TrueData connection using truedata-ws library"""
+        """Start REAL TrueData connection using truedata-ws library with correct 2025 configuration"""
         global truedata_connection_status
         
         try:
             # Import the truedata-ws library
             from truedata_ws.websocket.TD import TD
             
-            logger.info(f"🚀 Connecting to TrueData-WS with credentials: {self.login_id}")
+            logger.info(f"🚀 Connecting to TrueData-WS (2025 mechanism) with credentials: {self.login_id}")
             
-            # Initialize TrueData-WS connection
-            self.td_obj = TD(self.login_id, self.password)
+            # Try different port configurations based on subscription type
+            ports_to_try = [8082, 8084, 8086]  # 8082 is default for 2025
             
-            # Give it a moment to establish connection
-            time.sleep(3)
+            for port in ports_to_try:
+                try:
+                    logger.info(f"🔗 Attempting connection on port {port}...")
+                    
+                    # Initialize TrueData-WS connection with specific port
+                    self.td_obj = TD(self.login_id, self.password, live_port=port)
+                    
+                    # Give it a moment to establish connection
+                    time.sleep(5)
+                    
+                    # Test connection by trying to start live data
+                    logger.info(f"📊 Testing live data on port {port} for: {self.symbols}")
+                    req_ids = self.td_obj.start_live_data(self.symbols)
+                    
+                    if req_ids and len(req_ids) > 0:
+                        logger.info(f"✅ TrueData-WS live data started on port {port} with request IDs: {req_ids}")
+                        
+                        self.connected = True
+                        truedata_connection_status['connected'] = True
+                        truedata_connection_status['login_id'] = self.login_id
+                        truedata_connection_status['last_update'] = datetime.now().isoformat()
+                        truedata_connection_status['error'] = None
+                        truedata_connection_status['port'] = port
+                        
+                        # Start data monitoring thread
+                        self._start_data_monitoring(req_ids)
+                        
+                        logger.info(f"🎯 TrueData connection successful on port {port}!")
+                        return True
+                    else:
+                        logger.warning(f"❌ Port {port}: Failed to start live data, trying next port...")
+                        continue
+                        
+                except Exception as port_error:
+                    logger.warning(f"❌ Port {port} failed: {str(port_error)}")
+                    continue
             
-            # Start live data streaming for symbols
-            logger.info(f"📊 Starting live data for: {self.symbols}")
-            req_ids = self.td_obj.start_live_data(self.symbols)
-            
-            if req_ids:
-                logger.info(f"✅ TrueData-WS live data started with request IDs: {req_ids}")
-                
-                self.connected = True
-                truedata_connection_status['connected'] = True
-                truedata_connection_status['login_id'] = self.login_id
-                truedata_connection_status['last_update'] = datetime.now().isoformat()
-                truedata_connection_status['error'] = None
-                
-                # Start data monitoring thread
-                self._start_data_monitoring(req_ids)
-                
-                return True
-            else:
-                raise Exception("Failed to start live data streaming")
+            # If all ports failed
+            raise Exception("All TrueData ports failed - subscription may need verification")
                 
         except Exception as e:
-            error_msg = f"TrueData-WS connection failed: {str(e)}"
+            error_msg = f"TrueData-WS connection failed on all ports: {str(e)}"
             logger.error(f"❌ {error_msg}")
             
             truedata_connection_status['connected'] = False
