@@ -109,11 +109,13 @@ class ProperTrueDataClient:
                 close_timeout=10
             )
             
-            # Send authentication message after connection
+            # Send authentication message after connection (corrected format)
             auth_message = {
                 "action": "authenticate",
-                "user": self.username,
-                "password": self.password
+                "data": {
+                    "username": self.username,
+                    "password": self.password
+                }
             }
             
             await self.websocket.send(json.dumps(auth_message))
