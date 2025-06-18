@@ -64,65 +64,71 @@ class TrueOfficialTrueDataClient:
         logger.info(f"🔗 TRUE Official TrueData Client initialized for {self.username}")
     
     def start_connection(self) -> bool:
-        """Start connection using EXACT GitHub sample format"""
+        """Start connection using EXACT sequence: connect + start_live_data"""
         if not TRUEDATA_OFFICIAL_AVAILABLE:
             logger.error("❌ Official TrueData library not available")
             return False
             
         try:
-            logger.info("🚀 Starting TRUE Official TrueData connection (GitHub sample format)...")
+            logger.info("🚀 Starting TRUE Official TrueData with connect + start_live_data sequence...")
             
-            # EXACT format from TrueData API team re-confirmation
+            # Create TD_live object
             self.td_obj = TD_live(
                 self.username, 
                 self.password, 
                 url='push.truedata.in', 
                 live_port=8084,  # OFFICIAL port from TrueData API team
-                log_level=logging.WARNING,
+                log_level=logging.INFO,
                 full_feed=True,
                 dry_run=False
             )
             
-            logger.info("✅ TD_live object created successfully")
+            logger.info("✅ TD_live object created")
             
-            # Set up callbacks exactly like the sample
+            # Set up callbacks BEFORE connecting
             @self.td_obj.full_feed_trade_callback
             def full_feed_trade(tick_data):
                 try:
-                    logger.debug(f"📊 Tick data received: {tick_data}")
+                    logger.info(f"📊 REAL MARKET DATA: {tick_data}")
                     self._process_tick_data(tick_data)
                 except Exception as e:
                     logger.error(f"Error processing tick data: {e}")
             
             @self.td_obj.bidask_callback
-            def new_bidask(bidask_data):
+            def bidask_data(bidask_data):
                 try:
-                    logger.debug(f"📊 BidAsk data received: {bidask_data}")
+                    logger.debug(f"📊 BidAsk data: {bidask_data}")
                     self._process_bidask_data(bidask_data)
                 except Exception as e:
                     logger.error(f"Error processing bidask data: {e}")
             
-            @self.td_obj.full_feed_bar_callback
-            def full_feed_bar(bar_data):
-                try:
-                    logger.debug(f"📊 Bar data received: {bar_data}")
-                    self._process_bar_data(bar_data)
-                except Exception as e:
-                    logger.error(f"Error processing bar data: {e}")
+            logger.info("✅ Callbacks registered")
             
-            # Wait for connection to establish (like in sample)
-            time.sleep(3)
+            # Step 1: Connect to TrueData
+            logger.info("🔗 Connecting to TrueData...")
+            self.td_obj.connect()
+            
+            # Step 2: Wait for connection to stabilize
+            time.sleep(5)
+            
+            # Step 3: Start live data with initial symbols
+            initial_symbols = ['NIFTY', 'BANKNIFTY', 'FINNIFTY', 'RELIANCE', 'TCS']
+            logger.info(f"🚀 Starting live data for symbols: {initial_symbols}")
+            
+            self.td_obj.start_live_data(initial_symbols)
+            
+            # Step 4: Wait and verify data is flowing
+            time.sleep(5)
             
             self.connected = True
-            logger.info("✅ TRUE Official TrueData connected successfully!")
-            
-            # Subscribe to initial symbols
-            self._subscribe_initial_symbols()
+            logger.info("✅ TRUE Official TrueData connected and streaming!")
             
             return True
             
         except Exception as e:
             logger.error(f"Error starting TRUE Official TrueData: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             return False
     
     def _process_tick_data(self, tick_data):
