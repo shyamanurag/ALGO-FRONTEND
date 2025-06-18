@@ -108,22 +108,30 @@ class TrueOfficialTrueDataClient:
             logger.info("🔗 Connecting to TrueData...")
             self.td_obj.connect()
             
-            # Step 2: Wait for connection to stabilize
-            time.sleep(5)
+            # Step 2: Wait for connection to stabilize (shorter wait)
+            time.sleep(2)
             
-            # Step 3: Start live data with initial symbols
-            initial_symbols = ['NIFTY', 'BANKNIFTY', 'FINNIFTY', 'RELIANCE', 'TCS']
-            logger.info(f"🚀 Starting live data for symbols: {initial_symbols}")
-            
-            self.td_obj.start_live_data(initial_symbols)
-            
-            # Step 4: Wait and verify data is flowing
-            time.sleep(5)
-            
-            self.connected = True
-            logger.info("✅ TRUE Official TrueData connected and streaming!")
-            
-            return True
+            # Step 3: Check if connection is alive before starting live data
+            if hasattr(self.td_obj, 'live_websocket') and self.td_obj.live_websocket:
+                logger.info("✅ WebSocket connection verified")
+                
+                # Step 4: Start live data with initial symbols
+                initial_symbols = ['NIFTY', 'BANKNIFTY', 'FINNIFTY']
+                logger.info(f"🚀 Starting live data for symbols: {initial_symbols}")
+                
+                self.td_obj.start_live_data(initial_symbols)
+                logger.info("✅ start_live_data called successfully")
+                
+                # Step 5: Wait and verify data is flowing
+                time.sleep(3)
+                
+                self.connected = True
+                logger.info("✅ TRUE Official TrueData connected and streaming!")
+                
+                return True
+            else:
+                logger.error("❌ WebSocket connection not established")
+                return False
             
         except Exception as e:
             logger.error(f"Error starting TRUE Official TrueData: {e}")
