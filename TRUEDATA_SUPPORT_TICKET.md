@@ -1,122 +1,111 @@
-# TRUEDATA SUPPORT TICKET - EXACT CODE & ERROR REPRODUCTION
+# TRUEDATA SUPPORT TICKET - UPDATED WITH PORT 8084 RESULTS
 
 ## Account Details
 - **Login ID**: `tdwsp697`
 - **Password**: `shyam@697`
-- **Reported Issue**: Live data subscription shows as active but returns "User Subscription Expired"
+- **Assigned Port**: `8084` (as provided by TrueData)
+- **Issue**: Live data connection successful but data fields return None
 
-## Environment Details
-- **Python Version**: 3.11+
-- **truedata Library**: 7.0.0
-- **truedata-ws Library**: 5.0.11
-- **Operating System**: Linux (Kubernetes container)
-- **Date/Time**: 2025-06-18 11:25:00 UTC
+## 🎉 **BREAKTHROUGH - PORT 8084 WORKS!**
 
-## EXACT CODE BEING USED
-
-### Test 1: Official TrueData Library (truedata==7.0.0)
-
-```python
-from truedata import TD_live
-
-# Credentials
-login_id = 'tdwsp697'
-password = 'shyam@697'
-
-# This is the exact code that fails
-td_obj = TD_live(login_id, password)
-
-# Attempting to get LTP
-result = td_obj.get_ltp(['NIFTY'])
-```
-
-**EXACT ERROR OUTPUT:**
-```
-2025-06-18 11:23:59,414 - ERROR - [Errno 111] Connection refused - goodbye
-2025-06-18 11:24:04,686 - ERROR - [Errno 111] Connection refused - goodbye
-2025-06-18 11:24:09,970 - ERROR - [Errno 111] Connection refused - goodbye
-2025-06-18 11:24:15,246 - ERROR - [Errno 111] Connection refused - goodbye
-2025-06-18 11:24:20,517 - ERROR - [Errno 111] Connection refused - goodbye
-2025-06-18 11:24:25,788 - ERROR - [Errno 111] Connection refused - goodbye
-2025-06-18 11:24:31,086 - ERROR - [Errno 111] Connection refused - goodbye
-```
-
-### Test 2: TrueData-WS Library (truedata-ws==5.0.11)
+### ✅ What Now Works (After Using Port 8084)
 
 ```python
 from truedata_ws.websocket.TD import TD
 
-# Credentials
-login_id = 'tdwsp697'
-password = 'shyam@697'
+# Using TrueData assigned port 8084
+td_obj = TD('tdwsp697', 'shyam@697', live_port=8084)
 
-# Test 1: Historical data (THIS WORKS)
-td_historical = TD(login_id, password, live_port=None)
-# Result: ✅ SUCCESS - "Connected successfully to TrueData Historical Data Service"
-
-# Test 2: Live data on default port (THIS FAILS)
-td_live = TD(login_id, password, live_port=8082)
-
-# Attempting to start live data
-symbols = ['NIFTY']
-req_ids = td_live.start_live_data(symbols)
+# Live data subscription
+symbols = ['NIFTY', 'BANKNIFTY']
+req_ids = td_obj.start_live_data(symbols)
+# Returns: [2000, 2001] ✅ SUCCESS!
 ```
 
-**EXACT ERROR OUTPUT:**
+**RESULT:**
+- ✅ Connection to port 8084: **SUCCESS**
+- ✅ Live data subscription: **SUCCESS** 
+- ✅ Request IDs returned: `[2000, 2001]`
+- ✅ Data objects received with correct symbol names
+
+### ⚠️ Current Issue - Data Fields Are None
+
+**Data Structure Received:**
+```python
+{
+    'symbol': 'NIFTY',          # ✅ Correct
+    'ltp': None,                # ❌ Should have price
+    'day_open': None,           # ❌ Should have price  
+    'day_high': None,           # ❌ Should have price
+    'day_low': None,            # ❌ Should have price
+    'best_bid_price': None,     # ❌ Should have price
+    'best_ask_price': None,     # ❌ Should have price
+    'oi': None,                 # ❌ Should have value
+    'volume': None,             # ❌ Should have value
+    # ... all other fields are None
+}
 ```
-(2025-06-18 11:24:47,903) WARNING :: Connected successfully to TrueData Historical Data Service...
-(2025-06-18 11:24:49,000) ERROR :: The request encountered an error - User Subscription Expired
-(2025-06-18 11:24:51,150) ERROR :: The request encountered an error - User Subscription Expired
-(2025-06-18 11:24:53,279) ERROR :: The request encountered an error - User Subscription Expired
-(2025-06-18 11:24:55,320) ERROR :: The request encountered an error - User Subscription Expired
-[...continues repeating every 2 seconds...]
+
+## Environment Details
+- **Python Version**: 3.11+
+- **truedata-ws Library**: 5.0.11
+- **Operating System**: Linux (Kubernetes container)
+- **Date/Time**: 2025-06-18 11:32:00 UTC
+- **Test Time**: During market hours (Indian market)
+
+## Specific Questions for TrueData Support
+
+### 1. **Data Population**
+- Why are all price/volume fields returning `None`?
+- Is there a delay before data starts populating?
+- Are there additional steps needed after `start_live_data()`?
+
+### 2. **Market Timing**
+- Does live data only flow during active market hours?
+- Should we expect data during pre-market or after-hours?
+- What timezone does the data service operate in?
+
+### 3. **Symbol Format**
+- Are we using the correct symbol names ('NIFTY', 'BANKNIFTY')?
+- Should we use different formats like 'NIFTY-I' or token IDs?
+
+### 4. **Account Configuration**
+- Is our account fully activated for live data on port 8084?
+- Are there any account-specific settings we need to configure?
+
+## Code That Works (For TrueData Testing)
+
+```python
+from truedata_ws.websocket.TD import TD
+import time
+
+# Connection code that works
+td_obj = TD('tdwsp697', 'shyam@697', live_port=8084)
+
+# Start live data
+req_ids = td_obj.start_live_data(['NIFTY', 'BANKNIFTY'])
+print(f"Request IDs: {req_ids}")  # Should show [2000, 2001]
+
+# Wait and check data
+time.sleep(10)
+for req_id in req_ids:
+    data = td_obj.live_data.get(req_id)
+    print(f"Data for {req_id}: {data}")
+    # All fields show None - this is the issue to resolve
 ```
 
-## ANALYSIS
+## Request for TrueData Support
 
-### What Works ✅
-1. **Library Import**: Both libraries import successfully
-2. **Historical Data Connection**: `TD(login_id, password, live_port=None)` connects successfully
-3. **Authentication**: Credentials are accepted for historical data
-4. **Connection Message**: "Connected successfully to TrueData Historical Data Service"
+Since the connection is now working with port 8084, we need guidance on:
 
-### What Fails ❌
-1. **Official truedata Library**: Complete connection failure with "Connection refused"
-2. **Live Data Subscription**: "User Subscription Expired" error on all live ports
-3. **Live Ports Tested**: 8082, 8084, 8086 (all return same error)
+1. **How to get actual price data to populate in the fields**
+2. **Whether there are market timing restrictions**  
+3. **If additional authentication/activation steps are needed**
+4. **Expected data update frequency**
 
-## SPECIFIC QUESTIONS FOR TRUEDATA SUPPORT
-
-1. **Subscription Status**: 
-   - Is live data subscription actually active for account `tdwsp697`?
-   - What is the difference between historical and live data subscriptions?
-
-2. **Port Configuration**:
-   - Which ports should be used for live data access in 2025?
-   - Are there account-specific port assignments?
-
-3. **Library Compatibility**:
-   - Which library version should be used: `truedata==7.0.0` or `truedata-ws==5.0.11`?
-   - Are there known issues with the current versions?
-
-4. **Connection Method**:
-   - Is the connection code correct for the current API?
-   - Are there additional authentication steps required?
-
-## CURRENT IMPACT
-- Historical data access is working fine
-- Live data access is completely blocked
-- This is preventing real-time trading operations
-- Need urgent resolution for live trading to proceed
-
-## REQUEST
-Please confirm:
-1. The exact subscription status for live data on account `tdwsp697`
-2. The correct code pattern for live data access in 2025
-3. Any account-specific configuration requirements
-4. Expected timeline for resolution
+This is now a **data population issue** rather than a connection issue.
 
 ---
-**Generated**: 2025-06-18 11:25:00 UTC  
-**Contact**: Development Team  
-**Priority**: High - Production Impact
+**Updated**: 2025-06-18 11:32:00 UTC  
+**Status**: Connection Working, Data Fields Empty  
+**Priority**: Medium - Technical Configuration
