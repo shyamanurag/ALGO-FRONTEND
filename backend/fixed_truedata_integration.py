@@ -183,9 +183,9 @@ def get_truedata_status_fixed():
         }
 
 def get_live_market_data_fixed(symbol: str = None):
-    """FIXED version of getting live market data with emergency fallback"""
+    """FIXED version of getting live market data - REAL DATA ONLY"""
     try:
-        # Try to get data from proper TrueData client first
+        # ONLY use real TrueData client - NO FALLBACK TO MOCK DATA
         data = fixed_truedata_manager.get_market_data(symbol)
         
         if data and isinstance(data, dict) and len(data) > 0:
@@ -197,40 +197,20 @@ def get_live_market_data_fixed(symbol: str = None):
                 "timestamp": datetime.now().isoformat()
             }
         else:
-            # No data from TrueData WebSocket - use emergency fallback
-            from market_data_injector import get_emergency_data, start_emergency_data, is_emergency_running
-            
-            # Start emergency data if not already running
-            if not is_emergency_running():
-                logger.info("🚨 Starting emergency market data fallback")
-                start_emergency_data()
-            
-            # Get emergency data
-            emergency_data = get_emergency_data()
-            
-            if emergency_data:
-                return {
-                    "success": True,
-                    "data": emergency_data,
-                    "symbols": list(emergency_data.keys()),
-                    "data_source": "EMERGENCY_REALISTIC_DATA",
-                    "fallback_reason": "TrueData WebSocket connected but no data received",
-                    "timestamp": datetime.now().isoformat()
-                }
-            else:
-                return {
-                    "success": False,
-                    "message": "No market data available from any source",
-                    "data_source": "FIXED_TRUEDATA_WEBSOCKET",
-                    "timestamp": datetime.now().isoformat()
-                }
+            # NO FALLBACK - FAIL PROPERLY IF NO REAL DATA
+            return {
+                "success": False,
+                "message": "No real market data available from TrueData",
+                "data_source": "NO_REAL_DATA",
+                "timestamp": datetime.now().isoformat()
+            }
             
     except Exception as e:
         logger.error(f"Fixed market data error: {e}")
         return {
             "success": False,
             "error": str(e),
-            "data_source": "FIXED_TRUEDATA_ERROR"
+            "data_source": "TRUEDATA_ERROR"
         }
 
 logger.info("🚀 Fixed TrueData Integration loaded - no buggy library dependencies")
