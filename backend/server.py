@@ -2889,36 +2889,33 @@ async def test_truedata_connection():
 
 @api_router.get("/system/truedata-status")
 async def get_truedata_status():
-    """Get REAL TrueData connection status with current credentials"""
+    """Get REAL TrueData connection status using FIXED implementation"""
     try:
-        from truedata_client import truedata_client
+        from fixed_truedata_integration import get_truedata_status_fixed
         
-        # Get actual connection status from client
-        try:
-            status = truedata_client.get_status()
-            live_data = truedata_client.get_all_data()
-            is_connected = truedata_client.is_connected()
-        except Exception as client_error:
-            logger.warning(f"TrueData client error: {client_error}")
-            status = {"connected": False}
-            live_data = {}
-            is_connected = False
+        logger.info("🔍 Getting TrueData status using FIXED implementation")
+        result = get_truedata_status_fixed()
         
-        # Return status with current environment credentials
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error getting TrueData status: {e}")
         return {
-            "success": True,
+            "success": False,
+            "error": str(e),
             "connection_status": {
-                "connected": is_connected,
-                "username": TRUEDATA_USERNAME,  # Current env username
-                "url": f"{TRUEDATA_URL}:{TRUEDATA_PORT}",  # Current env URL:port
-                "sandbox": TRUEDATA_SANDBOX,
-                "symbols_count": len(live_data),
-                "symbols": list(live_data.keys()),
-                "last_update": status.get("last_update")
+                "connected": False,
+                "username": os.environ.get('TRUEDATA_USERNAME', ''),
+                "url": f"{os.environ.get('TRUEDATA_URL', 'push.truedata.in')}:{os.environ.get('TRUEDATA_PORT', '8084')}",
+                "sandbox": True,
+                "symbols_count": 0,
+                "symbols": [],
+                "last_update": "Never"
             },
-            "live_data_count": len(live_data),
-            "symbols": list(live_data.keys()),
-            "sample_data": {k: v for k, v in list(live_data.items())[:1]} if live_data else {}
+            "live_data_count": 0,
+            "symbols": [],
+            "sample_data": {},
+            "implementation": "FIXED_TRUEDATA_ERROR"
         }
         
     except Exception as e:
