@@ -609,24 +609,23 @@ async def fetch_one_db(query: str, *params):
 
 # Elite trading system initialization
 async def initialize_elite_trading_system():
-    """Initialize elite autonomous trading system with proper TrueData + emergency fallback"""
+    """Initialize elite autonomous trading system with REAL TrueData ONLY"""
     global elite_engine, analyzers, truedata_connected
     
     try:
-        # Initialize proper TrueData client (bypassing buggy library)
+        # Initialize proper TrueData client - NO MOCK DATA EVER
         from proper_truedata_client import initialize_proper_truedata, proper_truedata_client
-        from market_data_injector import add_emergency_callback, start_emergency_data
         
-        logger.info("🚀 Initializing PROPER TrueData WebSocket client with emergency fallback...")
+        logger.info("🚀 Initializing REAL TrueData WebSocket client - NO MOCK DATA")
         truedata_success = initialize_proper_truedata()
         
         # Set up market data callback for autonomous engine
         def market_data_callback(market_update):
             try:
-                # Forward market data to autonomous engine if available
-                logger.info(f"📊 Market Update: {market_update.symbol} - LTP: {market_update.ltp} ({market_update.data_source})")
+                # Forward ONLY REAL market data to autonomous engine
+                logger.info(f"📊 REAL Market Update: {market_update.symbol} - LTP: {market_update.ltp}")
                 
-                # Update global live market data
+                # Update global live market data with REAL data only
                 live_market_data[market_update.symbol] = {
                     'symbol': market_update.symbol,
                     'ltp': market_update.ltp,
@@ -634,42 +633,36 @@ async def initialize_elite_trading_system():
                     'oi': market_update.oi,
                     'change_percent': market_update.change_percent,
                     'timestamp': market_update.timestamp,
-                    'data_source': market_update.data_source
+                    'data_source': 'REAL_TRUEDATA_WEBSOCKET'
                 }
                 
             except Exception as e:
-                logger.error(f"Error forwarding market data: {e}")
+                logger.error(f"Error forwarding REAL market data: {e}")
         
         if truedata_success:
             truedata_connected = True
-            logger.info("✅ Proper TrueData connected - following exact specifications")
+            logger.info("✅ REAL TrueData connected - NO MOCK DATA")
             
             # Add callback to proper TrueData client
             proper_truedata_client.add_data_callback(market_data_callback)
             
         else:
-            logger.warning("⚠️ TrueData WebSocket connection failed")
+            logger.error("❌ REAL TrueData connection failed - SYSTEM WILL NOT USE MOCK DATA")
         
-        # ALWAYS set up emergency fallback callback (in case TrueData connects but no data flows)
-        logger.info("🚨 Setting up emergency data fallback system")
-        add_emergency_callback(market_data_callback)
-        
-        # Start emergency data immediately if TrueData failed
-        if not truedata_success:
-            logger.info("🚨 Starting emergency data feed immediately (TrueData failed)")
-            start_emergency_data()
-        
-        # Initialize autonomous trading engine
-        try:
-            from autonomous_trading_engine import get_autonomous_engine
-            
-            autonomous_engine = get_autonomous_engine()
-            await autonomous_engine.start_autonomous_trading()
-            
-            logger.info("✅ Elite Autonomous Trading System initialized and ACTIVE")
-            
-        except ImportError:
-            logger.warning("Autonomous engine not available - using basic mode")
+        # Initialize autonomous trading engine ONLY if real data is available
+        if truedata_success:
+            try:
+                from autonomous_trading_engine import get_autonomous_engine
+                
+                autonomous_engine = get_autonomous_engine()
+                await autonomous_engine.start_autonomous_trading()
+                
+                logger.info("✅ Elite Autonomous Trading System initialized with REAL DATA ONLY")
+                
+            except ImportError:
+                logger.warning("Autonomous engine not available")
+        else:
+            logger.error("❌ Autonomous trading NOT started - no real market data available")
         
     except Exception as e:
         logger.error(f"Error initializing elite trading system: {e}")
