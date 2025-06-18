@@ -26,26 +26,35 @@ def test_truedata_libraries():
         td_hist = TD(login_id, password, live_port=None)
         print("✅ Historical connection: SUCCESS")
         
-        print("1b. Testing live data connection (port 8082)...")
-        td_live = TD(login_id, password, live_port=8082)
+        print("1b. Testing live data connection (assigned port 8084)...")
+        td_live = TD(login_id, password, live_port=8084)
         print("✅ Live connection object created")
         
         print("1c. Testing live data subscription...")
-        symbols = ['NIFTY']
+        symbols = ['NIFTY', 'BANKNIFTY']
         req_ids = td_live.start_live_data(symbols)
         print(f"Live data request IDs: {req_ids}")
         
         if req_ids:
             print("✅ Live data subscription: SUCCESS")
             import time
-            time.sleep(5)
+            time.sleep(10)
             
             for req_id in req_ids:
                 data = td_live.live_data.get(req_id)
                 if data:
-                    print(f"✅ Data received: {data}")
+                    symbol = data.get('symbol', 'Unknown')
+                    ltp = data.get('ltp', 'None')
+                    print(f"✅ Data structure received for {symbol} (req_id {req_id})")
+                    print(f"   LTP: {ltp}")
+                    print(f"   Sample fields: {list(data.keys())[:5]}...")
+                    
+                    if ltp is None:
+                        print(f"   ⚠️ ISSUE: LTP is None - data fields not populating")
+                    else:
+                        print(f"   ✅ SUCCESS: Live price data flowing!")
                 else:
-                    print(f"⚠️ No data yet for request {req_id}")
+                    print(f"⚠️ No data structure for request {req_id}")
         else:
             print("❌ Live data subscription: FAILED")
             

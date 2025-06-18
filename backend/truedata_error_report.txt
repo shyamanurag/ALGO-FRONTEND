@@ -114,3 +114,6 @@ Creating TD_live object...
 2025-06-18 11:32:58,891 - ERROR - [Errno 111] Connection refused - goodbye
 2025-06-18 11:33:04,178 - ERROR - [Errno 111] Connection refused - goodbye
 2025-06-18 11:33:09,452 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:33:14,719 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:33:20,005 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:33:25,278 - ERROR - [Errno 111] Connection refused - goodbye
