@@ -2008,8 +2008,8 @@ async def start_real_truedata():
                 "status": status,
                 "credentials": {
                     "username": "tdwsp697",
-                    "url": "push.truedata.in:9084",
-                    "implementation": "TRUE_OFFICIAL_GITHUB_SAMPLE"
+                    "url": "push.truedata.in:8084",  # Official port from TrueData API team
+                    "implementation": "TRUE_OFFICIAL_TRUEDATA_CONFIRMED"
                 },
                 "data_source": "TRUEDATA_OFFICIAL_LIBRARY",
                 "timestamp": datetime.utcnow().isoformat()
