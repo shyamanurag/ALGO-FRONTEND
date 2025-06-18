@@ -183,10 +183,10 @@ def get_truedata_status_fixed():
         }
 
 def get_live_market_data_fixed(symbol: str = None):
-    """Get live market data using OFFICIAL TrueData library - REAL DATA ONLY"""
+    """Get live market data using TRUE OFFICIAL TrueData library - GitHub sample format"""
     try:
-        # ONLY use official TrueData client - NO MOCK DATA EVER
-        from official_truedata_client import get_live_data, is_connected
+        # Use TRUE official TrueData client (exact GitHub sample format)
+        from true_official_truedata_client import get_live_data, is_connected
         
         if is_connected():
             data = get_live_data(symbol)
@@ -196,26 +196,26 @@ def get_live_market_data_fixed(symbol: str = None):
                     "success": True,
                     "data": data,
                     "symbols": list(data.keys()) if isinstance(data, dict) else [symbol] if symbol else [],
-                    "data_source": "TRUEDATA_OFFICIAL",
+                    "data_source": "TRUEDATA_OFFICIAL_LIBRARY",
                     "timestamp": datetime.now().isoformat()
                 }
             else:
                 return {
                     "success": False,
-                    "message": "No real market data available from official TrueData",
+                    "message": "No real market data available from TRUE official TrueData",
                     "data_source": "TRUEDATA_OFFICIAL_NO_DATA",
                     "timestamp": datetime.now().isoformat()
                 }
         else:
             return {
                 "success": False,
-                "message": "Official TrueData not connected",
-                "data_source": "TRUEDATA_OFFICIAL_DISCONNECTED",
+                "message": "TRUE Official TrueData not connected",
+                "data_source": "TRUEDATA_OFFICIAL_DISCONNECTED", 
                 "timestamp": datetime.now().isoformat()
             }
             
     except Exception as e:
-        logger.error(f"Official TrueData error: {e}")
+        logger.error(f"TRUE Official TrueData error: {e}")
         return {
             "success": False,
             "error": str(e),
