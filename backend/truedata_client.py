@@ -30,7 +30,14 @@ class RealTrueDataClient:
         self.live_data = {}
         self.connection_thread = None
         self.running = False
-        self.symbols = ['NIFTY-I', 'BANKNIFTY-I', 'FINNIFTY-I']  # Index format for TrueData
+        
+        # Try different symbol formats that TrueData might expect
+        self.symbol_formats = [
+            ['NIFTY-I', 'BANKNIFTY-I', 'FINNIFTY-I'],  # Index format
+            ['NIFTY', 'BANKNIFTY', 'FINNIFTY'],        # Simple format
+            ['NSE:NIFTY', 'NSE:BANKNIFTY', 'NSE:FINNIFTY'],  # Exchange prefix
+            ['26000', '26009', '26037']                 # Token format (common TrueData tokens)
+        ]
         
         logger.info(f"🔗 Real TrueData-WS Client initialized for {self.login_id}")
 
