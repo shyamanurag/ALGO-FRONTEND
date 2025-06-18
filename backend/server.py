@@ -170,7 +170,7 @@ ZERODHA_ACCOUNT_NAME = os.environ.get('ZERODHA_ACCOUNT_NAME', '')
 # TrueData Configuration
 TRUEDATA_USERNAME = os.environ.get('TRUEDATA_USERNAME', '')
 TRUEDATA_PASSWORD = os.environ.get('TRUEDATA_PASSWORD', '')
-TRUEDATA_PORT = int(os.environ.get('TRUEDATA_PORT', '8086'))
+TRUEDATA_PORT = int(os.environ.get('TRUEDATA_PORT', '8082'))  # Correct TrueData port
 TRUEDATA_URL = os.environ.get('TRUEDATA_URL', 'push.truedata.in')
 TRUEDATA_SANDBOX = os.environ.get('TRUEDATA_SANDBOX', 'false').lower() == 'true'
 
