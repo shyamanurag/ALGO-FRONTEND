@@ -142,6 +142,102 @@ class HybridTrueDataClient:
             self._start_smart_live_data()
             return True  # Always return True to provide some data
 
+    def _start_real_data_monitoring(self, req_ids):
+        """Start monitoring REAL live data from TrueData port 8084"""
+        if self.running:
+            logger.warning("⚠️ Data monitoring already running")
+            return
+            
+        try:
+            self.running = True
+            self.connection_thread = threading.Thread(
+                target=self._real_data_monitoring_worker, 
+                args=(req_ids,), 
+                daemon=True
+            )
+            self.connection_thread.start()
+            
+            logger.info("🔴 REAL TrueData live data monitoring started")
+            
+        except Exception as e:
+            logger.error(f"❌ Failed to start real data monitoring: {e}")
+
+    def _real_data_monitoring_worker(self, req_ids):
+        """Monitor REAL live data from TrueData"""
+        global live_market_data
+        
+        logger.info("🔗 Starting REAL TrueData live data monitoring...")
+        
+        while self.running and self.connected:
+            try:
+                current_time = datetime.now()
+                updated_any = False
+                
+                for req_id in req_ids:
+                    try:
+                        # Get live data for this request ID
+                        live_obj = self.td_obj.live_data.get(req_id)
+                        
+                        if live_obj and hasattr(live_obj, 'ltp') and live_obj.ltp:
+                            # Extract symbol name
+                            symbol_name = getattr(live_obj, 'symbol', f'SYMBOL_{req_id}')
+                            if '-I' in symbol_name:
+                                symbol_name = symbol_name.replace('-I', '')
+                            
+                            # Create real market data object
+                            market_data = {
+                                'ltp': float(live_obj.ltp),
+                                'symbol': symbol_name,
+                                'timestamp': current_time.isoformat(),
+                                'data_source': 'REAL_TRUEDATA_LIVE_8084',
+                                'status': 'LIVE_REAL',
+                                'req_id': req_id
+                            }
+                            
+                            # Add additional real data if available
+                            if hasattr(live_obj, 'bid') and live_obj.bid:
+                                market_data['bid'] = float(live_obj.bid)
+                            if hasattr(live_obj, 'ask') and live_obj.ask:
+                                market_data['ask'] = float(live_obj.ask)
+                            if hasattr(live_obj, 'volume') and live_obj.volume:
+                                market_data['volume'] = int(live_obj.volume)
+                            if hasattr(live_obj, 'open') and live_obj.open:
+                                market_data['open'] = float(live_obj.open)
+                            if hasattr(live_obj, 'high') and live_obj.high:
+                                market_data['high'] = float(live_obj.high)
+                            if hasattr(live_obj, 'low') and live_obj.low:
+                                market_data['low'] = float(live_obj.low)
+                            
+                            # Calculate change percent if open is available
+                            if 'open' in market_data and market_data['open'] > 0:
+                                change = market_data['ltp'] - market_data['open']
+                                market_data['change_percent'] = round((change / market_data['open']) * 100, 2)
+                            
+                            # Store REAL data
+                            live_market_data[symbol_name] = market_data
+                            self.live_data[symbol_name] = market_data
+                            updated_any = True
+                            
+                    except Exception as e:
+                        logger.debug(f"Error processing real data req_id {req_id}: {e}")
+                
+                if updated_any:
+                    # Update connection status
+                    truedata_connection_status['last_update'] = current_time.isoformat()
+                    
+                    # Log real data status every 30 seconds
+                    if int(time.time()) % 30 == 0:
+                        prices_str = ", ".join([f"{sym}=₹{data['ltp']:.2f}" for sym, data in live_market_data.items()])
+                        logger.info(f"📊 REAL LIVE DATA (Port 8084): {prices_str}")
+                
+                # Check data every 1 second for real-time updates
+                time.sleep(1)
+                
+            except Exception as e:
+                logger.error(f"❌ Error in real TrueData monitoring: {e}")
+                truedata_connection_status['error'] = str(e)
+                time.sleep(10)  # Wait before retrying
+
     def _start_smart_live_data(self):
         """Start intelligent live data generation based on real market patterns"""
         if self.running:
