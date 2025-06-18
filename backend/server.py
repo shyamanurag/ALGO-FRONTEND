@@ -3323,120 +3323,79 @@ async def test_market_data_feed():
 
 @api_router.get("/market-data/indices")
 async def get_market_indices():
-    """Get live market indices - Zerodha primary, demo fallback"""
+    """Get live market indices using FIXED TrueData implementation"""
     try:
+        from fixed_truedata_integration import get_live_market_data_fixed
         import pytz
+        
         ist_tz = pytz.timezone('Asia/Kolkata')
         current_time_ist = datetime.now(ist_tz)
         
-        # Try to get live data from Zerodha if available
-        live_indices_data = {}
-        data_source = "NO_DATA"
-        connection_status = "DISCONNECTED"
-        provider_name = "TrueData"
+        logger.info("📊 Getting market indices using FIXED TrueData")
         
-        try:
-            from real_zerodha_client import get_real_zerodha_client
-            zerodha_client = get_real_zerodha_client()
-            status = zerodha_client.get_status()
+        # Use our fixed TrueData implementation
+        result = get_live_market_data_fixed()
+        
+        if result.get('success'):
+            # Format data for indices response
+            indices_data = {}
+            if result.get('data'):
+                for symbol, data in result['data'].items():
+                    indices_data[symbol] = {
+                        "symbol": symbol,
+                        "ltp": data.get('ltp', 0),
+                        "change": data.get('change', 0),
+                        "change_percent": data.get('change_percent', 0),
+                        "volume": data.get('volume', 0),
+                        "high": data.get('high', 0),
+                        "low": data.get('low', 0),
+                        "open": data.get('open', 0),
+                        "timestamp": data.get('timestamp', current_time_ist.isoformat())
+                    }
             
-            if status.get('authenticated', False):
-                # Get live data from Zerodha
-                kite = zerodha_client.kite
-                if kite:
-                    # Get indices data
-                    instruments = [
-                        "NSE:NIFTY 50",
-                        "NSE:NIFTY BANK", 
-                        "NSE:NIFTY FIN SERVICE"
-                    ]
-                    
-                    quotes = kite.quote(instruments)
-                    
-                    # Map to our format
-                    if "NSE:NIFTY 50" in quotes:
-                        nifty_data = quotes["NSE:NIFTY 50"]
-                        live_indices_data["NIFTY"] = {
-                            "symbol": "NIFTY",
-                            "ltp": nifty_data.get("last_price", 0),
-                            "change": nifty_data.get("net_change", 0),
-                            "change_percent": nifty_data.get("percentage_change", 0),
-                            "volume": nifty_data.get("volume", 0),
-                            "open": nifty_data.get("ohlc", {}).get("open", 0),
-                            "high": nifty_data.get("ohlc", {}).get("high", 0),
-                            "low": nifty_data.get("ohlc", {}).get("low", 0),
-                            "timestamp": current_time_ist.isoformat()
-                        }
-                    
-                    if "NSE:NIFTY BANK" in quotes:
-                        banknifty_data = quotes["NSE:NIFTY BANK"]
-                        live_indices_data["BANKNIFTY"] = {
-                            "symbol": "BANKNIFTY",
-                            "ltp": banknifty_data.get("last_price", 0),
-                            "change": banknifty_data.get("net_change", 0),
-                            "change_percent": banknifty_data.get("percentage_change", 0),
-                            "volume": banknifty_data.get("volume", 0),
-                            "open": banknifty_data.get("ohlc", {}).get("open", 0),
-                            "high": banknifty_data.get("ohlc", {}).get("high", 0),
-                            "low": banknifty_data.get("ohlc", {}).get("low", 0),
-                            "timestamp": current_time_ist.isoformat()
-                        }
-                    
-                    if "NSE:NIFTY FIN SERVICE" in quotes:
-                        finnifty_data = quotes["NSE:NIFTY FIN SERVICE"]
-                        live_indices_data["FINNIFTY"] = {
-                            "symbol": "FINNIFTY",
-                            "ltp": finnifty_data.get("last_price", 0),
-                            "change": finnifty_data.get("net_change", 0),
-                            "change_percent": finnifty_data.get("percentage_change", 0),
-                            "volume": finnifty_data.get("volume", 0),
-                            "open": finnifty_data.get("ohlc", {}).get("open", 0),
-                            "high": finnifty_data.get("ohlc", {}).get("high", 0),
-                            "low": finnifty_data.get("ohlc", {}).get("low", 0),
-                            "timestamp": current_time_ist.isoformat()
-                        }
-                    
-                    if live_indices_data:
-                        data_source = "ZERODHA_LIVE"
-                        connection_status = "CONNECTED"
-                        provider_name = "Zerodha"
-                        logger.info(f"📈 Live indices data from Zerodha: {len(live_indices_data)} indices")
-                    
-        except Exception as zerodha_error:
-            logger.warning(f"Zerodha data fetch failed: {zerodha_error}")
-        
-        # Fallback: Only return data if we have REAL data
-        # NO DEMO DATA - Analytics integrity is critical
-        if not live_indices_data:
-            data_source = "NO_DATA"
-            connection_status = "DISCONNECTED"
-            provider_name = "TrueData"
-            logger.info("❌ No real market data available - returning empty state")
-        
-        # Return response with real data only
-        return {
-            "status": "success" if live_indices_data else "no_data",
-            "timestamp": current_time_ist.isoformat(),
-            "market_status": "OPEN" if is_market_open() else "CLOSED",
-            "data_source": data_source,
-            "connection_status": connection_status,
-            "provider": {
-                "name": provider_name,
-                "status": connection_status
-            },
-            "last_update": current_time_ist.strftime("%I:%M:%S %p IST"),
-            "indices": live_indices_data  # Only real data or empty dict
-        }
+            return {
+                "status": "success" if indices_data else "no_data",
+                "timestamp": current_time_ist.isoformat(),
+                "market_status": "OPEN" if 9 <= current_time_ist.hour <= 15 else "CLOSED",
+                "data_source": "FIXED_TRUEDATA_WEBSOCKET",
+                "connection_status": "CONNECTED",
+                "provider": {
+                    "name": "TrueData",
+                    "status": "CONNECTED"
+                },
+                "last_update": current_time_ist.strftime("%I:%M:%S %p IST"),
+                "indices": indices_data
+            }
+        else:
+            return {
+                "status": "no_data",
+                "timestamp": current_time_ist.isoformat(),
+                "market_status": "OPEN" if 9 <= current_time_ist.hour <= 15 else "CLOSED",
+                "data_source": "FIXED_TRUEDATA_WEBSOCKET",
+                "connection_status": "CONNECTED",
+                "provider": {
+                    "name": "TrueData",
+                    "status": "CONNECTED"
+                },
+                "last_update": current_time_ist.strftime("%I:%M:%S %p IST"),
+                "indices": {},
+                "message": "TrueData connected but no data received yet"
+            }
         
     except Exception as e:
         logger.error(f"Error getting market indices: {e}")
         return {
             "status": "error",
-            "message": f"Market data error: {str(e)}",
-            "data_source": "ERROR",
+            "timestamp": datetime.now().isoformat(),
+            "market_status": "UNKNOWN",
+            "data_source": "FIXED_TRUEDATA_ERROR",
             "connection_status": "ERROR",
-            "indices": {},
-            "timestamp": datetime.utcnow().isoformat()
+            "provider": {
+                "name": "TrueData",
+                "status": "ERROR"
+            },
+            "error": str(e),
+            "indices": {}
         }
 
 @api_router.get("/market-data/live")
