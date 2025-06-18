@@ -609,21 +609,21 @@ async def fetch_one_db(query: str, *params):
 
 # Elite trading system initialization
 async def initialize_elite_trading_system():
-    """Initialize elite autonomous trading system with REAL TrueData ONLY"""
+    """Initialize elite autonomous trading system with OFFICIAL TrueData library"""
     global elite_engine, analyzers, truedata_connected
     
     try:
-        # Initialize proper TrueData client - NO MOCK DATA EVER
-        from proper_truedata_client import initialize_proper_truedata, proper_truedata_client
+        # Initialize OFFICIAL TrueData client (no more custom implementation)
+        from official_truedata_client import initialize_official_truedata, official_truedata_client
         
-        logger.info("🚀 Initializing REAL TrueData WebSocket client - NO MOCK DATA")
-        truedata_success = initialize_proper_truedata()
+        logger.info("🚀 Initializing OFFICIAL TrueData client (truedata-ws v5.0.11)...")
+        truedata_success = initialize_official_truedata()
         
         # Set up market data callback for autonomous engine
         def market_data_callback(market_update):
             try:
-                # Forward ONLY REAL market data to autonomous engine
-                logger.info(f"📊 REAL Market Update: {market_update.symbol} - LTP: {market_update.ltp}")
+                # Forward REAL market data to autonomous engine
+                logger.info(f"📊 REAL Market Data: {market_update.symbol} - LTP: {market_update.ltp} (Official)")
                 
                 # Update global live market data with REAL data only
                 live_market_data[market_update.symbol] = {
@@ -633,7 +633,7 @@ async def initialize_elite_trading_system():
                     'oi': market_update.oi,
                     'change_percent': market_update.change_percent,
                     'timestamp': market_update.timestamp,
-                    'data_source': 'REAL_TRUEDATA_WEBSOCKET'
+                    'data_source': 'TRUEDATA_OFFICIAL'
                 }
                 
             except Exception as e:
@@ -641,13 +641,13 @@ async def initialize_elite_trading_system():
         
         if truedata_success:
             truedata_connected = True
-            logger.info("✅ REAL TrueData connected - NO MOCK DATA")
+            logger.info("✅ OFFICIAL TrueData connected - REAL DATA FLOWING")
             
-            # Add callback to proper TrueData client
-            proper_truedata_client.add_data_callback(market_data_callback)
+            # Add callback to official TrueData client
+            official_truedata_client.add_data_callback(market_data_callback)
             
         else:
-            logger.error("❌ REAL TrueData connection failed - SYSTEM WILL NOT USE MOCK DATA")
+            logger.error("❌ OFFICIAL TrueData connection failed - SYSTEM WILL NOT USE MOCK DATA")
         
         # Initialize autonomous trading engine ONLY if real data is available
         if truedata_success:
@@ -657,7 +657,7 @@ async def initialize_elite_trading_system():
                 autonomous_engine = get_autonomous_engine()
                 await autonomous_engine.start_autonomous_trading()
                 
-                logger.info("✅ Elite Autonomous Trading System initialized with REAL DATA ONLY")
+                logger.info("✅ Elite Autonomous Trading System initialized with OFFICIAL REAL DATA")
                 
             except ImportError:
                 logger.warning("Autonomous engine not available")
