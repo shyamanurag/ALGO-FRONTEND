@@ -1067,8 +1067,25 @@ async def execute_strategy_loop():
         logger.error(f"Error in strategy execution loop: {e}")
 
 async def get_real_market_data(symbol: str) -> Optional[Dict]:
-    """Get real market data from database or API"""
+    """Get real market data from TrueData, database, or API"""
     try:
+        # PRIORITY 1: Try TrueData first (REAL LIVE DATA)
+        try:
+            from truedata_client import get_live_data, is_connected as td_connected
+            
+            if td_connected():
+                live_data = get_live_data(symbol)
+                if live_data and live_data.get('ltp', 0) > 0:
+                    logger.info(f"📊 REAL TrueData: {symbol} = ₹{live_data['ltp']}")
+                    return live_data
+                else:
+                    logger.debug(f"TrueData: No live data for {symbol}")
+            else:
+                logger.debug("TrueData not connected")
+        except Exception as e:
+            logger.debug(f"TrueData error for {symbol}: {e}")
+        
+        # PRIORITY 2: Check database cache
         if db_pool:
             if isinstance(db_pool, str):  # SQLite database
                 async with aiosqlite.connect(db_pool) as db:
