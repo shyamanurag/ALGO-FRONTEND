@@ -134,7 +134,7 @@ ZERODHA_CLIENT_ID = os.environ.get('ZERODHA_CLIENT_ID')
 TRUEDATA_USERNAME = os.environ.get('TRUEDATA_USERNAME')
 TRUEDATA_PASSWORD = os.environ.get('TRUEDATA_PASSWORD')
 TRUEDATA_URL = os.environ.get('TRUEDATA_URL', 'push.truedata.in')
-TRUEDATA_PORT = int(os.environ.get('TRUEDATA_PORT', '8086'))
+TRUEDATA_PORT = int(os.environ.get('TRUEDATA_PORT', '8082'))  # Correct TrueData port
 DATA_PROVIDER_ENABLED = os.environ.get('DATA_PROVIDER_ENABLED', 'true').lower() == 'true'
 
 # Global state management
