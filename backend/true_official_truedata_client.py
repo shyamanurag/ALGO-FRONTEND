@@ -72,12 +72,12 @@ class TrueOfficialTrueDataClient:
         try:
             logger.info("🚀 Starting TRUE Official TrueData connection (GitHub sample format)...")
             
-            # EXACT format from GitHub sample
+            # EXACT format from TrueData API team re-confirmation
             self.td_obj = TD_live(
                 self.username, 
                 self.password, 
                 url='push.truedata.in', 
-                live_port=9084,  # Correct port from sample
+                live_port=8084,  # OFFICIAL port from TrueData API team
                 log_level=logging.WARNING,
                 full_feed=True,
                 dry_run=False
