@@ -6005,6 +6005,29 @@ async def startup_event():
         # Initialize database
         await init_database()
         
+        # Initialize TrueData connection
+        logger.info("🔗 Initializing REAL TrueData connection...")
+        try:
+            from truedata_client import initialize_truedata, get_connection_status
+            
+            truedata_success = initialize_truedata()
+            if truedata_success:
+                system_state['truedata_connected'] = True
+                system_state['data_source'] = 'REAL_TRUEDATA'
+                logger.info("✅ TrueData REAL connection established successfully!")
+                
+                # Test data flow
+                status = get_connection_status()
+                logger.info(f"📊 TrueData Status: {status}")
+            else:
+                logger.warning("⚠️ TrueData connection failed, autonomous trading will use fallback")
+                system_state['truedata_connected'] = False
+                system_state['data_source'] = 'NO_DATA'
+        except Exception as e:
+            logger.error(f"❌ TrueData initialization error: {e}")
+            system_state['truedata_connected'] = False
+            system_state['data_source'] = 'ERROR'
+        
         # Initialize elite trading system
         if CORE_COMPONENTS_AVAILABLE:
             await initialize_elite_trading_system()
