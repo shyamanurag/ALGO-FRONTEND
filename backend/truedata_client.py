@@ -64,31 +64,40 @@ class RealTrueDataClient:
                     # Give it a moment to establish connection
                     time.sleep(5)
                     
-                    # Test connection by trying to start live data
-                    logger.info(f"📊 Testing live data on port {port} for: {self.symbols}")
-                    req_ids = self.td_obj.start_live_data(self.symbols)
+                    # Try different symbol formats
+                    for i, symbols in enumerate(self.symbol_formats):
+                        try:
+                            logger.info(f"📊 Testing symbol format {i+1} on port {port}: {symbols}")
+                            req_ids = self.td_obj.start_live_data(symbols)
+                            
+                            if req_ids and len(req_ids) > 0:
+                                logger.info(f"✅ SUCCESS! Port {port}, Format {i+1}: {req_ids}")
+                                
+                                self.symbols = symbols  # Store working symbols
+                                self.connected = True
+                                truedata_connection_status['connected'] = True
+                                truedata_connection_status['login_id'] = self.login_id
+                                truedata_connection_status['last_update'] = datetime.now().isoformat()
+                                truedata_connection_status['error'] = None
+                                truedata_connection_status['port'] = port
+                                truedata_connection_status['symbols_format'] = symbols
+                                
+                                # Start data monitoring thread
+                                self._start_data_monitoring(req_ids)
+                                
+                                logger.info(f"🎯 TrueData connection successful! Port: {port}, Symbols: {symbols}")
+                                return True
+                            else:
+                                logger.debug(f"Format {i+1} failed on port {port}")
+                                
+                        except Exception as symbol_error:
+                            logger.debug(f"Symbol format {i+1} error on port {port}: {str(symbol_error)}")
+                            continue
                     
-                    if req_ids and len(req_ids) > 0:
-                        logger.info(f"✅ TrueData-WS live data started on port {port} with request IDs: {req_ids}")
-                        
-                        self.connected = True
-                        truedata_connection_status['connected'] = True
-                        truedata_connection_status['login_id'] = self.login_id
-                        truedata_connection_status['last_update'] = datetime.now().isoformat()
-                        truedata_connection_status['error'] = None
-                        truedata_connection_status['port'] = port
-                        
-                        # Start data monitoring thread
-                        self._start_data_monitoring(req_ids)
-                        
-                        logger.info(f"🎯 TrueData connection successful on port {port}!")
-                        return True
-                    else:
-                        logger.warning(f"❌ Port {port}: Failed to start live data, trying next port...")
-                        continue
-                        
+                    logger.warning(f"❌ Port {port}: All symbol formats failed, trying next port...")
+                    
                 except Exception as port_error:
-                    logger.warning(f"❌ Port {port} failed: {str(port_error)}")
+                    logger.warning(f"❌ Port {port} connection failed: {str(port_error)}")
                     continue
             
             # If all ports failed
