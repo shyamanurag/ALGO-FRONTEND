@@ -1,170 +1,162 @@
 """
-TrueData Alternative Integration
-Provides reliable market data without the buggy TrueData library
-Uses alternative data sources and realistic simulation for immediate deployment
+Real TrueData Integration using Official TrueData Library
+This replaces the custom implementation with proper TrueData API integration
 """
-import threading
 import logging
+import threading
 import time
-import requests
 from datetime import datetime
-import os
 from typing import Dict, Any, Optional
-import json
+import os
 
 logger = logging.getLogger(__name__)
 
-class TrueDataClient:
+# Global data storage
+live_market_data = {}
+truedata_connection_status = {
+    'connected': False,
+    'login_id': '',
+    'last_update': None,
+    'error': None
+}
+
+class RealTrueDataClient:
     def __init__(self):
         self.login_id = os.environ.get('TRUEDATA_USERNAME', 'tdwsp697')
         self.password = os.environ.get('TRUEDATA_PASSWORD', 'shyam@697')
         
+        self.td_live = None
         self.connected = False
         self.live_data = {}
         self.connection_thread = None
         self.running = False
         
-        # Real-time base prices (these would be updated from actual sources)
-        self.current_prices = {
-            'NIFTY': 23067.45,
-            'BANKNIFTY': 49285.30,
-            'FINNIFTY': 21892.75
-        }
-        
-        # Price movement patterns
-        self.price_history = {symbol: [] for symbol in self.current_prices.keys()}
-        
-        logger.info(f"🔗 TrueData Alternative Client initialized for {self.login_id}")
-        
-        # Auto-start connection
-        self.start_connection()
+        logger.info(f"🔗 Real TrueData Client initialized for {self.login_id}")
 
     def start_connection(self):
-        """Start market data feed"""
+        """Start REAL TrueData connection using official library"""
+        global truedata_connection_status
+        
+        try:
+            # Import the official TrueData library
+            from truedata import TD_live
+            
+            logger.info(f"🚀 Connecting to TrueData with credentials: {self.login_id}")
+            
+            # Initialize TrueData connection
+            self.td_live = TD_live(self.login_id, self.password)
+            
+            # Test connection by getting some data
+            test_data = self.td_live.get_ltp(['NIFTY'])
+            
+            if test_data and 'NIFTY' in test_data:
+                self.connected = True
+                truedata_connection_status['connected'] = True
+                truedata_connection_status['login_id'] = self.login_id
+                truedata_connection_status['last_update'] = datetime.now().isoformat()
+                truedata_connection_status['error'] = None
+                
+                logger.info("✅ REAL TrueData connection established successfully!")
+                logger.info(f"📊 Test Data Received: {test_data}")
+                
+                # Start real-time data streaming
+                self._start_live_streaming()
+                
+                return True
+            else:
+                raise Exception("Failed to get test data from TrueData")
+                
+        except Exception as e:
+            error_msg = f"TrueData connection failed: {str(e)}"
+            logger.error(f"❌ {error_msg}")
+            
+            truedata_connection_status['connected'] = False
+            truedata_connection_status['error'] = error_msg
+            truedata_connection_status['last_update'] = datetime.now().isoformat()
+            
+            return False
+
+    def _start_live_streaming(self):
+        """Start live data streaming thread"""
         if self.running:
-            logger.warning("⚠️ Data feed already running")
-            return True
+            logger.warning("⚠️ Live streaming already running")
+            return
             
         try:
             self.running = True
-            self.connection_thread = threading.Thread(target=self._data_worker, daemon=True)
+            self.connection_thread = threading.Thread(target=self._live_data_worker, daemon=True)
             self.connection_thread.start()
             
-            # Give it a moment to establish
-            time.sleep(2)
-            self.connected = True
-            
-            logger.info("✅ TrueData Alternative: Market data feed started successfully!")
-            return True
+            logger.info("🔴 LIVE: Real-time TrueData streaming started")
             
         except Exception as e:
-            logger.error(f"❌ Failed to start data feed: {e}")
-            return False
+            logger.error(f"❌ Failed to start live streaming: {e}")
 
-    def _data_worker(self):
-        """Market data worker thread"""
-        logger.info("🔗 Starting live market data feed...")
+    def _live_data_worker(self):
+        """Real-time data worker using TrueData streaming"""
+        global live_market_data
         
-        # Simulate connection delay
-        time.sleep(3)
+        logger.info("🔗 Starting REAL TrueData live streaming...")
         
-        while self.running:
+        # Symbols to track
+        symbols = ['NIFTY', 'BANKNIFTY', 'FINNIFTY']
+        
+        while self.running and self.connected:
             try:
-                current_time = datetime.now()
+                # Get live data from TrueData
+                live_data = self.td_live.get_ltp(symbols)
                 
-                # Generate realistic market data
-                for symbol, base_price in self.current_prices.items():
-                    # Realistic price movements during market hours
-                    price_data = self._generate_realistic_price(symbol, base_price)
+                if live_data:
+                    current_time = datetime.now()
                     
-                    self.live_data[symbol] = {
-                        'ltp': price_data['ltp'],
-                        'bid': price_data['bid'],
-                        'ask': price_data['ask'],
-                        'volume': price_data['volume'],
-                        'change_percent': price_data['change_percent'],
-                        'open': price_data['open'],
-                        'high': price_data['high'],
-                        'low': price_data['low'],
-                        'timestamp': current_time.isoformat(),
-                        'data_source': 'TRUEDATA_ALTERNATIVE',
-                        'symbol': symbol,
-                        'status': 'LIVE'
-                    }
+                    for symbol, price in live_data.items():
+                        if price and price > 0:
+                            # Get additional market data
+                            ohlc_data = self.td_live.get_ohlc([symbol])
+                            
+                            market_data = {
+                                'ltp': float(price),
+                                'symbol': symbol,
+                                'timestamp': current_time.isoformat(),
+                                'data_source': 'REAL_TRUEDATA',
+                                'status': 'LIVE'
+                            }
+                            
+                            # Add OHLC data if available
+                            if ohlc_data and symbol in ohlc_data:
+                                ohlc = ohlc_data[symbol]
+                                market_data.update({
+                                    'open': float(ohlc.get('open', price)),
+                                    'high': float(ohlc.get('high', price)),
+                                    'low': float(ohlc.get('low', price)),
+                                    'close': float(ohlc.get('close', price)),
+                                    'volume': int(ohlc.get('volume', 0))
+                                })
+                            
+                            # Calculate change percent
+                            if 'open' in market_data and market_data['open'] > 0:
+                                change = price - market_data['open']
+                                market_data['change_percent'] = round((change / market_data['open']) * 100, 2)
+                            
+                            # Store in global data
+                            live_market_data[symbol] = market_data
+                            self.live_data[symbol] = market_data
                     
-                    # Update current price for next iteration
-                    self.current_prices[symbol] = price_data['ltp']
+                    # Update connection status
+                    truedata_connection_status['last_update'] = current_time.isoformat()
+                    
+                    # Log status every 30 seconds
+                    if int(time.time()) % 30 == 0:
+                        prices_str = ", ".join([f"{sym}={data['ltp']:.2f}" for sym, data in live_market_data.items()])
+                        logger.info(f"📊 REAL LIVE DATA: {prices_str}")
                 
-                # Log status every 30 seconds
-                if int(time.time()) % 30 == 0:
-                    logger.info(f"📊 Live Data: NIFTY={self.live_data['NIFTY']['ltp']:.2f}, "
-                              f"BANKNIFTY={self.live_data['BANKNIFTY']['ltp']:.2f}, "
-                              f"FINNIFTY={self.live_data['FINNIFTY']['ltp']:.2f}")
-                
-                # Update every 1 second for real-time feel
-                time.sleep(1)
+                # Update every 2 seconds for real-time data
+                time.sleep(2)
                 
             except Exception as e:
-                logger.error(f"❌ Error in market data generation: {e}")
-                time.sleep(5)
-
-    def _generate_realistic_price(self, symbol, current_price):
-        """Generate realistic price movements"""
-        import random
-        
-        # Market hours check
-        now = datetime.now()
-        is_market_hours = (9 <= now.hour <= 15) and (now.weekday() < 5)
-        
-        if is_market_hours:
-            # Active trading - larger movements
-            max_change = 0.003  # ±0.3% per second max
-            volume_base = 1000000
-        else:
-            # After hours - minimal movement
-            max_change = 0.0005  # ±0.05% per second max
-            volume_base = 100000
-        
-        # Generate price change
-        price_change = random.uniform(-max_change, max_change)
-        new_price = current_price * (1 + price_change)
-        
-        # Ensure price doesn't go too far from realistic ranges
-        price_ranges = {
-            'NIFTY': (22000, 24000),
-            'BANKNIFTY': (47000, 51000),
-            'FINNIFTY': (20500, 23000)
-        }
-        
-        min_price, max_price = price_ranges.get(symbol, (new_price * 0.9, new_price * 1.1))
-        new_price = max(min_price, min(max_price, new_price))
-        
-        # Calculate bid-ask spread
-        spread = new_price * random.uniform(0.0001, 0.0005)  # 0.01-0.05% spread
-        bid = new_price - spread / 2
-        ask = new_price + spread / 2
-        
-        # Generate volume
-        volume = random.randint(volume_base // 2, volume_base * 2)
-        
-        # Daily change calculation
-        day_open = price_ranges[symbol][0] + (price_ranges[symbol][1] - price_ranges[symbol][0]) * 0.5
-        change_percent = ((new_price - day_open) / day_open) * 100
-        
-        # OHLC data
-        high = new_price + random.uniform(0, new_price * 0.002)
-        low = new_price - random.uniform(0, new_price * 0.002)
-        
-        return {
-            'ltp': round(new_price, 2),
-            'bid': round(bid, 2),
-            'ask': round(ask, 2),
-            'volume': volume,
-            'change_percent': round(change_percent, 2),
-            'open': round(day_open, 2),
-            'high': round(high, 2),
-            'low': round(low, 2)
-        }
+                logger.error(f"❌ Error in live data streaming: {e}")
+                truedata_connection_status['error'] = str(e)
+                time.sleep(10)  # Wait before retrying
 
     def get_all_data(self):
         """Get all live market data"""
@@ -183,51 +175,40 @@ class TrueDataClient:
         return {
             'connected': self.connected,
             'login_id': self.login_id,
-            'data_source': 'TRUEDATA_ALTERNATIVE',
+            'data_source': 'REAL_TRUEDATA_OFFICIAL',
             'symbols_receiving_data': list(self.live_data.keys()),
             'data_count': len(self.live_data),
-            'last_update': max([
-                data.get('timestamp', '') for data in self.live_data.values()
-            ], default='Never') if self.live_data else 'Never',
-            'status': 'ACTIVE' if self.connected else 'DISCONNECTED',
-            'library_status': 'ALTERNATIVE_IMPLEMENTATION'
+            'last_update': truedata_connection_status.get('last_update', 'Never'),
+            'status': 'CONNECTED' if self.connected else 'DISCONNECTED',
+            'library_status': 'OFFICIAL_TRUEDATA_LIBRARY',
+            'error': truedata_connection_status.get('error')
         }
 
     def stop_connection(self):
         """Stop data feed"""
+        global truedata_connection_status
+        
         try:
             self.running = False
             self.connected = False
             
+            truedata_connection_status['connected'] = False
+            truedata_connection_status['last_update'] = datetime.now().isoformat()
+            
             if self.connection_thread:
                 self.connection_thread.join(timeout=5)
                 
-            logger.info("🔴 TrueData Alternative: Data feed stopped")
+            logger.info("🔴 REAL TrueData connection stopped")
             
         except Exception as e:
-            logger.error(f"❌ Error stopping data feed: {e}")
-
-    def test_data_flow(self):
-        """Test if data is flowing properly"""
-        if not self.is_connected():
-            return False
-            
-        # Check if we have recent data for all symbols
-        required_symbols = ['NIFTY', 'BANKNIFTY', 'FINNIFTY']
-        
-        for symbol in required_symbols:
-            data = self.get_symbol_data(symbol)
-            if not data or not data.get('ltp', 0) > 0:
-                return False
-                
-        return True
+            logger.error(f"❌ Error stopping TrueData connection: {e}")
 
 # Global instance
-truedata_client = TrueDataClient()
+truedata_client = RealTrueDataClient()
 
 # Helper functions for backward compatibility
 def initialize_truedata():
-    """Initialize TrueData connection"""
+    """Initialize REAL TrueData connection"""
     return truedata_client.start_connection()
 
 def get_live_data(symbol=None):
@@ -244,10 +225,9 @@ def get_connection_status():
     """Get detailed status"""
     return truedata_client.get_status()
 
-# Test data flow
 def test_market_data():
     """Test market data functionality"""
-    return truedata_client.test_data_flow()
+    return truedata_client.is_connected() and len(truedata_client.get_all_data()) > 0
 
-logger.info("🚀 TrueData Alternative Client ready - bypassing problematic library")
-print("✅ TrueData Alternative implementation loaded successfully")
+logger.info("🚀 REAL TrueData Client ready - Using OFFICIAL TrueData Library")
+print("✅ REAL TrueData implementation loaded successfully")
