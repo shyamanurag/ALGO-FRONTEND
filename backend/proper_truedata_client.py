@@ -94,12 +94,12 @@ class ProperTrueDataClient:
         logger.info(f"🔗 Proper TrueData Client initialized for {self.username}")
     
     async def connect(self) -> bool:
-        """Connect using proper TrueData authentication format"""
+        """Connect using OFFICIAL TrueData WebSocket format from GitHub samples"""
         try:
-            # TrueData WebSocket URL (no query params for auth)
-            ws_url = f"wss://{self.url}:{self.port}"
+            # Official TrueData WebSocket URL from sample code
+            ws_url = "wss://api.truedata.in/websocket"
             
-            logger.info(f"🔄 Connecting to TrueData WebSocket: {ws_url}")
+            logger.info(f"🔄 Connecting to OFFICIAL TrueData WebSocket: {ws_url}")
             
             # Connect to WebSocket
             self.websocket = await websockets.connect(
@@ -109,29 +109,27 @@ class ProperTrueDataClient:
                 close_timeout=10
             )
             
-            # Send authentication message after connection (TrueData format)
+            # Send authentication using OFFICIAL format from GitHub
             auth_message = {
-                "t": "c",  # Message type for connection/authentication
-                "uid": self.username,  # Username
-                "pwd": self.password,  # Password
-                "source": "web"
+                "username": self.username,
+                "password": self.password
             }
             
             await self.websocket.send(json.dumps(auth_message))
-            logger.info(f"🔐 Sent TrueData authentication for user: {self.username}")
+            logger.info(f"🔐 Sent OFFICIAL authentication for user: {self.username}")
             
             self.connected = True
             self.running = True
             
-            logger.info("✅ TrueData WebSocket connected successfully")
+            logger.info("✅ TrueData WebSocket connected using OFFICIAL format")
             
             # Start listening for messages
             asyncio.create_task(self._listen_messages())
             
-            # Wait for authentication response before subscribing
-            await asyncio.sleep(2)
+            # Wait for authentication response
+            await asyncio.sleep(3)
             
-            # Subscribe to symbols
+            # Subscribe to symbols after authentication
             await self._subscribe_symbols()
             
             return True
