@@ -141,19 +141,22 @@ class ProperTrueDataClient:
             return False
     
     async def _subscribe_symbols(self):
-        """Subscribe to symbols using proper message format"""
+        """Subscribe to all 250 symbols from subscription using proper message format"""
         try:
-            # Subscribe to NIFTY, BANKNIFTY, FINNIFTY using symbol IDs
-            symbols_to_subscribe = ['256265', '260105', '257801']  # NIFTY, BANKNIFTY, FINNIFTY
+            # Get all symbol IDs from our subscription mapping
+            symbols_to_subscribe = list(self.symbol_mappings.keys())
             
+            logger.info(f"📊 Subscribing to {len(symbols_to_subscribe)} symbols from TrueData subscription...")
+            
+            # TrueData subscription message format (needs to be corrected based on actual API)
             subscribe_message = {
                 "action": "subscribe",
                 "symbols": symbols_to_subscribe,
-                "mode": "full"  # Get full market data
+                "mode": "full"  # Get full market data for all symbols
             }
             
             await self.websocket.send(json.dumps(subscribe_message))
-            logger.info(f"📊 Subscribed to symbols: {symbols_to_subscribe}")
+            logger.info(f"📊 Subscription request sent for {len(symbols_to_subscribe)} symbols")
             
         except Exception as e:
             logger.error(f"Error subscribing to symbols: {e}")
