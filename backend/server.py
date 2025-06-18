@@ -1081,11 +1081,74 @@ async def get_real_market_data(symbol: str) -> Optional[Dict]:
                 else:
                     logger.debug(f"TrueData: No live data for {symbol}")
             else:
-                logger.debug("TrueData not connected")
+                logger.debug("TrueData not connected - subscription may be expired")
         except Exception as e:
             logger.debug(f"TrueData error for {symbol}: {e}")
         
-        # PRIORITY 2: Check database cache
+        # PRIORITY 2: Try Zerodha as IMMEDIATE working solution
+        try:
+            from src.core.zerodha import ZerodhaIntegration
+            zerodha_config = {
+                'api_key': ZERODHA_API_KEY,
+                'api_secret': ZERODHA_API_SECRET,
+                'user_id': ZERODHA_CLIENT_ID,
+                'redis_url': REDIS_URL
+            }
+            
+            zerodha = ZerodhaIntegration(zerodha_config)
+            await zerodha.initialize()
+            
+            if await zerodha.is_connected():
+                quotes = await zerodha.get_quote([symbol])
+                if symbol in quotes:
+                    quote = quotes[symbol]
+                    
+                    market_data = {
+                        'ltp': quote['ltp'],
+                        'bid': quote.get('bid', 0),
+                        'ask': quote.get('ask', 0),
+                        'volume': quote.get('volume', 0),
+                        'oi': quote.get('oi', 0),
+                        'open': quote.get('open', 0),
+                        'high': quote.get('high', 0),
+                        'low': quote.get('low', 0),
+                        'symbol': symbol,
+                        'timestamp': datetime.utcnow().isoformat(),
+                        'data_source': 'ZERODHA_LIVE',
+                        'status': 'LIVE'
+                    }
+                    
+                    # Calculate change percent
+                    if market_data['open'] > 0:
+                        change = market_data['ltp'] - market_data['open']
+                        market_data['change_percent'] = round((change / market_data['open']) * 100, 2)
+                    
+                    logger.info(f"📊 ZERODHA LIVE: {symbol} = ₹{market_data['ltp']}")
+                    
+                    # Store in database for future use
+                    if db_pool and isinstance(db_pool, str):  # SQLite
+                        try:
+                            async with aiosqlite.connect(db_pool) as db:
+                                await db.execute("""
+                                    INSERT INTO market_data_live (
+                                        symbol, ltp, bid, ask, volume, oi, 
+                                        open_price, high_price, low_price, timestamp
+                                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                """, (symbol, market_data['ltp'], market_data['bid'], 
+                                market_data['ask'], market_data['volume'], 
+                                market_data['oi'], market_data['open'],
+                                market_data['high'], market_data['low'], 
+                                datetime.utcnow()))
+                                await db.commit()
+                        except Exception as e:
+                            logger.debug(f"Error storing market data: {e}")
+                    
+                    return market_data
+                    
+        except Exception as e:
+            logger.warning(f"Failed to get real market data from Zerodha API: {e}")
+        
+        # PRIORITY 3: Check database cache
         if db_pool:
             if isinstance(db_pool, str):  # SQLite database
                 async with aiosqlite.connect(db_pool) as db:
