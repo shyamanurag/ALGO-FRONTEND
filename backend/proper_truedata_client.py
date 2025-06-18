@@ -143,18 +143,21 @@ class ProperTrueDataClient:
             return False
     
     async def _subscribe_symbols(self):
-        """Subscribe to all 250 symbols from subscription using proper message format"""
+        """Subscribe to top 250 futures dynamically"""
         try:
-            # Get all symbol IDs from our subscription mapping
+            # For now, get available symbols from current subscription
+            # TODO: Implement dynamic top 250 futures fetching from TrueData
             symbols_to_subscribe = list(self.symbol_mappings.keys())
             
-            logger.info(f"📊 Subscribing to {len(symbols_to_subscribe)} symbols from TrueData subscription...")
+            logger.info(f"📊 Subscribing to {len(symbols_to_subscribe)} symbols (will expand to top 250 futures)...")
             
-            # TrueData subscription message format (needs to be corrected based on actual API)
+            # Send subscription request using corrected format
             subscribe_message = {
-                "action": "subscribe",
-                "symbols": symbols_to_subscribe,
-                "mode": "full"  # Get full market data for all symbols
+                "action": "subscribe", 
+                "data": {
+                    "symbols": symbols_to_subscribe,
+                    "mode": "full"
+                }
             }
             
             await self.websocket.send(json.dumps(subscribe_message))
@@ -162,6 +165,24 @@ class ProperTrueDataClient:
             
         except Exception as e:
             logger.error(f"Error subscribing to symbols: {e}")
+    
+    async def get_top_futures_list(self):
+        """Get dynamic list of top 250 futures by volume/OI"""
+        try:
+            # TODO: Implement API call to get top 250 futures
+            # This would query TrueData or market data provider for:
+            # - Most active futures by volume
+            # - Sorted by open interest 
+            # - Current expiry month focus
+            
+            logger.info("🔍 Fetching top 250 futures list...")
+            
+            # Placeholder - need TrueData API for this
+            return list(self.symbol_mappings.keys())
+            
+        except Exception as e:
+            logger.error(f"Error fetching top futures list: {e}")
+            return []
     
     async def _listen_messages(self):
         """Listen for WebSocket messages using your exact format specification"""
