@@ -63,13 +63,33 @@ class ProperTrueDataClient:
         # Callbacks
         self.data_callbacks: List[Callable] = []
         
-        # Symbol mappings as per your specification
+        # Symbol mappings for 250 symbols subscription (F&O, Stocks, Indices)
+        # This should be populated with actual TrueData symbol IDs from your subscription
         self.symbol_mappings = {
-            # TrueData symbol_id to our format
+            # Major Indices
             '256265': 'NIFTY',
             '260105': 'BANKNIFTY', 
-            '257801': 'FINNIFTY'
+            '257801': 'FINNIFTY',
+            '259849': 'SENSEX',
+            '259004': 'NIFTYIT',
+            
+            # NOTE: You need to provide the complete list of 250 symbols
+            # with their exact TrueData symbol IDs from your subscription
+            # Format should be: 'TRUEDATA_SYMBOL_ID': 'OUR_SYMBOL_FORMAT'
+            
+            # Placeholder - REPLACE WITH ACTUAL 250 SYMBOLS FROM YOUR SUBSCRIPTION
+            # Examples of what might be included:
+            # '2885': 'RELIANCE',
+            # '11536': 'TCS',
+            # '1333': 'HDFCBANK',
+            # '1594': 'INFY',
+            # '123456': 'NIFTY25JUN25000CE',
+            # '123457': 'BANKNIFTY25JUN52000PE',
+            # ... (remaining 245 symbols)
         }
+        
+        # TODO: Load actual 250 symbols from configuration or database
+        logger.warning("⚠️ CRITICAL: Only 5 sample symbols configured. Need complete 250 symbol list from TrueData subscription!")
         
         logger.info(f"🔗 Proper TrueData Client initialized for {self.username}")
     
