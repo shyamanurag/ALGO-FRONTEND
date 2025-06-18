@@ -1,0 +1,34 @@
+🔍 TrueData Support - Error Reproduction Report
+Timestamp: 2025-06-18T11:21:50.811700
+Account: tdwsp697
+Issue: Live data subscription verification
+truedata version: 7.0.0
+truedata-ws version: 5.0.11
+============================================================
+TEST 1: Official TrueData Library (truedata==7.0.0)
+============================================================
+Connecting with credentials: tdwsp697
+Creating TD_live object...
+2025-06-18 11:21:52,575 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:21:57,866 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:22:03,139 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:22:08,437 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:22:13,698 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:22:18,980 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:22:24,285 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:22:29,558 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:22:34,826 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:22:40,107 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:22:45,397 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:22:50,669 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:22:55,932 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:23:01,189 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:23:06,454 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:23:11,769 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:23:17,048 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:23:22,316 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:23:27,601 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:23:32,898 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:23:38,183 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:23:43,479 - ERROR - [Errno 111] Connection refused - goodbye
+2025-06-18 11:23:48,777 - ERROR - [Errno 111] Connection refused - goodbye
