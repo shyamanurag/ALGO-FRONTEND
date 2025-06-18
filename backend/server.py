@@ -5026,21 +5026,44 @@ async def websocket_trading_data(websocket: WebSocket):
 
 @api_router.get("/truedata/status")
 async def get_truedata_status():
-    """Get current TrueData connection status"""
+    """Get current TrueData connection status using FIXED implementation"""
     try:
-        connected = system_state.get('truedata_connected', False)
+        from fixed_truedata_integration import get_truedata_status_fixed
         
-        return {
-            "success": True,
-            "connected": connected,
-            "status": "connected" if connected else "disconnected",
-            "username_configured": bool(TRUEDATA_USERNAME),
-            "password_configured": bool(TRUEDATA_PASSWORD),
-            "url": TRUEDATA_URL,
-            "port": TRUEDATA_PORT,
-            "last_updated": system_state.get('last_updated'),
-            "message": "Real-time market data feed" if connected else "Market data feed disconnected"
-        }
+        # Get status from our fixed implementation
+        fixed_status = get_truedata_status_fixed()
+        
+        if fixed_status.get('success'):
+            status_details = fixed_status.get('status', {})
+            connected = status_details.get('connected', False)
+            
+            return {
+                "success": True,
+                "connected": connected,
+                "status": "connected" if connected else "disconnected",
+                "username_configured": bool(TRUEDATA_USERNAME),
+                "password_configured": bool(TRUEDATA_PASSWORD),
+                "url": TRUEDATA_URL,
+                "port": TRUEDATA_PORT,
+                "last_updated": datetime.now().isoformat(),
+                "message": "Real-time market data feed using FIXED implementation" if connected else "Market data feed disconnected",
+                "implementation": "FIXED_TRUEDATA_WEBSOCKET",
+                "fallback_mode": False,
+                "active_source": "truedata_fixed" if connected else None
+            }
+        else:
+            return {
+                "success": True,
+                "connected": False,
+                "status": "disconnected",
+                "username_configured": bool(TRUEDATA_USERNAME),
+                "password_configured": bool(TRUEDATA_PASSWORD),
+                "url": TRUEDATA_URL,
+                "port": TRUEDATA_PORT,
+                "last_updated": datetime.now().isoformat(),
+                "message": "Market data feed disconnected - fixed implementation error",
+                "implementation": "FIXED_TRUEDATA_ERROR"
+            }
         
     except Exception as e:
         logger.error(f"Error getting TrueData status: {e}")
@@ -5048,7 +5071,8 @@ async def get_truedata_status():
             "success": False,
             "connected": False,
             "status": "error",
-            "message": str(e)
+            "message": str(e),
+            "implementation": "FIXED_TRUEDATA_ERROR"
         }
 
 @api_router.post("/truedata/connect")
