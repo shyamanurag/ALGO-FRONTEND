@@ -25,6 +25,7 @@ python-dotenv==1.0.0
 matplotlib==3.8.2
 kiteconnect==4.2.0
 pyotp==2.9.0
+truedata==2.0.5
 pytz==2023.3
 websocket-client>=0.57.0
 colorama>=0.4.3
