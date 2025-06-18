@@ -231,7 +231,7 @@ class TrueOfficialTrueDataClient:
             'connected': self.is_connected(),
             'username': self.username,
             'url': 'push.truedata.in',
-            'port': 9084,
+            'port': 8084,
             'symbols_receiving_data': list(self.live_data.keys()),
             'last_update': self.last_update.isoformat() if self.last_update else None,
             'implementation': 'TRUE_OFFICIAL_LIBRARY',
