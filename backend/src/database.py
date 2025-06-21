@@ -227,7 +227,7 @@ async def create_database_schema(db_conn_or_path: Any):
     ]
 
     try:
-        if isinstance(db_conn_or_path, str) and "sqlite" in db_conn_or_path: # SQLite path
+        if isinstance(db_conn_or_path, str): # SQLite path
             async with aiosqlite.connect(db_conn_or_path) as db:
                 for query in schema_queries:
                     await db.execute(query)
