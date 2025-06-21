@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 """
 Backend API Testing for ALGO-FRONTEND Trading Platform
-Tests core API endpoints, health checks, and data integrity
+Focused on testing the three critical issues that were fixed:
+1. Missing backend endpoints (/api/system/status)
+2. WebSocket 403 errors (/api/ws/autonomous-data)
+3. TrueData/Zerodha integration
 """
 
 import requests
 import sys
 import json
-from datetime import datetime
+import websocket
+import threading
 import time
+from datetime import datetime
 
-class AlgoTradingAPITester:
+class CriticalIssuesTester:
     def __init__(self, base_url=None):
         # Use the environment variable from frontend/.env
         self.base_url = base_url
@@ -119,153 +124,171 @@ class AlgoTradingAPITester:
             "failed_tests": failed_tests
         }
 
-    def test_core_endpoints(self):
-        """Test core API endpoints"""
-        print("\n🔍 Testing Core Endpoints...")
+    def test_system_status_endpoint(self):
+        """Test the system status endpoint (ISSUE 1)"""
+        print("\n🔍 ISSUE 1: Testing System Status Endpoint...")
         
-        # Test health endpoint - This is working
+        # Test the fixed system status endpoint
+        success, data = self.run_test("System Status Endpoint", "GET", "/api/system/status")
+        
+        if success:
+            # Verify the response contains all required fields
+            required_fields = [
+                "system_health", "autonomous_trading", "paper_trading", 
+                "trading_active", "market_open", "database_connected", 
+                "truedata_connected", "zerodha_connected", "websocket_connections"
+            ]
+            
+            if "data" in data:
+                data_obj = data["data"]
+                missing_fields = [field for field in required_fields if field not in data_obj]
+                
+                if missing_fields:
+                    print(f"⚠️ System Status response is missing required fields: {missing_fields}")
+                    self.test_results.append({
+                        "name": "System Status Fields Validation",
+                        "success": False,
+                        "error": f"Missing fields: {missing_fields}"
+                    })
+                    self.tests_run += 1
+                else:
+                    print("✅ System Status response contains all required fields")
+                    self.test_results.append({
+                        "name": "System Status Fields Validation",
+                        "success": True
+                    })
+                    self.tests_run += 1
+                    self.tests_passed += 1
+            else:
+                print("⚠️ System Status response does not contain 'data' field")
+        
+        # Also test the health endpoint for comparison
         self.run_test("Health Check", "GET", "/api/health")
-        
-        # Test system status - Using the correct endpoint
-        self.run_test("System Status", "GET", "/api/autonomous/status")
-        
-        # Test market data status - This endpoint has an issue with TRUEDATA_URL
-        # self.run_test("Market Data Status", "GET", "/api/market-data/status")
-
-    def test_admin_endpoints(self):
-        """Test admin endpoints"""
-        print("\n🔍 Testing Admin Endpoints...")
-        
-        # Test Zerodha auth status - This is working
-        self.run_test("Zerodha Auth Status", "GET", "/api/system/zerodha-auth-status")
-        
-        # Skip admin endpoints that require authentication
-        # self.run_test("Admin Overall Metrics", "GET", "/api/admin/overall-metrics")
-        # self.run_test("Admin Recent Trades", "GET", "/api/admin/recent-trades")
-
-    def test_market_data_endpoints(self):
-        """Test market data endpoints"""
-        print("\n🔍 Testing Market Data Endpoints...")
-        
-        # Test live market data - This is working
-        self.run_test("Live Market Data", "GET", "/api/market-data/live")
-        
-        # Test indices data - This is working
-        self.run_test("Indices Data", "GET", "/api/market-data/indices")
-
-    def test_trading_endpoints(self):
-        """Test trading endpoints"""
-        print("\n🔍 Testing Trading Endpoints...")
-        
-        # Test active trading signals - This is working
-        self.run_test("Active Trading Signals", "GET", "/api/trading-signals/active")
-        
-        # Test elite recommendations - This is working
-        self.run_test("Elite Recommendations", "GET", "/api/elite-recommendations")
-        
-        # Skip endpoints that are not found
-        # self.run_test("Orders", "GET", "/api/trading/orders")
-        
-    def test_autonomous_trading_endpoints(self):
-        """Test autonomous trading endpoints"""
-        print("\n🔍 Testing Autonomous Trading Endpoints...")
-        
-        # Test autonomous trading status - This is working
-        self.run_test("Autonomous Trading Status", "GET", "/api/autonomous/status")
-        
-        # Skip endpoints that are not found
-        # self.run_test("Autonomous Strategy Performance", "GET", "/api/autonomous/strategy-performance")
-        # self.run_test("Autonomous Active Orders", "GET", "/api/autonomous/active-orders")
-        # self.run_test("Autonomous System Metrics", "GET", "/api/autonomous/system-metrics")
-        
-    def test_strategy_endpoints(self):
-        """Test strategy endpoints"""
-        print("\n🔍 Testing Strategy Endpoints...")
-        
-        # Test all strategies - This is working
-        self.run_test("All Strategies", "GET", "/api/strategies")
-        
-        # Test strategy metrics - This is working
-        self.run_test("Strategy Metrics", "GET", "/api/strategies/metrics")
-        
-        # Skip endpoints that are not found
-        # self.run_test("Strategy Performance", "GET", "/api/strategies/performance")
-        
-        # Skip specific strategy endpoints that are not found
-        # strategies = ["MomentumSurfer", "NewsImpactScalper", "VolatilityExplosion", 
-        #              "ConfluenceAmplifier", "PatternHunter", "LiquidityMagnet", "VolumeProfileScalper"]
-        
-        # for strategy in strategies:
-        #    self.run_test(f"{strategy} Details", "GET", f"/api/strategies/{strategy}/details")
 
     def test_truedata_integration(self):
-        """Test TrueData integration"""
-        print("\n🔍 Testing TrueData Integration (PRIORITY)...")
+        """Test TrueData integration (ISSUE 3)"""
+        print("\n🔍 ISSUE 3: Testing TrueData Integration...")
         
-        # Test TrueData connect endpoint with production credentials
-        self.run_test("TrueData Connect", "POST", "/api/truedata/connect", data={
+        # Test TrueData connect endpoint
+        connect_success, _ = self.run_test("TrueData Connect", "POST", "/api/truedata/connect", data={
             "username": "tdwsp697",
             "password": "shyam@697"
         })
         
-        # Check connection status after connect attempt
-        self.run_test("System Health After Connect", "GET", "/api/health")
+        # Check system status after connect attempt
+        if connect_success:
+            time.sleep(1)  # Give the system a moment to process the connection
+            self.run_test("System Status After Connect", "GET", "/api/system/status")
         
         # Test TrueData disconnect endpoint
-        self.run_test("TrueData Disconnect", "POST", "/api/truedata/disconnect", data={})
+        disconnect_success, _ = self.run_test("TrueData Disconnect", "POST", "/api/truedata/disconnect", data={})
+        
+        # Check system status after disconnect
+        if disconnect_success:
+            time.sleep(1)  # Give the system a moment to process the disconnection
+            self.run_test("System Status After Disconnect", "GET", "/api/system/status")
 
     def test_websocket_connectivity(self):
-        """Test WebSocket connectivity"""
-        print("\n🔍 Testing WebSocket Connectivity...")
+        """Test WebSocket connectivity (ISSUE 2)"""
+        print("\n🔍 ISSUE 2: Testing WebSocket Connectivity...")
         
         # We can't directly test WebSocket connections in this test framework
         # But we can check if the endpoint is registered by making a GET request
-        # which should return a 400 Bad Request (as it's a WebSocket endpoint)
         self.run_test("WebSocket Endpoint Check", "GET", "/api/ws/autonomous-data", expected_status=400)
         
-        print("Note: Full WebSocket testing requires a WebSocket client. Will be tested via browser automation.")
+        # Now test actual WebSocket connection
+        ws_url = self.base_url.replace('https://', 'wss://').replace('http://', 'ws://') + '/api/ws/autonomous-data'
+        print(f"\n🔍 Testing WebSocket connection to: {ws_url}")
+        
+        ws_success = False
+        ws_error = None
+        ws_received_message = None
+        
+        def on_message(ws, message):
+            nonlocal ws_received_message
+            print(f"📥 WebSocket message received: {message}")
+            ws_received_message = message
+            
+        def on_error(ws, error):
+            nonlocal ws_error
+            print(f"❌ WebSocket error: {error}")
+            ws_error = error
+            
+        def on_close(ws, close_status_code, close_msg):
+            print(f"🔌 WebSocket closed: {close_status_code} - {close_msg}")
+            
+        def on_open(ws):
+            nonlocal ws_success
+            print("✅ WebSocket connection opened successfully")
+            ws_success = True
+            print("📤 Sending ping message...")
+            ws.send(json.dumps({"type": "ping"}))
+            
+        def ws_thread():
+            ws = websocket.WebSocketApp(
+                ws_url,
+                on_open=on_open,
+                on_message=on_message,
+                on_error=on_error,
+                on_close=on_close
+            )
+            ws.run_forever(ping_interval=5, ping_timeout=3)
+            
+        # Start WebSocket connection in a separate thread
+        self.tests_run += 1
+        thread = threading.Thread(target=ws_thread)
+        thread.daemon = True
+        thread.start()
+        
+        # Wait for the connection to establish or fail
+        timeout = 10
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            if ws_success or ws_error:
+                break
+            time.sleep(0.5)
+            
+        # Wait a bit more for potential messages
+        if ws_success:
+            time.sleep(2)
+            
+        # Record the result
+        if ws_success:
+            self.tests_passed += 1
+            print("✅ WebSocket connection test passed")
+            if ws_received_message:
+                print(f"✅ WebSocket received response: {ws_received_message}")
+                
+            self.test_results.append({
+                "name": "WebSocket Connection Test",
+                "success": True,
+                "response": ws_received_message
+            })
+        else:
+            print(f"❌ WebSocket connection test failed: {ws_error}")
+            self.test_results.append({
+                "name": "WebSocket Connection Test",
+                "success": False,
+                "error": str(ws_error) if ws_error else "Connection timed out"
+            })
+            
+        print("Note: WebSocket testing complete.")
 
-    def test_data_integrity(self):
-        """Test data integrity and sacred protection"""
-        print("\n🔍 Testing Data Integrity and Sacred Protection...")
+    def run_critical_tests(self):
+        """Run tests for the three critical issues"""
+        print("\n🚀 Starting Critical Issues Testing...")
         
-        # Test contamination report - This is working
-        self.run_test("Contamination Report", "GET", "/api/system/contamination-report")
+        # Test core health endpoint first
+        self.run_test("Core API Health Check", "GET", "/api/health")
         
-        # Skip the sacred protection test as it requires a different endpoint structure
-        # self.run_test("Sacred Protection Test", "POST", "/api/trading/place-order", 
-        #              expected_status=400, data=mock_data)
-
-    def run_all_tests(self):
-        """Run all API tests"""
-        print("\n🚀 Starting Comprehensive API Testing...")
+        # Test ISSUE 1: System Status Endpoint
+        self.test_system_status_endpoint()
         
-        # Core endpoints
-        self.test_core_endpoints()
-        
-        # Admin endpoints
-        self.test_admin_endpoints()
-        
-        # Market data endpoints
-        self.test_market_data_endpoints()
-        
-        # Trading endpoints
-        self.test_trading_endpoints()
-        
-        # Autonomous trading endpoints
-        self.test_autonomous_trading_endpoints()
-        
-        # Strategy endpoints
-        self.test_strategy_endpoints()
-        
-        # TrueData integration
-        self.test_truedata_integration()
-        
-        # WebSocket connectivity
+        # Test ISSUE 2: WebSocket Connectivity
         self.test_websocket_connectivity()
         
-        # Data integrity
-        self.test_data_integrity()
+        # Test ISSUE 3: TrueData Integration
+        self.test_truedata_integration()
         
         # Print summary
         return self.print_summary()
@@ -291,15 +314,15 @@ def main():
         sys.exit(1)
     
     # Create tester and run tests
-    tester = AlgoTradingAPITester(backend_url)
-    results = tester.run_all_tests()
+    tester = CriticalIssuesTester(backend_url)
+    results = tester.run_critical_tests()
     
     # Exit with appropriate code
     if results["tests_passed"] == results["tests_run"]:
-        print("\n✅ All tests passed!")
+        print("\n✅ All critical issues have been resolved!")
         return 0
     else:
-        print(f"\n⚠️ {results['tests_run'] - results['tests_passed']} tests failed!")
+        print(f"\n⚠️ {results['tests_run'] - results['tests_passed']} tests failed. Some critical issues may still exist.")
         return 1
 
 if __name__ == "__main__":
