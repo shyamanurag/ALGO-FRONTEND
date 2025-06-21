@@ -279,6 +279,5 @@ app.include_router(webhook_router, prefix="/api", dependencies=[Depends(get_app_
 
 if __name__ == "__main__":
     import uvicorn
-    # Use settings for host and port
-    uvicorn.run( "main:app", host=settings.APP_HOST, port=settings.APP_PORT, reload=True, workers=1)
-```
+    # Use settings for host and port  
+    uvicorn.run("server:app", host=settings.APP_HOST, port=settings.APP_PORT, reload=True, workers=1)
