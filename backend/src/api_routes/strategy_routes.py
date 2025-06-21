@@ -194,3 +194,33 @@ async def reset_strategy_route(strategy_name: str, app_state: AppState = Depends
         logger.error(f"Error resetting strategy {strategy_name}: {e}", exc_info=True) # No change
         raise HTTPException(status_code=500, detail=f"Error resetting strategy {strategy_name}: {str(e)}") # No change
 
+@strategy_router.get("/system/status", summary="Get detailed system status")
+async def get_system_status_route(app_state: AppState = Depends(get_app_state)):
+    """Get comprehensive system status including all components"""
+    sys_status = app_state.system_status
+    trading_ctrl = app_state.trading_control
+    market_data = app_state.market_data
+    
+    uptime_seconds = 0
+    if sys_status.app_start_time:
+        uptime_seconds = (datetime.utcnow() - sys_status.app_start_time).total_seconds()
+    
+    status_data = {
+        "system_health": sys_status.system_health,
+        "autonomous_trading": trading_ctrl.autonomous_trading_active,
+        "paper_trading": trading_ctrl.paper_trading,
+        "trading_active": trading_ctrl.trading_active,
+        "market_open": sys_status.market_open,
+        "database_connected": sys_status.database_connected,
+        "redis_connected": sys_status.redis_connected,
+        "truedata_connected": market_data.truedata_connected,
+        "zerodha_connected": market_data.zerodha_data_connected,
+        "websocket_connections": sys_status.websocket_connections,
+        "uptime_seconds": uptime_seconds,
+        "last_update": format_datetime_for_api(sys_status.last_system_update_utc),
+        "data_source": market_data.active_data_source,
+        "emergency_mode": trading_ctrl.emergency_mode,
+        "live_symbols_count": len(market_data.live_market_data)
+    }
+    return create_api_success_response(data=status_data)
+
