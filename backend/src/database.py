@@ -268,6 +268,7 @@ async def execute_db_query(query: str, *params, db_conn_or_path: Optional[Any] =
     try:
         if isinstance(conn_to_use, str): # SQLite path
             async with aiosqlite.connect(conn_to_use) as db:
+                db.row_factory = aiosqlite.Row  # This makes rows dict-like
                 cursor = await db.execute(query, params)
                 # For SELECT, fetch rows. For INSERT/UPDATE/DELETE, rowcount might be useful.
                 if query.strip().upper().startswith("SELECT"):
