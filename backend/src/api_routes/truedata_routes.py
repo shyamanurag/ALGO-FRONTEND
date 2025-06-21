@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 truedata_router = APIRouter(prefix="/truedata", tags=["TrueData Integration"])
 
-@truedata_router.post("/truedata/connect", summary="Initialize/Attempt to connect the TrueData Singleton Client")
+@truedata_router.post("/connect", summary="Initialize/Attempt to connect the TrueData Client")
 async def truedata_connect_route(settings: AppSettings = Depends(get_settings)):
     # The singleton's initialize_truedata handles its own connection logic.
     # We pass necessary config from settings if they are not purely from ENV for the singleton.
