@@ -411,4 +411,3 @@ if __name__ == '__main__':
         finally: await shutdown_truedata_client()
     asyncio.run(main_test())
 
-```
