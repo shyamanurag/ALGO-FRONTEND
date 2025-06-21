@@ -76,8 +76,17 @@ from src.api_routes.zerodha_routes import zerodha_router, zerodha_direct_router
 from src.api_routes.webhook_routes import webhook_router
 
 app.add_middleware(CORSMiddleware,
-    allow_origins=[str(settings.FRONTEND_URL)] if settings.FRONTEND_URL and str(settings.FRONTEND_URL) != "*" else ["*"],
-    allow_credentials=True, allow_methods=["*"], allow_headers=["*"], expose_headers=["*"])
+    allow_origins=[
+        "https://fresh-start-14.preview.emergentagent.com",
+        "https://602553e8-702b-4f02-9e1c-3c400bda193e.preview.emergentagent.com", 
+        "http://localhost:3000",
+        str(settings.FRONTEND_URL)
+    ] if settings.FRONTEND_URL else ["*"],
+    allow_credentials=True, 
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"], 
+    allow_headers=["*"], 
+    expose_headers=["*"]
+)
 
 # active_websocket_connections: set = set() # Removed global WebSocket connection set
 
