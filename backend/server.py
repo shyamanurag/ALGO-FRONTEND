@@ -138,6 +138,47 @@ async def websocket_trading_data_endpoint(websocket: Any, user_id: str, app_stat
         logger_server.info(f"WebSocket connection for {user_id} removed. Active connections: {app_state_local.system_status.websocket_connections}")
 
 
+@app.websocket("/api/ws/autonomous-data")
+async def websocket_autonomous_data_endpoint(websocket: Any, app_state_local: AppState = Depends(get_app_state)):
+    """WebSocket endpoint for autonomous trading data that the frontend expects"""
+    await websocket.accept()
+    logger_server.info(f"Autonomous WebSocket connection accepted from {websocket.client.host}")
+    app_state_local.system_status.websocket_connections_set.add(websocket)
+    app_state_local.system_status.websocket_connections = len(app_state_local.system_status.websocket_connections_set)
+    
+    try:
+        # Send initial system status
+        initial_data = {
+            "type": "initial_data",
+            "system_health": app_state_local.system_status.system_health,
+            "trading_active": app_state_local.trading_control.trading_active,
+            "autonomous_trading": app_state_local.trading_control.autonomous_trading_active,
+            "paper_trading": app_state_local.trading_control.paper_trading,
+            "market_open": app_state_local.system_status.market_open,
+            "truedata_connected": app_state_local.market_data.truedata_connected,
+            "zerodha_connected": app_state_local.market_data.zerodha_data_connected
+        }
+        await websocket.send_text(json.dumps(initial_data))
+        
+        while True:
+            data = await websocket.receive_text()
+            logger_server.debug(f"Received message from autonomous WebSocket: {data}")
+            
+            # Handle ping/pong for keep-alive
+            if data == '{"type":"ping"}':
+                await websocket.send_text('{"type":"pong"}')
+            else:
+                # Echo other messages for now
+                await websocket.send_text(f'{{"type":"echo","message":"Received: {data}"}}')
+                
+    except Exception as e:
+        logger_server.info(f"Autonomous WebSocket connection closed/error: {e}")
+    finally:
+        app_state_local.system_status.websocket_connections_set.discard(websocket)
+        app_state_local.system_status.websocket_connections = len(app_state_local.system_status.websocket_connections_set)
+        logger_server.info(f"Autonomous WebSocket connection removed. Active connections: {app_state_local.system_status.websocket_connections}")
+
+
 @app.on_event("startup")
 async def startup_event_main():
     global app_state # app_state is global, settings is now app_state.config
