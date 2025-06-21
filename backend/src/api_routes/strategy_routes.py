@@ -13,13 +13,11 @@ from src.database import execute_db_query, fetch_one_db
 try:
     from backend.server import get_app_state, get_settings
 except ImportError:
-    logging.basicConfig(level=logging.ERROR)
-    _fallback_logger = logging.getLogger(__name__)
-    _fallback_logger.error("CRITICAL: Could not import get_app_state, get_settings from backend.server for strategy_routes.py. Routes will likely fail.")
+    # Use fallback functions (this is expected due to circular imports)
     from src.app_state import app_state as _global_app_state_instance_strat
     from src.config import settings as _global_settings_instance_strat
-    async def get_app_state(): return _global_app_state_instance_strat
-    async def get_settings(): return _global_settings_instance_strat
+    def get_app_state(): return _global_app_state_instance_strat
+    def get_settings(): return _global_settings_instance_strat
 
 logger = logging.getLogger(__name__)
 
