@@ -50,7 +50,7 @@ async def get_autonomous_system_metrics(app_state: AppState = Depends(get_app_st
             "zerodha_connected": market_data.zerodha_data_connected,
             "active_data_source": market_data.active_data_source,
             "live_symbols_count": len(market_data.live_market_data),
-            "last_data_update": format_datetime_for_api(market_data.last_data_update_time)
+            "last_data_update": format_datetime_for_api(getattr(market_data, 'last_update_time', None))
         },
         "strategy_metrics": {
             "total_strategies": 7,  # Fixed number of elite strategies
