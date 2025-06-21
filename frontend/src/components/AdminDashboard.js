@@ -211,6 +211,7 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
   useEffect(() => {
     fetchOverallMetrics();
     fetchRecentTrades();
+    fetchSystemStatus(); // Add this to load system status
   }, []);
 
   const fetchOverallMetrics = async () => {
