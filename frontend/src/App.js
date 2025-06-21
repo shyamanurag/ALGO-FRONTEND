@@ -182,26 +182,18 @@ function App() {
 
     const fetchSystemData = async () => {
       try {
-        // Enhanced health status fetch with better error handling
         const healthResponse = await fetch(`${BACKEND_URL}/api/health`);
-        
-        if (!healthResponse.ok) {
-          throw new Error(`API Error: ${healthResponse.status} - ${healthResponse.statusText}`);
-        }
-        
         const healthData = await healthResponse.json();
         
-        // Also fetch detailed system status
-        let systemData = null;
-        try {
-          const systemResponse = await fetch(`${BACKEND_URL}/api/system/status`);
-          if (systemResponse.ok) {
-            const systemResponseData = await systemResponse.json();
-            systemData = systemResponseData.status;
-          }
-        } catch (error) {
-          console.warn('System status endpoint not available:', error);
-        }
+        const systemResponse = await fetch(`${BACKEND_URL}/api/system/status`);
+        const systemData = await systemResponse.json();
+        
+        // Fix: Extract data from nested response structure
+        setSystemHealth(systemData.data?.system_health || 'UNKNOWN');
+        setBackendConnected(true);
+        
+        // Update system status with proper data structure
+        setSystemStatus(systemData.data || {});
         
         setSystemStatus({
           status: healthData.status,
