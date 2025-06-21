@@ -100,7 +100,7 @@ async def truedata_subscribe_symbols_route(symbols: List[str]):
         logger.error(f"Error calling add_truedata_symbols: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error subscribing to symbols: {str(e)}")
 
-@truedata_router.post("/truedata/unsubscribe", summary="Unsubscribe from TrueData symbols")
+@truedata_router.post("/unsubscribe", summary="Unsubscribe from TrueData symbols")
 async def truedata_unsubscribe_symbols_route(symbols: List[str]):
     if not symbols:
         raise HTTPException(status_code=400, detail="Symbols list cannot be empty.")
