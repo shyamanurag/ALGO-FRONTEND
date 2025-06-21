@@ -117,7 +117,20 @@ async def initialize_trading_strategies(app_state: AppState, settings: AppSettin
     strat_state.strategy_instances.clear()
     for strat_id, cfg_data in strategy_configs.items():
         StratCls = cfg_data["class"]
-        instance = StratCls(strategy_id=strat_id, symbol=cfg_data["symbol"], app_state=app_state, settings=settings, config=cfg_data["params"])
+        # Create strategy instance with just config - the real strategies have simpler constructors
+        strategy_config = {
+            "strategy_id": strat_id,
+            "symbol": cfg_data["symbol"],
+            **cfg_data["params"]  # Merge in the strategy-specific parameters
+        }
+        instance = StratCls(config=strategy_config)
+        
+        # Set additional attributes that strategies might expect
+        instance.strategy_id = strat_id
+        instance.symbol = cfg_data["symbol"] 
+        instance.app_state = app_state
+        instance.settings = settings
+        
         strat_state.strategy_instances[strat_id] = StrategyInstanceInfo(
             instance=instance, config=cfg_data, is_active=cfg_data["enabled"],
             status_message="Initialized" if cfg_data["enabled"] else "Initialized_Disabled_By_Config",
