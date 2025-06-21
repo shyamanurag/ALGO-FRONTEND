@@ -200,13 +200,16 @@ class AlgoTradingAPITester:
 
     def test_truedata_integration(self):
         """Test TrueData integration"""
-        print("\n🔍 Testing TrueData Integration...")
+        print("\n🔍 Testing TrueData Integration (PRIORITY)...")
         
-        # Skip TrueData status endpoint that is not found
-        # self.run_test("TrueData Status", "GET", "/api/system/truedata-status")
+        # Test TrueData connect endpoint with production credentials
+        self.run_test("TrueData Connect", "POST", "/api/truedata/connect", data={
+            "username": "tdwsp697",
+            "password": "shyam@697"
+        })
         
-        # Test TrueData connect endpoint
-        self.run_test("TrueData Connect", "POST", "/api/truedata/connect", data={})
+        # Check connection status after connect attempt
+        self.run_test("System Health After Connect", "GET", "/api/health")
         
         # Test TrueData disconnect endpoint
         self.run_test("TrueData Disconnect", "POST", "/api/truedata/disconnect", data={})
