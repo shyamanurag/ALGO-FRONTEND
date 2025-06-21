@@ -189,7 +189,6 @@ function App() {
         const systemData = await systemResponse.json();
         
         // Fix: Extract data from nested response structure
-        setSystemHealth(systemData.data?.system_health || 'UNKNOWN');
         setBackendConnected(true);
         
         // Update system status with proper data structure
