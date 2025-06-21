@@ -88,7 +88,7 @@ async def get_truedata_status_route(app_state: AppState = Depends(get_app_state)
     return create_api_success_response(data=status_data, message="TrueData status from singleton and app_state.")
 
 # Routes for adding/removing symbols dynamically (if supported by singleton client)
-@truedata_router.post("/truedata/subscribe", summary="Subscribe to additional TrueData symbols")
+@truedata_router.post("/subscribe", summary="Subscribe to additional TrueData symbols")
 async def truedata_subscribe_symbols_route(symbols: List[str]):
     if not symbols:
         raise HTTPException(status_code=400, detail="Symbols list cannot be empty.")
