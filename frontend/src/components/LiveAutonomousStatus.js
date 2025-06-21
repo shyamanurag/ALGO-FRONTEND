@@ -79,7 +79,7 @@ const LiveAutonomousStatus = () => {
 
   const connectTrueData = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/system/start-truedata`, {
+      const response = await fetch(`${BACKEND_URL}/api/truedata/connect`, {
         method: 'POST'
       });
       
