@@ -121,5 +121,3 @@ if __name__ == "__main__":
         logger.info(f"Configured LOG_LEVEL (if settings were loaded): {app_state.config.LOG_LEVEL}")
     else:
         logger.info("app_state.config is None in standalone app_state.py execution (as expected).")
-
-```
