@@ -4,7 +4,7 @@ Main application file. Initializes FastAPI app, loads configuration, sets up sta
 and includes all API routers.
 """
 
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, WebSocket
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
