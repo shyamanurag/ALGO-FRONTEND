@@ -194,4 +194,3 @@ async def reset_strategy_route(strategy_name: str, app_state: AppState = Depends
         logger.error(f"Error resetting strategy {strategy_name}: {e}", exc_info=True) # No change
         raise HTTPException(status_code=500, detail=f"Error resetting strategy {strategy_name}: {str(e)}") # No change
 
-```

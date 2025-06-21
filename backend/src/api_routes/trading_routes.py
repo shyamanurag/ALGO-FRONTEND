@@ -132,7 +132,6 @@ async def execute_manual_trade_action(trade_request: TradeRequest, app_state: Ap
         logger.error(f"Manual order placement failed: {error_msg}")
         raise HTTPException(status_code=500, detail=f"Order placement failed: {error_msg}")
 
-
 @trading_router.post("/manual-trade", summary="Place a manual trade")
 async def place_manual_trade_route(trade_request: TradeRequest, app_state: AppState = Depends(get_app_state), settings: AppSettings = Depends(get_settings)):
     return await execute_manual_trade_action(trade_request, app_state, settings)
@@ -247,7 +246,6 @@ async def get_elite_recommendations_route(app_state: AppState = Depends(get_app_
         logger.error(f"Error getting elite recommendations: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error getting elite recommendations: {str(e)}")
 
-
 @trading_router.get("/elite-recommendations/stats", summary="Get elite recommendations statistics")
 async def get_elite_stats_route(app_state: AppState = Depends(get_app_state)):
     if not app_state.clients.db_pool: raise HTTPException(status_code=503, detail="Database not available.")
@@ -313,4 +311,3 @@ async def square_off_position_stub_route(symbol: str = Path(..., min_length=1, d
     await execute_db_query("UPDATE positions SET status = ?, exit_time = ? WHERE symbol = ? AND (status = 'OPEN' OR status = 'open')", "CLOSED_STUB", datetime.utcnow(), symbol, db_conn_or_path=app_state.clients.db_pool)
     return create_api_success_response(message=f"Position for {symbol} square-off attempted (stub).")
 
-```

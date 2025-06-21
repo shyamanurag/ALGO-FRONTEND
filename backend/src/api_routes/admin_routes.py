@@ -47,7 +47,6 @@ logger = logging.getLogger(__name__)
 # For now, keeping api_router.
 api_router = APIRouter()
 
-
 # --- Authentication Endpoint ---
 @api_router.post("/token", response_model=Token, tags=["Admin Authentication"])
 async def login_for_access_token(
@@ -138,7 +137,6 @@ async def get_admin_overall_metrics(
     }
     return create_api_success_response(data=metrics_data)
 
-
 @api_router.post("/strategies/{strategy_name}/configure", summary="Configure a trading strategy")
 async def configure_strategy(
     strategy_name: str,
@@ -204,4 +202,3 @@ async def get_zerodha_admin_status(
         logger.error(f"Error getting Zerodha admin status by '{current_admin.username}': {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error fetching Zerodha status from client: {str(e)}")
 
-```

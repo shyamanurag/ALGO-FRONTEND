@@ -120,4 +120,3 @@ if __name__ == '__main__':
 
     fastapi_logger = logging.getLogger("fastapi")
     fastapi_logger.debug("FastAPI debug log (should show if root is DEBUG and fastapi logger is DEBUG).")
-```

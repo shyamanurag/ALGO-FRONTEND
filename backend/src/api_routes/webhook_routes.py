@@ -100,5 +100,3 @@ async def truedata_webhook_route(
         # This will be caught by generic_exception_handler
         raise Exception(f"Internal server error processing webhook: {str(e)}. Body preview: {body_preview}")
 
-
-```

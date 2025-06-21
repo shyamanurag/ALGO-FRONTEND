@@ -62,7 +62,6 @@ async def run_system_health_check_job(app_state: AppState, settings: AppSettings
         # Not necessarily an issue if Redis is optional
         logger.info("HealthCheck: Redis client not available (may be optional).")
 
-
     # Update overall system health
     if not health_issues:
         app_state.system_status.system_health = "OPERATIONAL"
@@ -130,7 +129,6 @@ async def run_execute_strategy_loop_job(app_state: AppState, settings: AppSettin
     except Exception as e:
         logger.error(f"Error during scheduled strategy loop execution: {e}", exc_info=True)
 
-
 def initialize_scheduler(app_state: AppState, settings: AppSettings) -> AsyncIOScheduler:
     """
     Creates, configures, and returns the APScheduler instance.
@@ -192,4 +190,3 @@ def initialize_scheduler(app_state: AppState, settings: AppSettings) -> AsyncIOS
     logger.info("APScheduler initialization complete with jobs.")
     return scheduler
 
-```

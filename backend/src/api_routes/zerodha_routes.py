@@ -188,4 +188,3 @@ async def disconnect_zerodha_direct_route(app_state: AppState = Depends(get_app_
 
     return create_api_success_response(message=message, data={"status": "disconnected"})
 
-```

@@ -23,7 +23,6 @@ except ImportError:
     async def get_settings(): return _global_settings_instance_md
     async def get_market_data_state(): return _global_app_state_instance_md.market_data
 
-
 logger = logging.getLogger(__name__)
 
 market_data_router = APIRouter(prefix="/market-data", tags=["Market Data"])
@@ -48,7 +47,6 @@ async def get_market_analysis_route(app_state: AppState = Depends(get_app_state)
     # Using a simpler check based on presence of elite_engine for now as analyzers specific state is not in AppState
     if not app_state.clients.elite_engine:
          raise HTTPException(status_code=503, detail="Elite engine (containing analyzers) not available.")
-
 
     symbols_to_check = ["NIFTY", "BANKNIFTY", "FINNIFTY"] # These should ideally be configurable
     market_data_available_for_analysis = False
@@ -175,7 +173,6 @@ async def get_market_indices_route(
                 is_market_hours_val = _market_open_time <= current_time_ist.time() <= _market_close_time
         except ImportError: logger.warning("pytz not available for /indices route market hours check.")
 
-
         indices_to_fetch = ['NIFTY', 'BANKNIFTY', 'FINNIFTY'] # Could be part of settings
         indices_output_data = {}
         data_found_for_any_index = False
@@ -231,4 +228,3 @@ async def get_symbol_data_route(symbol_name: str, market_data_state: MarketDataS
         logger.error(f"Error getting symbol data for {symbol_name} from app_state: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error getting symbol data: {str(e)}")
 
-```

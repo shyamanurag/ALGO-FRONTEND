@@ -83,7 +83,6 @@ async def _sync_truedata_globals_to_app_state(app_state: AppState):
         except ValueError:
             logger.warning(f"Could not parse 'last_update' from global_truedata_connection_status: {global_last_update_str}")
 
-
 async def initialize_market_data_handling(
     app: Any, # FastAPI app instance, not directly used here now for TD
     settings: AppSettings,
@@ -116,7 +115,6 @@ async def initialize_market_data_handling(
             # This is good for responsiveness of app_state.market_data.truedata_connected
             if app_state_instance.market_data.truedata_connected != is_conn: # Check against current app_state
                  await _sync_truedata_globals_to_app_state(app_state_instance)
-
 
         # The singleton's initialize_truedata is async
         await initialize_truedata_singleton(
@@ -151,7 +149,6 @@ async def initialize_market_data_handling(
 
     market_data_state.market_data_last_update = datetime.utcnow()
     logger.info("Market Data Handling initialization sequence finished.")
-
 
 def get_live_market_data(symbol: str, market_data_state: MarketDataState) -> Optional[Dict[str, Any]]:
     # This now reads from app_state, which is synced from the singleton's globals
@@ -192,7 +189,6 @@ def get_market_data_status(market_data_state: MarketDataState, settings: AppSett
 #         market_data_state.market_data_last_update = datetime.utcnow()
 #         logger.info(f"External call: TrueData connection status set to {status} in app_state.market_data.")
 
-
 async def get_historical_data_for_strategy(
     symbol: str, days_back: int, interval: str, app_state: AppState, settings: AppSettings
 ) -> Optional[List[Dict[str, Any]]]:
@@ -225,4 +221,3 @@ async def get_historical_data_for_strategy(
         logger.error(f"Error fetching historical for {symbol} via {client_name}: {e}", exc_info=True)
         return []
 
-```

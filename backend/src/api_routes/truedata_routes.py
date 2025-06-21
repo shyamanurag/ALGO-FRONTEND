@@ -112,7 +112,6 @@ async def truedata_unsubscribe_symbols_route(symbols: List[str]):
         logger.error(f"Error calling remove_truedata_symbols: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error unsubscribing from symbols: {str(e)}")
 
-
 # The following test routes primarily use settings and basic socket operations,
 # so they might not need significant changes beyond ensuring they align with how the
 # singleton might be configured (e.g., if URL/port are now fixed in the singleton).
@@ -199,4 +198,3 @@ async def scan_truedata_ports_route(settings: AppSettings = Depends(get_settings
     response_data = {"host": td_url, "scanned_tcp_ports": results, "likely_open_ports": [p for p,s in results.items() if s=="OPEN"]}
     return create_api_success_response(data=response_data)
 
-```

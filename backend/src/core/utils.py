@@ -46,7 +46,6 @@ def format_date_for_api(date_object: Optional[date]) -> Optional[str]:
         return str(date_object)
     return date_object.isoformat()
 
-
 # Example of a more specific utility if needed elsewhere, e.g. for normalizing symbol names
 def normalize_symbol(symbol: str) -> str:
     """
@@ -119,7 +118,6 @@ if __name__ == "__main__":
     logger_utils_test.info(f"Formatted None datetime: {format_datetime_for_api(None)}")
     logger_utils_test.info(f"Formatted date as datetime: {format_datetime_for_api(date(2023,1,1))}")
 
-
     logger_utils_test.info("\n--- Testing format_date_for_api ---")
     today_date = date.today()
     logger_utils_test.info(f"Formatted date: {format_date_for_api(today_date)}")
@@ -130,4 +128,3 @@ if __name__ == "__main__":
     logger_utils_test.info(f"Normalized ' nifty 50 ': '{normalize_symbol(' nifty 50 ')}'")
     logger_utils_test.info(f"Normalized 'RELIANCE': '{normalize_symbol('RELIANCE')}'")
 
-```

@@ -25,7 +25,6 @@ logging.basicConfig(level=logging.CRITICAL)
 logger_test = logging.getLogger(__name__)
 # logger_test.setLevel(logging.DEBUG)
 
-
 class MockKiteConnect:
     def __init__(self, api_key=None, access_token=None, timeout=None):
         self.api_key = api_key
@@ -50,7 +49,6 @@ class MockKiteConnect:
     def _set_access_token_effect(self, access_token):
         self.access_token = access_token
         logger_test.debug(f"MockKiteConnect: access_token set to {access_token}")
-
 
 class TestConsolidatedZerodhaClient(unittest.IsolatedAsyncioTestCase):
 
@@ -82,7 +80,6 @@ class TestConsolidatedZerodhaClient(unittest.IsolatedAsyncioTestCase):
         self.client = ConsolidatedZerodhaClient(self.mock_settings, self.mock_app_state)
         # The KiteConnect instance is now self.client.kite, which is an instance of MockKiteConnect
         self.mock_kite_sdk_instance = self.client.kite
-
 
     async def asyncTearDown(self):
         self.patcher_kite_connect.stop()
@@ -132,7 +129,6 @@ class TestConsolidatedZerodhaClient(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(db_call_args[2], 'TESTUSER123') # user_id
             self.assertEqual(db_call_args[3], 'new_access_token') # access_token
 
-
     async def test_03_generate_session_token_exception(self):
         logger_test.debug("Running test_03_generate_session_token_exception")
         self.mock_kite_sdk_instance.generate_session.side_effect = TokenException("Invalid token")
@@ -163,7 +159,6 @@ class TestConsolidatedZerodhaClient(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(self.mock_app_state.market_data.zerodha_data_connected)
             self.mock_kite_sdk_instance.set_access_token.assert_called_with("db_access_token")
             self.mock_kite_sdk_instance.profile.assert_called_once()
-
 
     async def test_05_set_access_token_verification_fails_token_exception(self):
         logger_test.debug("Running test_05_set_access_token_verification_fails_token_exception")
@@ -261,7 +256,6 @@ class TestConsolidatedZerodhaClient(unittest.IsolatedAsyncioTestCase):
         # self.mock_kite_sdk_instance.invalidate_access_token = AsyncMock() # If it were async
         self.mock_kite_sdk_instance.invalidate_access_token = MagicMock()
 
-
         with patch('asyncio.to_thread', new_callable=AsyncMock) as mock_to_thread:
              # mock_to_thread for self.kite.invalidate_access_token
             mock_to_thread.return_value = None # Simulate successful sync call
@@ -283,4 +277,3 @@ class TestConsolidatedZerodhaClient(unittest.IsolatedAsyncioTestCase):
 
 if __name__ == '__main__':
     unittest.main()
-```

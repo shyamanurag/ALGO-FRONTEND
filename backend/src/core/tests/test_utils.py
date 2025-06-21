@@ -58,7 +58,6 @@ class TestCoreUtils(unittest.TestCase):
         # Test with another non-datetime object (e.g., an int)
         self.assertEqual(format_datetime_for_api(12345), "12345")
 
-
     def test_format_date_for_api(self):
         # Test with a valid date object
         date_obj = date(2023, 1, 15)
@@ -86,4 +85,3 @@ class TestCoreUtils(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-```

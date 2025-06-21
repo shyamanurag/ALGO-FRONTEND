@@ -29,7 +29,6 @@ class MockAppSettings:
         if not self.ADMIN_PASSWORD_HASH and self.ADMIN_PASSWORD_PLAIN:
             self.ADMIN_PASSWORD_HASH = get_password_hash(self.ADMIN_PASSWORD_PLAIN)
 
-
 @patch('backend.src.core.security.settings', MockAppSettings())
 class TestSecurityUtils(unittest.TestCase):
 
@@ -140,4 +139,3 @@ class TestSecurityUtils(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-```

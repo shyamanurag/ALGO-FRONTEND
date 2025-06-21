@@ -129,7 +129,6 @@ if __name__ == "__main__":
         logger_sec_test.info(f"Verification (testpassword vs dummy_hash): {verify_password('testpassword', dummy_hashed)}")
         logger_sec_test.info(f"Verification (wrongpassword vs dummy_hash): {verify_password('wrongpassword', dummy_hashed)}")
 
-
     # Test JWT creation
     user_data_for_token = {"sub": "testuser", "role": "admin"}
     token = create_access_token(user_data_for_token)
@@ -149,4 +148,3 @@ if __name__ == "__main__":
     else:
         logger_sec_test.warning("'settings' object not available. Skipping get_admin_user_from_settings test.")
 
-```

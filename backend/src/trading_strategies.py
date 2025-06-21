@@ -75,7 +75,6 @@ class PlaceholderOrderManager:
                 exchange = "NFO" if any(kw in symbol.upper() for kw in ["NIFTY", "BANKNIFTY", "FINNIFTY", "MIDCPNIFTY"]) and \
                                     any(char.isdigit() for char in symbol) else "NSE"
 
-
                 broker_order_id = await zd_client.place_order( # Await the async call
                     variety=variety, exchange=exchange, tradingsymbol=symbol, transaction_type=trans_type,
                     quantity=int(quantity), product=product.upper(), order_type=order_type.upper(), price=price,
@@ -176,4 +175,3 @@ async def store_signal_in_database(signal: Dict[str, Any], app_state: AppState) 
     except Exception as e: logger.error(f"Error storing signal {signal_id}: {e}", exc_info=True); return None
 
 # execute_paper_order helper is removed as its logic is now part of PlaceholderOrderManager.place_order when is_paper=True
-```

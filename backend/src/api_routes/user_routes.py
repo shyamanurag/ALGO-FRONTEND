@@ -226,4 +226,3 @@ async def toggle_account_autonomous_route(user_id: str, app_state: AppState = De
         logger.error(f"Error toggling autonomous trading for {user_id}: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error toggling autonomous status: {str(e)}")
 
-```

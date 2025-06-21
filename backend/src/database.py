@@ -18,7 +18,6 @@ logger = logging.getLogger(__name__)
 _db_pool: Optional[Any] = None
 _redis_client: Optional[redis.Redis] = None
 
-
 async def init_database(settings: Any) -> Tuple[Optional[Any], Optional[redis.Redis]]:
     """
     Initializes the database connection pool (PostgreSQL or SQLite) and Redis client.
@@ -76,7 +75,6 @@ async def init_database(settings: Any) -> Tuple[Optional[Any], Optional[redis.Re
     _db_pool = db_pool_instance # Update module-level variable
     _redis_client = redis_client_instance # Update module-level variable
     return db_pool_instance, redis_client_instance
-
 
 async def create_database_schema(db_conn_or_path: Any):
     """
@@ -370,4 +368,3 @@ async def setup_database_on_startup(settings_obj: Any, app_state_obj: Any):
 
     logger.info(f"Database setup complete. DB Connected: {app_state_obj.system_status.database_connected}, Redis Connected: {app_state_obj.system_status.redis_connected}")
 
-```

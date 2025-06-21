@@ -45,4 +45,3 @@ if __name__ == "__main__":
     )
     print("\nNot Found Error Example:")
     print(not_found_error.model_dump_json(indent=2))
-```

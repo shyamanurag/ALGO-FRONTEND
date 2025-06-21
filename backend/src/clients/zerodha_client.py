@@ -31,7 +31,6 @@ class ZerodhaAPIError(ClientException):
     """General Zerodha API error."""
     pass
 
-
 logger = logging.getLogger(__name__)
 
 class ConsolidatedZerodhaClient:
@@ -94,7 +93,6 @@ class ConsolidatedZerodhaClient:
                 logger.info(f"[{self.client_display_name}] Marked token as inactive in DB for user {self.current_user_id}.")
             except Exception as db_err:
                 logger.error(f"[{self.client_display_name}] Failed to mark token as inactive in DB for {self.current_user_id}: {db_err}", exc_info=True)
-
 
     def get_login_url(self) -> Optional[str]:
         if not self.kite:
@@ -163,7 +161,6 @@ class ConsolidatedZerodhaClient:
             self.app_state.market_data.zerodha_data_connected = False
             raise ZerodhaAPIError(f"Unexpected error during session generation: {str(e)}", status_code=500)
 
-
     async def set_access_token(self, access_token: str, user_id: Optional[str] = None, public_token: Optional[str] = None) -> bool:
         log_prefix = f"[{user_id or self.client_display_name}]"
         if not self.kite:
@@ -201,7 +198,6 @@ class ConsolidatedZerodhaClient:
             # but connection is not "fully" verified. Depending on policy, may set zerodha_data_connected = False
             self.app_state.market_data.zerodha_data_connected = False # For safety
             return False
-
 
     async def _api_call_wrapper(self, kite_method_name: str, *args, **kwargs):
         if not self.kite or not self.access_token:
@@ -346,4 +342,3 @@ class ConsolidatedZerodhaClient:
 
     # Add more methods as needed for WebSocket tick handling if in scope.
     # For now, assuming primary ticks via TrueData.
-```

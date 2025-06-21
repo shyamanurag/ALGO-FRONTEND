@@ -247,4 +247,3 @@ async def manual_restore_tokens_route(app_state: AppState = Depends(get_app_stat
         logger.error(f"Error manually restoring tokens (placeholder call): {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to call token restoration: {str(e)}")
 
-```
