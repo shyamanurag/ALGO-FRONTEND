@@ -266,7 +266,7 @@ async def execute_db_query(query: str, *params, db_conn_or_path: Optional[Any] =
         return None # Or raise an exception
 
     try:
-        if isinstance(conn_to_use, str) and "sqlite" in conn_to_use: # SQLite path
+        if isinstance(conn_to_use, str): # SQLite path
             async with aiosqlite.connect(conn_to_use) as db:
                 cursor = await db.execute(query, params)
                 # For SELECT, fetch rows. For INSERT/UPDATE/DELETE, rowcount might be useful.
