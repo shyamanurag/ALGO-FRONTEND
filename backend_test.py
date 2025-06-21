@@ -214,6 +214,17 @@ class AlgoTradingAPITester:
         # Test TrueData disconnect endpoint
         self.run_test("TrueData Disconnect", "POST", "/api/truedata/disconnect", data={})
 
+    def test_websocket_connectivity(self):
+        """Test WebSocket connectivity"""
+        print("\n🔍 Testing WebSocket Connectivity...")
+        
+        # We can't directly test WebSocket connections in this test framework
+        # But we can check if the endpoint is registered by making a GET request
+        # which should return a 400 Bad Request (as it's a WebSocket endpoint)
+        self.run_test("WebSocket Endpoint Check", "GET", "/api/ws/autonomous-data", expected_status=400)
+        
+        print("Note: Full WebSocket testing requires a WebSocket client. Will be tested via browser automation.")
+
     def test_data_integrity(self):
         """Test data integrity and sacred protection"""
         print("\n🔍 Testing Data Integrity and Sacred Protection...")
