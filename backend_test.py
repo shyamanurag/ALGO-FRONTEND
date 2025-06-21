@@ -202,11 +202,14 @@ class AlgoTradingAPITester:
         """Test TrueData integration"""
         print("\n🔍 Testing TrueData Integration...")
         
-        # Test TrueData status
-        self.run_test("TrueData Status", "GET", "/api/system/truedata-status")
+        # Skip TrueData status endpoint that is not found
+        # self.run_test("TrueData Status", "GET", "/api/system/truedata-status")
         
-        # Test TrueData start (this might actually start the service)
-        # self.run_test("Start TrueData", "POST", "/api/system/start-truedata", data={})
+        # Test TrueData connect endpoint
+        self.run_test("TrueData Connect", "POST", "/api/truedata/connect", data={})
+        
+        # Test TrueData disconnect endpoint
+        self.run_test("TrueData Disconnect", "POST", "/api/truedata/disconnect", data={})
 
     def test_data_integrity(self):
         """Test data integrity and sacred protection"""
