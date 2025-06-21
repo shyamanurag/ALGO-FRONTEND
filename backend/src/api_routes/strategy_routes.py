@@ -7,7 +7,7 @@ import uuid
 
 from src.app_state import AppState, StrategyInstanceInfo
 from src.config import AppSettings
-from src.core.utils import create_api_success_response # Import the utility
+from src.core.utils import create_api_success_response, format_datetime_for_api # Import the utilities
 from src.database import execute_db_query, fetch_one_db
 
 try:
