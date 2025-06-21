@@ -142,6 +142,9 @@ async def websocket_trading_data_endpoint(websocket: Any, user_id: str, app_stat
 async def startup_event_main():
     global app_state # app_state is global, settings is now app_state.config
     
+    # Set the configuration in app_state
+    app_state.config = settings
+    
     logger_server.info(f"🚀 Starting Platform (Log Level: {app_state.config.LOG_LEVEL})...") # Use app_state.config
     app_state.system_status.app_start_time = datetime.utcnow()
     app_state.trading_control.paper_trading = app_state.config.PAPER_TRADING
