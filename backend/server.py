@@ -354,6 +354,7 @@ async def get_system_status_route(app_state: AppState = Depends(get_app_state)):
 app.include_router(main_api_router, prefix="/api")
 
 app.include_router(admin_router, prefix="/api/admin", dependencies=[Depends(get_app_state)])
+app.include_router(autonomous_router, prefix="/api", dependencies=[Depends(get_app_state)])
 app.include_router(strategy_router, prefix="/api", dependencies=[Depends(get_app_state)])
 app.include_router(autonomous_strategy_router, prefix="/api", dependencies=[Depends(get_app_state)])
 app.include_router(trading_router, prefix="/api", dependencies=[Depends(get_app_state)])
