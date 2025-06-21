@@ -10,11 +10,10 @@ from src.core.utils import create_api_success_response, format_datetime_for_api 
 try:
     from backend.server import get_market_data_state, get_app_state
 except ImportError:
-    _fallback_logger_wh = logging.getLogger(__name__)
-    _fallback_logger_wh.error("CRITICAL: Could not import get_market_data_state or get_app_state from backend.server for webhook_routes.py.")
-    from src.app_state import app_state as _global_app_state_instance_wh
-    async def get_market_data_state(): return _global_app_state_instance_wh.market_data
-    async def get_app_state(): return _global_app_state_instance_wh
+    # Use fallback functions (this is expected due to circular imports)
+    from src.app_state import app_state as _global_app_state_instance
+    def get_market_data_state(): return _global_app_state_instance.market_data
+    def get_app_state(): return _global_app_state_instance
 
 logger = logging.getLogger(__name__)
 
