@@ -322,8 +322,9 @@ async def fetch_one_db(query: str, *params, db_conn_or_path: Optional[Any] = Non
         return None
 
     try:
-        if isinstance(conn_to_use, str) and "sqlite" in conn_to_use: # SQLite path
+        if isinstance(conn_to_use, str): # SQLite path
             async with aiosqlite.connect(conn_to_use) as db:
+                db.row_factory = aiosqlite.Row  # This makes rows dict-like
                 cursor = await db.execute(query, params)
                 row = await cursor.fetchone()
                 await cursor.close()
