@@ -199,7 +199,8 @@ function AdminDashboard({ systemStatus, connectedAccounts, realTimeData, onTrueD
       const response = await fetch(`${BACKEND_URL}/api/system/status`);
       const data = await response.json();
       if (data.success) {
-        setCurrentSystemStatus(data.status);
+        // Fix: Extract data from nested response structure
+        setCurrentSystemStatus(data.data || {});
       }
     } catch (error) {
       console.error('Error fetching system status:', error);
