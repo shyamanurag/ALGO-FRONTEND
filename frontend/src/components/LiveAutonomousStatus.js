@@ -128,13 +128,13 @@ const LiveAutonomousStatus = () => {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className={`w-4 h-4 rounded-full mr-3 ${
-                systemStatus?.status?.system_health === 'HEALTHY' ? 'bg-green-400' : 
-                systemStatus?.status?.system_health === 'DEGRADED' ? 'bg-yellow-400' : 'bg-red-400'
+                systemStatus?.system_health === 'OPERATIONAL_RESUMED' || systemStatus?.system_health === 'HEALTHY' ? 'bg-green-400' :
+                systemStatus?.system_health === 'DEGRADED' || systemStatus?.system_health === 'ERROR_MD_INIT' ? 'bg-yellow-400' : 'bg-red-400'
               }`}></div>
               <div>
                 <p className="text-sm font-medium text-gray-600">System Health</p>
                 <p className="text-xl font-bold text-gray-900">
-                  {systemStatus?.status?.system_health || 'UNKNOWN'}
+                  {systemStatus?.system_health || 'UNKNOWN'}
                 </p>
               </div>
             </div>
