@@ -187,9 +187,9 @@ async def startup_event_main():
         app_state.trading_control.autonomous_trading_active = False
 
     try:
-        scheduler_instance = AsyncIOScheduler()
+        from src.scheduler_jobs import initialize_scheduler
+        scheduler_instance = initialize_scheduler(app_state, app_state.config)
         app_state.clients.scheduler = scheduler_instance
-        setup_scheduler_jobs(app_state, scheduler_instance)
     except Exception as e_sched: logger_server.error(f"❌ Scheduler setup error: {e_sched}", exc_info=True)
         
     if app_state.system_status.system_health not in ["ERROR_DB_INIT", "ERROR_MD_INIT"]:
