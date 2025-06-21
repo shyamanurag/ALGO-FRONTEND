@@ -19,14 +19,6 @@ except ImportError:
     from src.config import settings as _global_settings_instance
     def get_app_state(): return _global_app_state_instance
     def get_settings(): return _global_settings_instance
-    from backend.server import get_app_state, get_settings
-except ImportError:
-    _fallback_logger_user = logging.getLogger(__name__)
-    _fallback_logger_user.error("CRITICAL: Could not import get_app_state, get_settings from backend.server for user_routes.py.")
-    from src.app_state import app_state as _global_app_state_instance_user
-    from src.config import settings as _global_settings_instance_user
-    async def get_app_state(): return _global_app_state_instance_user
-    async def get_settings(): return _global_settings_instance_user
 
 logger = logging.getLogger(__name__)
 
