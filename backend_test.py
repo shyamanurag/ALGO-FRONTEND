@@ -261,6 +261,9 @@ class AlgoTradingAPITester:
         # TrueData integration
         self.test_truedata_integration()
         
+        # WebSocket connectivity
+        self.test_websocket_connectivity()
+        
         # Data integrity
         self.test_data_integrity()
         
