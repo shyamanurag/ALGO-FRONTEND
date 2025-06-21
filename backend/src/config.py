@@ -35,7 +35,8 @@ class AppSettings(BaseSettings):
 
     # Old/Legacy TrueData URL parts - can be deprecated if TRUEDATA_WEBSOCKET_URL is sufficient
     TRUEDATA_URL_LEGACY: str = Field(default="push.truedata.in", description="Legacy base URL/IP for TrueData (if needed, prefer TRUEDATA_WEBSOCKET_URL)")
-    TRUEDATA_URL: str = Field(default="push.truedata.in", description="TrueData URL for compatibility")
+    TRUEDATA_URL: str = Field(default="push.truedata.in", description="TrueData URL for TD_live connection")
+    TRUEDATA_PORT: int = Field(default=8084, description="TrueData port for TD_live connection")
     TRUEDATA_PORT_LEGACY: int = Field(default=8084, description="Legacy port for TrueData (if needed, prefer TRUEDATA_WEBSOCKET_URL)")
 
     TRUEDATA_API_URL: str = Field(default="history.truedata.in", description="URL for TrueData Historical API (if used separately)")
