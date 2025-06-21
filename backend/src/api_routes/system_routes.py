@@ -266,6 +266,27 @@ async def get_stored_tokens_route(app_state: AppState = Depends(get_app_state)):
         logger.error(f"Error getting stored tokens: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error getting stored tokens: {str(e)}")
 
+async def local_restore_auth_tokens(current_app_state: AppState) -> bool:
+    """Local function to restore authentication tokens from database"""
+    if not current_app_state.clients.db_pool:
+        logger.warning("DB not available for token restore.")
+        return False
+    
+    try:
+        token_data = await fetch_one_db(
+            "SELECT access_token, provider FROM auth_tokens WHERE is_active = 1 ORDER BY updated_at DESC LIMIT 1", 
+            db_conn_or_path=current_app_state.clients.db_pool
+        )
+        if token_data and token_data["access_token"]:
+            logger.info(f"Found token for provider '{token_data.get('provider', 'unknown')}'")
+            return True
+        else:
+            logger.info("No active tokens found in DB.")
+            return False
+    except Exception as e:
+        logger.error(f"Error restoring tokens: {e}", exc_info=True)
+        return False
+
 @system_router.post("/system/restore-tokens", summary="Manually restore tokens from database (placeholder)")
 async def manual_restore_tokens_route(app_state: AppState = Depends(get_app_state)):
     try:
