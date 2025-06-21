@@ -31,6 +31,7 @@ class StrategyInstanceInfo(BaseModel):
 class StrategyState(BaseModel):
     strategy_instances: Dict[str, StrategyInstanceInfo] = Field(default_factory=dict)
     overall_strategies_pnl: float = 0.0
+    active_strategies_count: int = 0
 
 class TradingControlState(BaseModel):
     paper_trading: bool = True
