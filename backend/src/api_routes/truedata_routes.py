@@ -61,7 +61,7 @@ async def truedata_connect_route(settings: AppSettings = Depends(get_settings)):
         logger.error(f"Error calling initialize_truedata_singleton: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Error during TrueData client initialization: {str(e)}")
 
-@truedata_router.post("/truedata/disconnect", summary="Attempt to disconnect the TrueData Singleton Client")
+@truedata_router.post("/disconnect", summary="Attempt to disconnect the TrueData Client")
 async def truedata_disconnect_route():
     try:
         logger.info("API call to disconnect TrueData Singleton Client.")
