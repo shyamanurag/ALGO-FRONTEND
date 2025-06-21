@@ -4,8 +4,8 @@ from typing import Dict, Optional, List, Any, Coroutine, Callable
 from datetime import datetime
 from kiteconnect import KiteConnect, KiteTicker
 from kiteconnect.exceptions import (
-    KiteException, TokenException, UserException, GeneralException, DataException,
-    NetworkException, OrderException, InputException, PermissionException
+    TokenException, NetworkException, GeneralException, InputException, 
+    DataException, OrderException, PermissionException
 )
 
 from src.config import AppSettings
