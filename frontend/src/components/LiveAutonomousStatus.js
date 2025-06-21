@@ -26,7 +26,8 @@ const LiveAutonomousStatus = () => {
       const systemResponse = await fetch(`${BACKEND_URL}/api/system/status`);
       if (systemResponse.ok) {
         const systemData = await systemResponse.json();
-        setSystemStatus(systemData);
+        // Fix: Extract data from nested response structure
+        setSystemStatus(systemData.data || systemData);
       }
 
       // Fetch autonomous status  
