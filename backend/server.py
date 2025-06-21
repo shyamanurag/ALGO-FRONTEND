@@ -65,7 +65,7 @@ async def generic_exception_handler(request: Request, exc: Exception) -> JSONRes
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
 
-from src.api_routes.admin_routes import api_router as admin_router
+from src.api_routes.autonomous_routes import api_router as admin_router
 from src.api_routes.strategy_routes import strategy_router, autonomous_strategy_router
 from src.api_routes.trading_routes import trading_router
 from src.api_routes.market_data_routes import market_data_router
