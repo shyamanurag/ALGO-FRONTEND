@@ -147,10 +147,10 @@ class AlgoTradingAPITester:
         """Test market data endpoints"""
         print("\n🔍 Testing Market Data Endpoints...")
         
-        # Test live market data
+        # Test live market data - This is working
         self.run_test("Live Market Data", "GET", "/api/market-data/live")
         
-        # Test indices data
+        # Test indices data - This is working
         self.run_test("Indices Data", "GET", "/api/market-data/indices")
 
     def test_trading_endpoints(self):
