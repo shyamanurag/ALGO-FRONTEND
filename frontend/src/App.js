@@ -192,27 +192,25 @@ function App() {
         // Fix: Extract data from nested response structure
         setBackendConnected(true);
         
-        // Update system status with proper data structure
-        setSystemStatus(systemData.data || {});
-        
+        // Update system status with comprehensive data from both endpoints
         setSystemStatus({
           status: healthData.status,
           database: healthData.database || healthData.components?.database,
           timestamp: healthData.timestamp,
-          // Enhanced system status from both endpoints
-          system_health: systemData?.system_health || healthData.status,
-          autonomous_trading: systemData?.autonomous_trading || healthData.autonomous_trading,
-          paper_trading: systemData?.paper_trading || healthData.paper_trading || true,
-          market_status: systemData?.market_open ? 'OPEN' : 'CLOSED',
+          // Enhanced system status from system endpoint (extract from data field)
+          system_health: systemData.data?.system_health || healthData.status,
+          autonomous_trading: systemData.data?.autonomous_trading || healthData.autonomous_trading,
+          paper_trading: systemData.data?.paper_trading || healthData.paper_trading || true,
+          market_status: systemData.data?.market_open ? 'OPEN' : 'CLOSED',
           current_time: healthData.timestamp,
           uptime: healthData.uptime,
           last_update: new Date().toISOString(),
-          data_source: systemData?.data_source || 'NO_DATA',
+          data_source: systemData.data?.data_source || 'NO_DATA',
           symbols_tracked: healthData.symbols_tracked,
           truedata: healthData.truedata || { status: 'DISCONNECTED', connected: false },
-          truedata_connected: systemData?.truedata_connected || false,
-          zerodha_connected: systemData?.zerodha_connected || false,
-          websocket_connections: systemData?.websocket_connections || 0,
+          truedata_connected: systemData.data?.truedata_connected || false,
+          zerodha_connected: systemData.data?.zerodha_connected || false,
+          websocket_connections: systemData.data?.websocket_connections || 0,
           trading_stats: healthData.trading_stats,
           // Add component status
           components: healthData.components || {}
