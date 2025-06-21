@@ -19,6 +19,7 @@ function App() {
   const [user, setUser] = useState({ name: 'Admin User', role: 'admin' }); // Default user for testing
   const [userRole, setUserRole] = useState('admin');
   const [systemStatus, setSystemStatus] = useState({});
+  const [backendConnected, setBackendConnected] = useState(false);
   const [connectedAccounts, setConnectedAccounts] = useState([]);
   const [realTimeData, setRealTimeData] = useState({});
 
