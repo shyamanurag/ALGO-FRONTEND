@@ -176,5 +176,3 @@ if __name__ == "__main__":
     logger.info(f"App Name: {settings.APP_NAME}")
     logger.info(f"App Version: {settings.APP_VERSION}")
     logger.info(f"Market Open Time (parsed): {settings.MARKET_OPEN_TIME}")
-
-```
