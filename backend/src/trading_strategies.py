@@ -138,7 +138,8 @@ async def initialize_trading_strategies(app_state: AppState, settings: AppSettin
         logger.info(f"Strategy '{strat_id}' ({cfg_data['display_name']}) for '{cfg_data['symbol']}' init. Active: {cfg_data['enabled']}")
 
     active_c = len([si for si in strat_state.strategy_instances.values() if si.is_active])
-    app_state.system_status.strategies_active = active_c
+    # Store active count in the strategy state, not system status
+    strat_state.active_strategies_count = active_c
     logger.info(f"Trading Strategies init complete. Active strategies: {active_c}")
 
 async def execute_strategy_loop(app_state: AppState, settings: AppSettings):
