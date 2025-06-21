@@ -1,470 +1,414 @@
-"""
-Hybrid TrueData Integration - Historical + Alternative Live Data
-Uses TrueData for historical data and implements live updates through other means
-"""
+import asyncio
+import json
 import logging
-import threading
-import time
-from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
-import os
+import websockets
+from datetime import datetime
+from typing import Dict, Optional, Callable, List, Any
+import ssl
+import certifi
 
-logger = logging.getLogger(__name__)
+# Import settings from the application's config module
+from src.config import settings # Centralized configuration
 
-# Global data storage
-live_market_data = {}
-truedata_connection_status = {
-    'connected': False,
-    'login_id': '',
-    'last_update': None,
-    'error': None,
-    'connection_type': 'hybrid'
+# --- Global Variables for Singleton State ---
+live_market_data: Dict[str, Dict[str, Any]] = {}
+truedata_connection_status: Dict[str, Any] = {
+    "connected": False,
+    "last_update": None,
+    "error_message": None,
+    "active_symbols": []
 }
+# --- End Global Variables ---
 
-class HybridTrueDataClient:
-    def __init__(self):
-        # Environment variables with TrueData specified port
-        self.login_id = os.environ.get('TRUEDATA_USERNAME', 'tdwsp697')
-        self.password = os.environ.get('TRUEDATA_PASSWORD', 'shyam@697')
-        self.assigned_port = 8084  # TrueData specified port for this account
-        
-        self.td_obj = None
-        self.connected = False
-        self.live_data = {}
-        self.connection_thread = None
-        self.running = False
-        
-        # Symbols for data
-        self.symbols = ['NIFTY', 'BANKNIFTY', 'FINNIFTY']
-        
-        logger.info(f"🔗 Hybrid TrueData Client initialized for {self.login_id}")
+# --- Logger Setup ---
+logger = logging.getLogger(__name__)
+# Basic configuration if no root logger is set (e.g. when run standalone)
+# In the main app, logging is configured by server.py calling setup_logging.
+if not logger.hasHandlers() and not logging.getLogger().hasHandlers(): # Check root logger too
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# --- End Logger Setup ---
 
-    def start_connection(self):
-        """Start hybrid TrueData connection (Historical + Smart Live Simulation)"""
+
+class TrueDataSingletonClient:
+    _instance = None
+
+    # --- Client Configuration (Now primarily from imported settings) ---
+    TD_USERNAME: Optional[str] = None
+    TD_PASSWORD: Optional[str] = None
+    TD_APIKEY: Optional[str] = None
+    WS_URL: str = "wss://api.truedata.in/websocket" # Default, will be overridden by settings
+    SYMBOLS_TO_SUBSCRIBE: List[str] = []
+
+    # SSL Context - Using library defaults is generally fine for standard wss.
+    # Custom context can be configured here if needed:
+    # ssl_context = ssl.create_default_context(cafile=certifi.where())
+
+    # --- Internal State ---
+    websocket_client: Optional[websockets.WebSocketClientProtocol] = None
+    is_connecting: bool = False
+    reconnect_attempts: int = 0
+    # Max attempts and delays will also come from settings
+
+    # Callbacks
+    _on_data_callback: Optional[Callable[[Dict], Any]] = None # Can be sync or async
+    _on_status_change_callback: Optional[Callable[[bool, Optional[str]], Any]] = None # Can be sync or async
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(TrueDataSingletonClient, cls).__new__(cls, *args, **kwargs)
+            # Initialize config from settings when instance is first created
+            cls._instance._load_config_from_settings()
+        return cls._instance
+
+    def _load_config_from_settings(self):
+        """Loads configuration from the global settings object."""
+        self.TD_USERNAME = settings.TRUEDATA_USERNAME
+        self.TD_PASSWORD = settings.TRUEDATA_PASSWORD
+        self.TD_APIKEY = settings.TRUEDATA_APIKEY # Optional
+        self.WS_URL = settings.TRUEDATA_WEBSOCKET_URL
+        # Ensure default symbols is a copy if it's mutable from settings
+        self.SYMBOLS_TO_SUBSCRIBE = list(settings.TRUEDATA_DEFAULT_SYMBOLS)
+        
+        # Reconnection parameters from settings
+        self.max_reconnect_attempts = settings.TRUEDATA_RECONNECT_MAX_ATTEMPTS
+        self.reconnect_delay_base = settings.TRUEDATA_RECONNECT_INITIAL_DELAY
+        self.max_reconnect_delay = settings.TRUEDATA_RECONNECT_MAX_DELAY # New setting for max delay cap
+
+        logger.info(f"[{self.__class__.__name__}] Configuration loaded from settings. User: {self.TD_USERNAME}, URL: {self.WS_URL}")
+
+
+    async def _update_global_status(self, connected: bool, error_message: Optional[str] = None, symbols: Optional[List[str]] = None):
         global truedata_connection_status
+        truedata_connection_status["connected"] = connected
+        truedata_connection_status["last_update"] = datetime.now().isoformat()
         
-        try:
-            # Import the truedata-ws library
-            from truedata_ws.websocket.TD import TD
-            
-            logger.info(f"🚀 Starting Hybrid TrueData connection with {self.login_id} on assigned port {self.assigned_port}")
-            
-            # First try TrueData assigned port 8084
-            try:
-                logger.info(f"🔗 Connecting to TrueData assigned port {self.assigned_port}...")
-                
-                # Initialize TrueData-WS for live data on assigned port
-                self.td_obj = TD(self.login_id, self.password, live_port=self.assigned_port)
-                
-                # Give it a moment to establish
-                time.sleep(5)
-                
-                # Test live data capability
-                logger.info("📊 Testing live data on assigned port...")
-                test_symbols = ['NIFTY', 'BANKNIFTY']
-                req_ids = self.td_obj.start_live_data(test_symbols)
-                
-                if req_ids and len(req_ids) > 0:
-                    logger.info(f"✅ TrueData LIVE connection successful on port {self.assigned_port}! Request IDs: {req_ids}")
-                    
-                    self.connected = True
-                    truedata_connection_status['connected'] = True
-                    truedata_connection_status['login_id'] = self.login_id
-                    truedata_connection_status['last_update'] = datetime.now().isoformat()
-                    truedata_connection_status['error'] = None
-                    truedata_connection_status['connection_type'] = f'real_truedata_live_port_{self.assigned_port}'
-                    truedata_connection_status['port'] = self.assigned_port
-                    
-                    # Start real data monitoring
-                    self._start_real_data_monitoring(req_ids)
-                    
-                    logger.info("🎯 REAL TrueData live connection established!")
-                    return True
-                else:
-                    logger.warning(f"❌ Live data failed on assigned port {self.assigned_port}")
-                    
-            except Exception as live_error:
-                logger.error(f"❌ TrueData live port {self.assigned_port} failed: {live_error}")
-            
-            # Fallback to historical + smart simulation
-            logger.info("🔄 Falling back to historical + smart simulation...")
-            
-            # Initialize TrueData-WS for historical data only (this works!)
-            self.td_obj = TD(self.login_id, self.password, live_port=None)
-            
-            # Test historical data access
-            logger.info("📊 Testing historical data access...")
-            
-            # Give it a moment to establish
-            time.sleep(3)
-            
-            # Try to get recent historical data for validation
-            end_date = datetime.now()
-            start_date = end_date - timedelta(days=1)
-            
-            # Test if we can access historical data
-            try:
-                # This is just a connection test - we'll implement smart live updates
-                logger.info("✅ TrueData historical connection established!")
-                
-                self.connected = True
-                truedata_connection_status['connected'] = True
-                truedata_connection_status['login_id'] = self.login_id
-                truedata_connection_status['last_update'] = datetime.now().isoformat()
-                truedata_connection_status['error'] = None
-                truedata_connection_status['connection_type'] = 'hybrid_historical_plus_smart_live'
-                
-                # Start smart live data generation
-                self._start_smart_live_data()
-                
-                logger.info("🎯 Hybrid TrueData connection successful!")
-                return True
-                
-            except Exception as hist_error:
-                logger.warning(f"Historical data test failed: {hist_error}")
-                # Continue anyway - we can still provide smart live data
-                self.connected = True
-                truedata_connection_status['connected'] = True
-                truedata_connection_status['connection_type'] = 'smart_live_only'
-                self._start_smart_live_data()
-                return True
-                
-        except Exception as e:
-            error_msg = f"Hybrid TrueData connection failed: {str(e)}"
-            logger.error(f"❌ {error_msg}")
-            
-            # Fallback to pure smart simulation
-            logger.info("🔄 Falling back to smart live simulation...")
-            truedata_connection_status['connected'] = True  # Still provide data
-            truedata_connection_status['error'] = f"TrueData unavailable: {error_msg}"
-            truedata_connection_status['connection_type'] = 'smart_simulation_fallback'
-            
-            self._start_smart_live_data()
-            return True  # Always return True to provide some data
+        # Preserve last error unless a new one is explicitly passed or connection is successful
+        if error_message is not None or connected:
+            truedata_connection_status["error_message"] = error_message
 
-    def _start_real_data_monitoring(self, req_ids):
-        """Start monitoring REAL live data from TrueData port 8084"""
-        if self.running:
-            logger.warning("⚠️ Data monitoring already running")
+        if symbols is not None:
+            truedata_connection_status["active_symbols"] = sorted(list(set(symbols))) # Keep unique and sorted
+
+        if self._on_status_change_callback:
+            try:
+                res = self._on_status_change_callback(connected, truedata_connection_status["error_message"])
+                if asyncio.iscoroutine(res): await res
+            except Exception as e_cb_status:
+                logger.error(f"Error in _on_status_change_callback: {e_cb_status}", exc_info=True)
+
+    async def connect(self):
+        if self.websocket_client and self.websocket_client.open:
+            logger.info(f"[{self.__class__.__name__}] Already connected.")
             return
-            
+        if self.is_connecting:
+            logger.info(f"[{self.__class__.__name__}] Connection attempt already in progress.")
+            return
+
+        self.is_connecting = True
+        # Ensure latest config is loaded if it can change dynamically (not typical for BaseSettings)
+        # self._load_config_from_settings() # Usually done once at init
+
+        if not self.TD_USERNAME or not self.TD_PASSWORD:
+            logger.error(f"[{self.__class__.__name__}] TrueData username or password not configured. Cannot connect.")
+            await self._update_global_status(False, "Username or password not configured.")
+            self.is_connecting = False
+            return
+
+        logger.info(f"[{self.__class__.__name__}] Attempting to connect to {self.WS_URL} for user {self.TD_USERNAME}...")
+
         try:
-            self.running = True
-            self.connection_thread = threading.Thread(
-                target=self._real_data_monitoring_worker, 
-                args=(req_ids,), 
-                daemon=True
+            self.websocket_client = await websockets.connect(
+                self.WS_URL,
+                ping_interval=settings.TRUEDATA_PING_INTERVAL,
+                ping_timeout=settings.TRUEDATA_PING_TIMEOUT,
+                close_timeout=settings.TRUEDATA_CLOSE_TIMEOUT
             )
-            self.connection_thread.start()
+            logger.info(f"[{self.__class__.__name__}] WebSocket connection established. Authenticating...")
             
-            logger.info("🔴 REAL TrueData live data monitoring started")
+            auth_payload = {"username": self.TD_USERNAME, "password": self.TD_PASSWORD}
+            if self.TD_APIKEY: auth_payload["apikey"] = self.TD_APIKEY
             
-        except Exception as e:
-            logger.error(f"❌ Failed to start real data monitoring: {e}")
+            await self.websocket_client.send(json.dumps(auth_payload))
+            # Optional: Wait for a specific auth success message if protocol defines one.
+            # For now, assume connection implies auth success for this client structure.
+            logger.info(f"[{self.__class__.__name__}] Authentication payload sent.")
 
-    def _real_data_monitoring_worker(self, req_ids):
-        """Monitor REAL live data from TrueData"""
+            await self._update_global_status(True, error_message=None) # Mark connected
+            logger.info(f"[{self.__class__.__name__}] Subscribing to default/current symbols...")
+            await self.subscribe_symbols(list(self.SYMBOLS_TO_SUBSCRIBE)) # Ensure it's a list copy
+
+            self.reconnect_attempts = 0
+            asyncio.create_task(self.listen_for_messages())
+
+        except websockets.exceptions.InvalidStatusCode as e_status:
+            logger.error(f"[{self.__class__.__name__}] WebSocket connection failed: Invalid status {e_status.status_code}.", exc_info=True)
+            await self._update_global_status(False, f"Connection Failed: Status {e_status.status_code}")
+            self.websocket_client = None
+        except ConnectionRefusedError:
+            logger.error(f"[{self.__class__.__name__}] WebSocket connection refused from {self.WS_URL}.", exc_info=True)
+            await self._update_global_status(False, "Connection Refused")
+            self.websocket_client = None
+        except Exception as e:
+            logger.error(f"[{self.__class__.__name__}] Failed to connect/authenticate with TrueData: {e}", exc_info=True)
+            await self._update_global_status(False, f"Connection Error: {str(e)[:100]}") # Avoid overly long error messages in status
+            self.websocket_client = None
+        finally:
+            self.is_connecting = False
+
+    async def listen_for_messages(self):
+        logger.info(f"[{self.__class__.__name__}] Listening for messages from TrueData...")
+        try:
+            while self.websocket_client and self.websocket_client.open:
+                message_str = await self.websocket_client.recv()
+                self._process_message(message_str)
+        except websockets.exceptions.ConnectionClosedError as e_closed_err:
+            logger.error(f"[{self.__class__.__name__}] Connection closed with error: {e_closed_err.code} {e_closed_err.reason}", exc_info=True)
+            await self._update_global_status(False, f"Connection Closed Error: {e_closed_err.code}")
+            await self.handle_reconnect()
+        except websockets.exceptions.ConnectionClosedOK:
+            logger.info(f"[{self.__class__.__name__}] Connection closed gracefully (OK).")
+            await self._update_global_status(False, "Connection Closed OK by server")
+            await self.handle_reconnect() # Reconnect unless shutdown was intended
+        except Exception as e_listen:
+            logger.error(f"[{self.__class__.__name__}] Error in message listener: {e_listen}", exc_info=True)
+            await self._update_global_status(False, f"Listener Error: {str(e_listen)[:50]}")
+            await self.handle_reconnect()
+        finally:
+            if not (self.websocket_client and self.websocket_client.open):
+                 logger.info(f"[{self.__class__.__name__}] Listener loop ended; WebSocket no longer open.")
+                 if truedata_connection_status["connected"]:
+                      await self._update_global_status(False, "Listener terminated, connection lost.")
+
+    def _process_message(self, message_str: str):
         global live_market_data
-        
-        logger.info("🔗 Starting REAL TrueData live data monitoring...")
-        
-        while self.running and self.connected:
-            try:
-                current_time = datetime.now()
-                updated_any = False
+        try:
+            data_packet = json.loads(message_str)
+            
+            if 'message' in data_packet and isinstance(data_packet['message'], dict):
+                msg_content = data_packet['message'].get('message', '')
+                if msg_content == 'HeartBeat' or 'TrueData Real Time Data Service' in msg_content:
+                    logger.debug(f"Heartbeat/Info: {msg_content}")
+                    truedata_connection_status["last_update"] = datetime.now().isoformat()
+                    return
+
+            if 'trade' in data_packet and isinstance(data_packet['trade'], list) and len(data_packet['trade']) >= 3:
+                tick = data_packet['trade']
+                symbol_id = str(tick[0]) # Assuming symbol_id is the first element
                 
-                for req_id in req_ids:
+                ltp_data = {
+                    "symbol_id": symbol_id, # Use the ID as key internally
+                    "ltp": float(tick[2]),
+                    "timestamp": datetime.fromtimestamp(int(tick[1])/1000).isoformat() if isinstance(tick[1], (int, float)) else str(tick[1]),
+                    "volume": int(tick[3]) if len(tick) > 3 and tick[3] is not None else 0,
+                    # Add more fields based on actual protocol and needs
+                }
+                live_market_data[symbol_id] = ltp_data
+                
+                if self._on_data_callback:
                     try:
-                        # Get live data for this request ID
-                        live_obj = self.td_obj.live_data.get(req_id)
-                        
-                        if live_obj and hasattr(live_obj, 'ltp') and live_obj.ltp:
-                            # Extract symbol name
-                            symbol_name = getattr(live_obj, 'symbol', f'SYMBOL_{req_id}')
-                            if '-I' in symbol_name:
-                                symbol_name = symbol_name.replace('-I', '')
-                            
-                            # Create real market data object
-                            market_data = {
-                                'ltp': float(live_obj.ltp),
-                                'symbol': symbol_name,
-                                'timestamp': current_time.isoformat(),
-                                'data_source': 'REAL_TRUEDATA_LIVE_8084',
-                                'status': 'LIVE_REAL',
-                                'req_id': req_id
-                            }
-                            
-                            # Add additional real data if available
-                            if hasattr(live_obj, 'bid') and live_obj.bid:
-                                market_data['bid'] = float(live_obj.bid)
-                            if hasattr(live_obj, 'ask') and live_obj.ask:
-                                market_data['ask'] = float(live_obj.ask)
-                            if hasattr(live_obj, 'volume') and live_obj.volume:
-                                market_data['volume'] = int(live_obj.volume)
-                            if hasattr(live_obj, 'open') and live_obj.open:
-                                market_data['open'] = float(live_obj.open)
-                            if hasattr(live_obj, 'high') and live_obj.high:
-                                market_data['high'] = float(live_obj.high)
-                            if hasattr(live_obj, 'low') and live_obj.low:
-                                market_data['low'] = float(live_obj.low)
-                            
-                            # Calculate change percent if open is available
-                            if 'open' in market_data and market_data['open'] > 0:
-                                change = market_data['ltp'] - market_data['open']
-                                market_data['change_percent'] = round((change / market_data['open']) * 100, 2)
-                            
-                            # Store REAL data
-                            live_market_data[symbol_name] = market_data
-                            self.live_data[symbol_name] = market_data
-                            updated_any = True
-                            
-                    except Exception as e:
-                        logger.debug(f"Error processing real data req_id {req_id}: {e}")
-                
-                if updated_any:
-                    # Update connection status
-                    truedata_connection_status['last_update'] = current_time.isoformat()
-                    
-                    # Log real data status every 30 seconds
-                    if int(time.time()) % 30 == 0:
-                        prices_str = ", ".join([f"{sym}=₹{data['ltp']:.2f}" for sym, data in live_market_data.items()])
-                        logger.info(f"📊 REAL LIVE DATA (Port 8084): {prices_str}")
-                
-                # Check data every 1 second for real-time updates
-                time.sleep(1)
-                
-            except Exception as e:
-                logger.error(f"❌ Error in real TrueData monitoring: {e}")
-                truedata_connection_status['error'] = str(e)
-                time.sleep(10)  # Wait before retrying
+                        res = self._on_data_callback(ltp_data.copy()) # Send a copy
+                        if asyncio.iscoroutine(res): asyncio.create_task(res) # If callback is async but called from sync
+                    except Exception as e_cb_data: logger.error(f"Error in _on_data_callback: {e_cb_data}", exc_info=True)
+            # else: logger.debug(f"Other msg: {message_str[:100]}")
 
-    def _start_smart_live_data(self):
-        """Start intelligent live data generation based on real market patterns"""
-        if self.running:
-            logger.warning("⚠️ Smart live data already running")
+        except json.JSONDecodeError: logger.warning(f"JSONDecodeError: {message_str[:200]}")
+        except Exception as e_proc: logger.error(f"Msg processing error: {e_proc} - Data: {message_str[:200]}", exc_info=True)
+
+    async def subscribe_symbols(self, symbols: List[str]):
+        current_subs = set(self.SYMBOLS_TO_SUBSCRIBE)
+        new_subs_to_add = [s for s in symbols if s not in current_subs]
+        if not new_subs_to_add and current_subs: # If no new symbols but already subscribed to some, resubscribe all
+            pass # Or just return if only new symbols are to be sent. User client sends all.
+        
+        self.SYMBOLS_TO_SUBSCRIBE = sorted(list(set(self.SYMBOLS_TO_SUBSCRIBE + symbols)))
+
+        if not self.websocket_client or not self.websocket_client.open:
+            logger.warning(f"[{self.__class__.__name__}] WS not connected. Symbols will be subscribed on connect: {self.SYMBOLS_TO_SUBSCRIBE}")
             return
-            
+        
+        logger.info(f"[{self.__class__.__name__}] Attempting to subscribe to: {self.SYMBOLS_TO_SUBSCRIBE}")
         try:
-            self.running = True
-            self.connection_thread = threading.Thread(target=self._smart_live_worker, daemon=True)
-            self.connection_thread.start()
-            
-            logger.info("🧠 Smart live data generation started")
-            
-        except Exception as e:
-            logger.error(f"❌ Failed to start smart live data: {e}")
+            # Example payload: {"type":"subscribe", "symbols": ["NIFTY", "BANKNIFTY"]}
+            # User client example: {"t": "s", "k": ["ID1", "ID2"]}
+            # The singleton should use symbol names as per its SYMBOLS_TO_SUBSCRIBE list
+            # If mapping to IDs is needed, it should happen here or before. Assuming names for now.
+            await self.websocket_client.send(json.dumps({"type": "subscribe", "symbols": self.SYMBOLS_TO_SUBSCRIBE}))
+            await self._update_global_status(True, symbols=self.SYMBOLS_TO_SUBSCRIBE)
+            logger.info(f"[{self.__class__.__name__}] Subscription request sent for: {self.SYMBOLS_TO_SUBSCRIBE}")
+        except Exception as e_sub: logger.error(f"Error subscribing: {e_sub}", exc_info=True)
 
-    def _smart_live_worker(self):
-        """Intelligent live data worker that generates realistic market movements"""
-        global live_market_data
-        
-        logger.info("🧠 Starting intelligent market data simulation...")
-        
-        # Realistic base prices (updated for current market levels)
-        base_prices = {
-            'NIFTY': 23067.45,
-            'BANKNIFTY': 49285.30,
-            'FINNIFTY': 21892.75
-        }
-        
-        # Track price movements
-        current_prices = base_prices.copy()
-        last_update = {}
-        
-        while self.running:
-            try:
-                current_time = datetime.now()
-                is_market_hours = self._is_market_hours(current_time)
-                
-                for symbol, base_price in base_prices.items():
-                    # Generate intelligent price movement
-                    market_data = self._generate_intelligent_price(
-                        symbol, current_prices[symbol], is_market_hours, current_time
-                    )
-                    
-                    # Update current price for continuity
-                    current_prices[symbol] = market_data['ltp']
-                    
-                    # Store in global data
-                    live_market_data[symbol] = market_data
-                    self.live_data[symbol] = market_data
-                    last_update[symbol] = current_time
-                
-                # Update connection status
-                truedata_connection_status['last_update'] = current_time.isoformat()
-                
-                # Log status every 30 seconds
-                if int(time.time()) % 30 == 0:
-                    prices_str = ", ".join([f"{sym}=₹{data['ltp']:.2f}" for sym, data in live_market_data.items()])
-                    logger.info(f"🧠 SMART LIVE DATA: {prices_str}")
-                
-                # Update frequency based on market hours
-                sleep_time = 1 if is_market_hours else 5
-                time.sleep(sleep_time)
-                
-            except Exception as e:
-                logger.error(f"❌ Error in smart live data: {e}")
-                time.sleep(10)
 
-    def _is_market_hours(self, current_time):
-        """Check if market is currently open"""
-        # Indian market hours: 9:15 AM to 3:30 PM, Monday to Friday
-        if current_time.weekday() >= 5:  # Weekend
-            return False
+    async def unsubscribe_symbols(self, symbols: List[str]):
+        self.SYMBOLS_TO_SUBSCRIBE = sorted([s for s in self.SYMBOLS_TO_SUBSCRIBE if s not in symbols])
         
-        market_start = current_time.replace(hour=9, minute=15, second=0, microsecond=0)
-        market_end = current_time.replace(hour=15, minute=30, second=0, microsecond=0)
+        if not self.websocket_client or not self.websocket_client.open:
+            logger.warning(f"[{self.__class__.__name__}] WS not connected. Symbol list updated locally.")
+            return
         
-        return market_start <= current_time <= market_end
+        logger.info(f"[{self.__class__.__name__}] Unsubscribing from {symbols}. Remaining: {self.SYMBOLS_TO_SUBSCRIBE}")
+        try:
+            # If TrueData requires resending the full list for unsubscription:
+            await self.websocket_client.send(json.dumps({"type": "subscribe", "symbols": self.SYMBOLS_TO_SUBSCRIBE}))
+            # Or if it has a specific unsubscribe type:
+            # await self.websocket_client.send(json.dumps({"type": "unsubscribe", "symbols": symbols}))
+            await self._update_global_status(True, symbols=self.SYMBOLS_TO_SUBSCRIBE)
+            logger.info(f"[{self.__class__.__name__}] Unsubscription/update request sent.")
+        except Exception as e_unsub: logger.error(f"Error unsubscribing: {e_unsub}", exc_info=True)
 
-    def _generate_intelligent_price(self, symbol, current_price, is_market_hours, current_time):
-        """Generate intelligent price movements based on real market patterns"""
-        import random
-        import math
-        
-        # Different volatility for different times
-        if is_market_hours:
-            # Opening hours - higher volatility
-            if current_time.hour == 9:
-                volatility = 0.008  # 0.8% max change
-            # Closing hours - higher volatility  
-            elif current_time.hour >= 15:
-                volatility = 0.006  # 0.6% max change
-            # Regular trading hours
-            else:
-                volatility = 0.003  # 0.3% max change
-                
-            volume_base = 1000000
+    async def handle_reconnect(self):
+        if self.is_connecting: return
+        # Check if client was intentionally stopped
+        if _truedata_client_singleton_instance is None or not _truedata_client_singleton_instance.websocket_client: # implies shutdown_truedata_client was called
+            logger.info(f"[{self.__class__.__name__}] Reconnect aborted, client seems to be shut down.")
+            return
+
+        if self.reconnect_attempts < self.max_reconnect_attempts:
+            self.reconnect_attempts += 1
+            delay = self.reconnect_delay_base * (2 ** (self.reconnect_attempts -1))
+            delay = min(delay, self.max_reconnect_delay if hasattr(self, 'max_reconnect_delay') else 60)
+            delay += random.uniform(0, 0.1 * delay)
+            logger.info(f"[{self.__class__.__name__}] Reconnect attempt {self.reconnect_attempts}/{self.max_reconnect_attempts} in {delay:.2f}s.")
+            await asyncio.sleep(delay)
+            await self.connect()
         else:
-            # After hours - minimal movement
-            volatility = 0.0005  # 0.05% max change
-            volume_base = 50000
-        
-        # Symbol-specific characteristics
-        symbol_volatility = {
-            'NIFTY': 1.0,      # Base volatility
-            'BANKNIFTY': 1.2,  # 20% more volatile
-            'FINNIFTY': 1.1    # 10% more volatile
-        }
-        
-        # Apply symbol-specific volatility
-        final_volatility = volatility * symbol_volatility.get(symbol, 1.0)
-        
-        # Generate price change with some trend bias
-        time_factor = (current_time.hour * 60 + current_time.minute) / 10
-        trend_bias = math.sin(time_factor / 100) * 0.001  # Subtle trend
-        
-        price_change = random.uniform(-final_volatility, final_volatility) + trend_bias
-        new_price = current_price * (1 + price_change)
-        
-        # Calculate realistic OHLC
-        high_factor = random.uniform(0, final_volatility * 0.5)
-        low_factor = random.uniform(0, final_volatility * 0.5)
-        
-        high_price = new_price * (1 + high_factor)
-        low_price = new_price * (1 - low_factor)
-        open_price = current_price  # Use previous price as open
-        
-        # Generate realistic bid-ask spread
-        spread_percent = random.uniform(0.01, 0.05) / 100  # 0.01-0.05%
-        spread = new_price * spread_percent
-        bid = new_price - spread / 2
-        ask = new_price + spread / 2
-        
-        # Generate volume based on time and volatility
-        time_factor = 1.5 if current_time.hour in [9, 10, 14, 15] else 1.0
-        volume = int(volume_base * time_factor * random.uniform(0.7, 1.3))
-        
-        # Calculate change percentage
-        change_percent = ((new_price - open_price) / open_price) * 100
-        
-        return {
-            'ltp': round(new_price, 2),
-            'open': round(open_price, 2),
-            'high': round(high_price, 2),
-            'low': round(low_price, 2),
-            'bid': round(bid, 2),
-            'ask': round(ask, 2),
-            'volume': volume,
-            'oi': random.randint(1000000, 2000000),
-            'change_percent': round(change_percent, 2),
-            'symbol': symbol,
-            'timestamp': current_time.isoformat(),
-            'data_source': 'HYBRID_TRUEDATA_SMART_LIVE',
-            'status': 'LIVE_INTELLIGENT'
-        }
+            logger.error(f"[{self.__class__.__name__}] Max reconnect attempts ({self.max_reconnect_attempts}) reached.")
+            await self._update_global_status(False, "Max reconnect attempts reached.")
 
-    def get_all_data(self):
-        """Get all live market data"""
-        return self.live_data.copy()
+    async def close_connection(self):
+        logger.info(f"[{self.__class__.__name__}] User requested close_connection.")
+        self.reconnect_attempts = self.max_reconnect_attempts + 1 # Prevent auto-reconnect
+        if self.websocket_client:
+            try:
+                await self.websocket_client.close()
+                logger.info(f"[{self.__class__.__name__}] WebSocket client close() called.")
+            except Exception as e_close:
+                logger.error(f"[{self.__class__.__name__}] Error during manual websocket_client.close(): {e_close}", exc_info=True)
+            finally:
+                 self.websocket_client = None
+        await self._update_global_status(False, "Connection closed by user request.")
 
-    def get_symbol_data(self, symbol):
-        """Get data for specific symbol"""
-        return self.live_data.get(symbol)
+    def set_on_data_callback(self, callback: Callable[[Dict], Any]): self._on_data_callback = callback
+    def set_on_status_change_callback(self, callback: Callable[[bool, Optional[str]], Any]): self._on_status_change_callback = callback
 
-    def is_connected(self):
-        """Check if connected and providing data"""
-        return self.connected and len(self.live_data) > 0
+# --- Interface Functions ---
+_truedata_client_singleton_instance: Optional[TrueDataSingletonClient] = None
 
-    def get_status(self):
-        """Get detailed connection status"""
-        return {
-            'connected': self.connected,
-            'login_id': self.login_id,
-            'data_source': 'HYBRID_TRUEDATA_SMART',
-            'symbols_receiving_data': list(self.live_data.keys()),
-            'data_count': len(self.live_data),
-            'last_update': truedata_connection_status.get('last_update', 'Never'),
-            'status': 'CONNECTED_HYBRID' if self.connected else 'DISCONNECTED',
-            'library_status': 'HYBRID_TRUEDATA_WS_SMART',
-            'connection_type': truedata_connection_status.get('connection_type', 'unknown'),
-            'error': truedata_connection_status.get('error')
-        }
+async def initialize_truedata(
+    settings_override: Optional[Any] = None, # Allow passing full settings object
+    username: Optional[str] = None,
+    password: Optional[str] = None,
+    apikey: Optional[str] = None,
+    ws_url: Optional[str] = None,
+    symbols: Optional[List[str]] = None,
+    on_data: Optional[Callable[[Dict], Any]] = None,
+    on_status_change: Optional[Callable[[bool, Optional[str]], Any]] = None
+):
+    global _truedata_client_singleton_instance
+    if _truedata_client_singleton_instance is None:
+        _truedata_client_singleton_instance = TrueDataSingletonClient()
+        # Initial config load from global `settings` happened in __new__/_load_config_from_settings
 
-    def stop_connection(self):
-        """Stop data feed"""
-        global truedata_connection_status
-        
+    # Allow overriding specific settings if passed, otherwise client uses its loaded config
+    client = _truedata_client_singleton_instance
+    if settings_override: # If a full settings object is passed, re-init config from it
+        client.TD_USERNAME = settings_override.TRUEDATA_USERNAME
+        client.TD_PASSWORD = settings_override.TRUEDATA_PASSWORD
+        client.TD_APIKEY = settings_override.TRUEDATA_APIKEY
+        client.WS_URL = settings_override.TRUEDATA_WEBSOCKET_URL
+        client.SYMBOLS_TO_SUBSCRIBE = list(settings_override.TRUEDATA_DEFAULT_SYMBOLS)
+        client.max_reconnect_attempts = settings_override.TRUEDATA_RECONNECT_MAX_ATTEMPTS
+        client.reconnect_delay_base = settings_override.TRUEDATA_RECONNECT_INITIAL_DELAY
+        client.max_reconnect_delay = settings_override.TRUEDATA_RECONNECT_MAX_DELAY
+        logger.info(f"[{client.__class__.__name__}] Re-configured from passed settings object.")
+
+
+    if username: client.TD_USERNAME = username
+    if password: client.TD_PASSWORD = password
+    if apikey: client.TD_APIKEY = apikey
+    if ws_url: client.WS_URL = ws_url
+    if symbols: client.SYMBOLS_TO_SUBSCRIBE = list(set(symbols)) # Use provided symbols, ensure unique
+
+    if on_data: client.set_on_data_callback(on_data)
+    if on_status_change: client.set_on_status_change_callback(on_status_change)
+
+    if not (client.websocket_client and client.websocket_client.open):
+        if not client.is_connecting:
+             # Ensure connect is not awaited here if initialize_truedata is called from sync context often
+             # If initialize_market_data_handling is async, direct await is fine.
+             await client.connect()
+    else: logger.info(f"[{client.__class__.__name__}] Already initialized and connected/connecting.")
+
+def get_truedata_status() -> Dict[str, Any]: return truedata_connection_status.copy()
+def is_connected() -> bool: return truedata_connection_status.get("connected", False)
+def get_live_data_for_symbol(symbol_id: str) -> Optional[Dict[str, Any]]: return live_market_data.get(symbol_id)
+
+async def add_truedata_symbols(symbols: List[str]):
+    if _truedata_client_singleton_instance: await _truedata_client_singleton_instance.subscribe_symbols(symbols)
+    else: logger.warning("TD client not init. Cannot add symbols.")
+
+async def remove_truedata_symbols(symbols: List[str]):
+    if _truedata_client_singleton_instance: await _truedata_client_singleton_instance.unsubscribe_symbols(symbols)
+    else: logger.warning("TD client not init. Cannot remove symbols.")
+
+async def shutdown_truedata_client():
+    global _truedata_client_singleton_instance
+    if _truedata_client_singleton_instance:
+        logger.info(f"[{_truedata_client_singleton_instance.__class__.__name__}] Shutdown initiated.")
+        await _truedata_client_singleton_instance.close_connection()
+        _truedata_client_singleton_instance = None
+    else: logger.info("TrueData client already None or not initialized. Shutdown had no instance to close.")
+
+if __name__ == '__main__':
+    async def main_test():
+        # Ensure global `settings` is usable if this is run standalone
+        # For testing, you might need to mock or provide a basic AppSettings instance
+        # For this __main__ block, assume settings are available via `from src.config import settings`
+        # or that the client's internal defaults are sufficient for a basic test.
+
+        logging.basicConfig(level=logging.DEBUG)
+
+        def my_data_handler(tick_data): logger.info(f"Tick via CB: {tick_data}")
+        async def my_status_handler(is_conn, err_msg):
+            logger.info(f"Status via CB: {'Conn' if is_conn else 'Disconn'}. Err: {err_msg or 'OK'}")
+
+        # To test with settings, ensure src.config.settings is valid or provide a mock
+        # For example, if running this file directly and src.config cannot be found:
+        class MockTestSettings: # Basic mock for standalone testing
+            TRUEDATA_USERNAME = "YOUR_USER" # Get from env or hardcode for test
+            TRUEDATA_PASSWORD = "YOUR_PASSWORD"
+            TRUEDATA_APIKEY = None
+            TRUEDATA_WEBSOCKET_URL = "wss://api.truedata.in/websocket" # Or your test URL
+            TRUEDATA_DEFAULT_SYMBOLS = ["NIFTY", "BANKNIFTY"]
+            TRUEDATA_PING_INTERVAL = 20
+            TRUEDATA_PING_TIMEOUT = 10
+            TRUEDATA_CLOSE_TIMEOUT = 5
+            TRUEDATA_RECONNECT_MAX_ATTEMPTS = 2 # Low for quick test
+            TRUEDATA_RECONNECT_INITIAL_DELAY = 2
+            TRUEDATA_RECONNECT_MAX_DELAY = 5
+
+        mock_settings_for_test = MockTestSettings()
+        # Update with actual env vars if available for testing
+        mock_settings_for_test.TRUEDATA_USERNAME = os.environ.get("TRUEDATA_USERNAME_GLOBAL", mock_settings_for_test.TRUEDATA_USERNAME)
+        mock_settings_for_test.TRUEDATA_PASSWORD = os.environ.get("TRUEDATA_PASSWORD_GLOBAL", mock_settings_for_test.TRUEDATA_PASSWORD)
+
+        logger.info(f"Test Main: User={mock_settings_for_test.TRUEDATA_USERNAME}, Pass valid? {'Yes' if mock_settings_for_test.TRUEDATA_PASSWORD else 'No'}")
+
+        await initialize_truedata(
+            settings_override=mock_settings_for_test, # Pass the mock settings
+            symbols=["RELIANCE"],
+            on_data=my_data_handler,
+            on_status_change=my_status_handler
+        )
+
         try:
-            self.running = False
-            self.connected = False
-            
-            truedata_connection_status['connected'] = False
-            truedata_connection_status['last_update'] = datetime.now().isoformat()
-            
-            if self.connection_thread:
-                self.connection_thread.join(timeout=5)
-                
-            logger.info("🔴 Hybrid TrueData connection stopped")
-            
-        except Exception as e:
-            logger.error(f"❌ Error stopping hybrid connection: {e}")
+            for i in range(30): # Test for 30 seconds
+                await asyncio.sleep(1)
+                status_now = get_truedata_status()
+                logger.debug(f"Test Main Loop: Status - Conn: {status_now['connected']}, Err: {status_now['error_message']}")
+                if i == 5: await add_truedata_symbols(["INFY"])
+                if i == 10: await remove_truedata_symbols(["RELIANCE"])
+        except KeyboardInterrupt: logger.info("Test interrupted.")
+        finally: await shutdown_truedata_client()
+    asyncio.run(main_test())
 
-# Global instance
-truedata_client = HybridTrueDataClient()
-
-# Helper functions for backward compatibility
-def initialize_truedata():
-    """Initialize hybrid TrueData connection"""
-    return truedata_client.start_connection()
-
-def get_live_data(symbol=None):
-    """Get live market data"""
-    if symbol:
-        return truedata_client.get_symbol_data(symbol)
-    return truedata_client.get_all_data()
-
-def is_connected():
-    """Check connection status"""
-    return truedata_client.is_connected()
-
-def get_connection_status():
-    """Get detailed status"""
-    return truedata_client.get_status()
-
-def test_market_data():
-    """Test market data functionality"""
-    return truedata_client.is_connected() and len(truedata_client.get_all_data()) > 0
-
-logger.info("🚀 Hybrid TrueData Client ready - Historical + Smart Live Data")
-print("✅ Hybrid TrueData implementation loaded successfully")
+```
