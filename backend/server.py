@@ -149,17 +149,18 @@ async def websocket_trading_data_endpoint(websocket: Any, user_id: str, app_stat
 
 
 @app.websocket("/api/ws/autonomous-data")
-async def websocket_autonomous_data_endpoint(websocket: Any):
+async def websocket_autonomous_data_endpoint(websocket: WebSocket):
     """WebSocket endpoint for autonomous trading data that the frontend expects"""
-    await websocket.accept()
-    logger_server.info(f"Autonomous WebSocket connection accepted from {websocket.client.host}")
-    
-    # Get app_state directly without dependency injection for WebSocket
-    global app_state
-    app_state.system_status.websocket_connections_set.add(websocket)
-    app_state.system_status.websocket_connections = len(app_state.system_status.websocket_connections_set)
-    
     try:
+        await websocket.accept()
+        logger_server.info(f"Autonomous WebSocket connection accepted from {websocket.client.host}")
+        
+        # Get app_state directly without dependency injection for WebSocket
+        global app_state
+        if hasattr(app_state.system_status, 'websocket_connections_set'):
+            app_state.system_status.websocket_connections_set.add(websocket)
+            app_state.system_status.websocket_connections = len(app_state.system_status.websocket_connections_set)
+        
         # Send initial system status
         initial_data = {
             "type": "initial_data",
@@ -169,27 +170,33 @@ async def websocket_autonomous_data_endpoint(websocket: Any):
             "paper_trading": app_state.trading_control.paper_trading,
             "market_open": app_state.system_status.market_open,
             "truedata_connected": app_state.market_data.truedata_connected,
-            "zerodha_connected": app_state.market_data.zerodha_data_connected
+            "zerodha_connected": app_state.market_data.zerodha_data_connected,
+            "timestamp": datetime.utcnow().isoformat()
         }
         await websocket.send_text(json.dumps(initial_data))
         
         while True:
-            data = await websocket.receive_text()
-            logger_server.debug(f"Received message from autonomous WebSocket: {data}")
-            
-            # Handle ping/pong for keep-alive
-            if data == '{"type":"ping"}':
-                await websocket.send_text('{"type":"pong"}')
-            else:
-                # Echo other messages for now
-                await websocket.send_text(f'{{"type":"echo","message":"Received: {data}"}}')
+            try:
+                data = await websocket.receive_text()
+                logger_server.debug(f"Received message from autonomous WebSocket: {data}")
+                
+                # Handle ping/pong for keep-alive
+                if data == '{"type":"ping"}':
+                    await websocket.send_text('{"type":"pong","timestamp":"' + datetime.utcnow().isoformat() + '"}')
+                else:
+                    # Echo other messages for now
+                    await websocket.send_text(f'{{"type":"echo","message":"Received: {data}","timestamp":"{datetime.utcnow().isoformat()}"}}')
+            except Exception as recv_error:
+                logger_server.debug(f"WebSocket receive error: {recv_error}")
+                break
                 
     except Exception as e:
-        logger_server.info(f"Autonomous WebSocket connection closed/error: {e}")
+        logger_server.info(f"Autonomous WebSocket connection error: {e}")
     finally:
-        app_state.system_status.websocket_connections_set.discard(websocket)
-        app_state.system_status.websocket_connections = len(app_state.system_status.websocket_connections_set)
-        logger_server.info(f"Autonomous WebSocket connection removed. Active connections: {app_state.system_status.websocket_connections}")
+        if hasattr(app_state.system_status, 'websocket_connections_set'):
+            app_state.system_status.websocket_connections_set.discard(websocket)
+            app_state.system_status.websocket_connections = len(app_state.system_status.websocket_connections_set)
+        logger_server.info(f"Autonomous WebSocket connection removed. Active connections: {getattr(app_state.system_status, 'websocket_connections', 0)}")
 
 
 @app.on_event("startup")
