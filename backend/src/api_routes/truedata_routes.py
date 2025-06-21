@@ -36,7 +36,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
-truedata_router = APIRouter(prefix="/system", tags=["TrueData System Control & Tests"])
+truedata_router = APIRouter(prefix="/truedata", tags=["TrueData Integration"])
 
 @truedata_router.post("/truedata/connect", summary="Initialize/Attempt to connect the TrueData Singleton Client")
 async def truedata_connect_route(settings: AppSettings = Depends(get_settings)):
