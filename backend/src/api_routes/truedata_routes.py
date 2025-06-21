@@ -13,7 +13,7 @@ from src.config import AppSettings
 from src.core.utils import create_api_success_response, format_datetime_for_api
 
 # Import new TrueData singleton interface functions
-from backend.truedata_client import (
+from truedata_client import (
     initialize_truedata as initialize_truedata_singleton,
     get_truedata_status as get_truedata_status_singleton,
     is_connected as is_truedata_singleton_connected,
