@@ -1,7 +1,17 @@
 from fastapi import APIRouter, Depends
 from datetime import datetime
-from ..app_state import AppState, get_app_state
-from ..api.utils import create_api_success_response, format_datetime_for_api
+from src.app_state import AppState, app_state
+from src.core.utils import create_api_success_response
+
+# Create dependency function inline
+def get_app_state():
+    return app_state
+
+def format_datetime_for_api(dt):
+    """Format datetime for API response"""
+    if dt is None:
+        return None
+    return dt.isoformat() if hasattr(dt, 'isoformat') else str(dt)
 
 autonomous_router = APIRouter(prefix="/autonomous", tags=["autonomous"])
 
