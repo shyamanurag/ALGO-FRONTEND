@@ -17,7 +17,7 @@ except ImportError:
     # Use fallback functions (this is expected due to circular imports)
     from src.app_state import app_state as _global_app_state_instance
     from src.config import settings as _global_settings_instance
-    def get_app_state(): return _global_app_state_instance  
+    def get_app_state(): return _global_app_state_instance
     def get_settings(): return _global_settings_instance
     def get_market_data_state(): return _global_app_state_instance.market_data
 
