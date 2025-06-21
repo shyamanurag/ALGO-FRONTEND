@@ -24,6 +24,13 @@ from truedata_client import (
 )
 
 try:
+    from backend.server import get_app_state, get_settings
+except ImportError:
+    # Use fallback functions (this is expected due to circular imports)
+    from src.app_state import app_state as _global_app_state_instance
+    from src.config import settings as _global_settings_instance
+    def get_app_state(): return _global_app_state_instance
+    def get_settings(): return _global_settings_instance
     from backend.server import get_app_state, get_settings # These provide AppState and AppSettings
 except ImportError:
     _fallback_logger_td = logging.getLogger(__name__)
