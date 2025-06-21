@@ -159,12 +159,12 @@ const LiveAutonomousStatus = () => {
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className={`w-4 h-4 rounded-full mr-3 ${
-                systemStatus?.status?.truedata?.connected ? 'bg-green-400' : 'bg-red-400'
+                systemStatus?.truedata_connected ? 'bg-green-400' : 'bg-red-400'
               }`}></div>
               <div>
                 <p className="text-sm font-medium text-gray-600">TrueData</p>
                 <p className="text-xl font-bold text-gray-900">
-                  {systemStatus?.status?.truedata?.connected ? 'CONNECTED' : 'DISCONNECTED'}
+                  {systemStatus?.truedata_connected ? 'CONNECTED' : 'DISCONNECTED'}
                 </p>
               </div>
             </div>
