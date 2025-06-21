@@ -34,7 +34,8 @@ const LiveAutonomousStatus = () => {
       const autonomousResponse = await fetch(`${BACKEND_URL}/api/autonomous/status`);
       if (autonomousResponse.ok) {
         const autonomousData = await autonomousResponse.json();
-        setAutonomousStatus(autonomousData);
+        // Fix: Extract data from nested response structure
+        setAutonomousStatus(autonomousData.data || autonomousData);
       }
 
       // Fetch trading signals
