@@ -310,6 +310,37 @@ async def shutdown_event_main(): # ... (shutdown logic as before, uses app_state
 main_api_router = APIRouter()
 @main_api_router.get("/")
 async def root(): return {"message": "Elite Autonomous Algo Trading Platform - Ready!", "version": settings.APP_VERSION if hasattr(settings, "APP_VERSION") else "2.1.0"} # Example using settings
+
+@main_api_router.get("/system/status", summary="Get detailed system status")
+async def get_system_status_route(app_state: AppState = Depends(get_app_state)):
+    """Get comprehensive system status including all components"""
+    sys_status = app_state.system_status
+    trading_ctrl = app_state.trading_control
+    market_data = app_state.market_data
+    
+    uptime_seconds = 0
+    if sys_status.app_start_time:
+        uptime_seconds = (datetime.utcnow() - sys_status.app_start_time).total_seconds()
+    
+    status_data = {
+        "system_health": sys_status.system_health,
+        "autonomous_trading": trading_ctrl.autonomous_trading_active,
+        "paper_trading": trading_ctrl.paper_trading,
+        "trading_active": trading_ctrl.trading_active,
+        "market_open": sys_status.market_open,
+        "database_connected": sys_status.database_connected,
+        "redis_connected": sys_status.redis_connected,
+        "truedata_connected": market_data.truedata_connected,
+        "zerodha_connected": market_data.zerodha_data_connected,
+        "websocket_connections": sys_status.websocket_connections,
+        "uptime_seconds": uptime_seconds,
+        "last_update": sys_status.last_system_update_utc.isoformat() if sys_status.last_system_update_utc else None,
+        "data_source": market_data.active_data_source,
+        "emergency_mode": trading_ctrl.emergency_mode,
+        "live_symbols_count": len(market_data.live_market_data)
+    }
+    return {"success": True, "data": status_data}
+
 app.include_router(main_api_router)
 
 app.include_router(admin_router, prefix="/api/admin", dependencies=[Depends(get_app_state)])
