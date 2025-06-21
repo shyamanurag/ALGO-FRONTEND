@@ -14,14 +14,12 @@ from src.config import AppSettings
 try:
     from backend.server import get_app_state, get_settings, get_market_data_state
 except ImportError:
-    # Fallback definitions if import fails
-    _fallback_logger_md = logging.getLogger(__name__)
-    _fallback_logger_md.error("CRITICAL: Could not import get_app_state, get_settings from backend.server for market_data_routes.py.")
-    from src.app_state import app_state as _global_app_state_instance_md
-    from src.config import settings as _global_settings_instance_md
-    async def get_app_state(): return _global_app_state_instance_md
-    async def get_settings(): return _global_settings_instance_md
-    async def get_market_data_state(): return _global_app_state_instance_md.market_data
+    # Use fallback functions (this is expected due to circular imports)
+    from src.app_state import app_state as _global_app_state_instance
+    from src.config import settings as _global_settings_instance
+    def get_app_state(): return _global_app_state_instance  
+    def get_settings(): return _global_settings_instance
+    def get_market_data_state(): return _global_app_state_instance.market_data
 
 logger = logging.getLogger(__name__)
 
