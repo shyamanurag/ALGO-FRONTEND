@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 """
-Backend API Testing for ALGO-FRONTEND Trading Platform
-Focused on testing the three critical issues that were fixed:
-1. Missing backend endpoints (/api/system/status)
-2. WebSocket 403 errors (/api/ws/autonomous-data)
-3. TrueData/Zerodha integration
+Comprehensive Backend API Testing for Elite Autonomous Trading Platform
+Tests all critical endpoints and functionality for production deployment verification.
 """
 
 import requests
@@ -15,7 +12,7 @@ import threading
 import time
 from datetime import datetime
 
-class CriticalIssuesTester:
+class ComprehensiveAPITester:
     def __init__(self, base_url=None):
         # Use the environment variable from frontend/.env
         self.base_url = base_url
@@ -124,11 +121,17 @@ class CriticalIssuesTester:
             "failed_tests": failed_tests
         }
 
-    def test_system_status_endpoint(self):
-        """Test the system status endpoint (ISSUE 1)"""
-        print("\n🔍 ISSUE 1: Testing System Status Endpoint...")
+    def test_core_endpoints(self):
+        """Test core system endpoints"""
+        print("\n🔍 Testing Core System Endpoints...")
         
-        # Test the fixed system status endpoint
+        # Test root API endpoint
+        self.run_test("Root API Endpoint", "GET", "/api/")
+        
+        # Test health check endpoint
+        self.run_test("Health Check", "GET", "/api/health")
+        
+        # Test system status endpoint
         success, data = self.run_test("System Status Endpoint", "GET", "/api/system/status")
         
         if success:
@@ -162,12 +165,12 @@ class CriticalIssuesTester:
             else:
                 print("⚠️ System Status response does not contain 'data' field")
         
-        # Also test the health endpoint for comparison
-        self.run_test("Health Check", "GET", "/api/health")
+        # Test autonomous system metrics endpoint
+        self.run_test("Autonomous System Metrics", "GET", "/api/autonomous/system-metrics")
 
     def test_truedata_integration(self):
-        """Test TrueData integration (ISSUE 3)"""
-        print("\n🔍 ISSUE 3: Testing TrueData Integration...")
+        """Test TrueData integration"""
+        print("\n🔍 Testing TrueData Integration...")
         
         # Test TrueData connect endpoint
         connect_success, _ = self.run_test("TrueData Connect", "POST", "/api/truedata/connect", data={
@@ -189,8 +192,8 @@ class CriticalIssuesTester:
             self.run_test("System Status After Disconnect", "GET", "/api/system/status")
 
     def test_websocket_connectivity(self):
-        """Test WebSocket connectivity (ISSUE 2)"""
-        print("\n🔍 ISSUE 2: Testing WebSocket Connectivity...")
+        """Test WebSocket connectivity"""
+        print("\n🔍 Testing WebSocket Connectivity...")
         
         # We can't directly test WebSocket connections in this test framework
         # But we can check if the endpoint is registered by making a GET request
@@ -274,21 +277,53 @@ class CriticalIssuesTester:
             
         print("Note: WebSocket testing complete.")
 
-    def run_critical_tests(self):
-        """Run tests for the three critical issues"""
-        print("\n🚀 Starting Critical Issues Testing...")
+    def test_trading_endpoints(self):
+        """Test trading and market data endpoints"""
+        print("\n🔍 Testing Trading & Market Data Endpoints...")
         
-        # Test core health endpoint first
-        self.run_test("Core API Health Check", "GET", "/api/health")
+        # Test trading signals endpoint
+        self.run_test("Active Trading Signals", "GET", "/api/trading-signals/active")
         
-        # Test ISSUE 1: System Status Endpoint
-        self.test_system_status_endpoint()
+        # Test elite recommendations endpoint
+        self.run_test("Elite Recommendations", "GET", "/api/elite-recommendations")
         
-        # Test ISSUE 2: WebSocket Connectivity
+        # Test live market data endpoint
+        self.run_test("Live Market Data", "GET", "/api/market-data/live")
+        
+        # Test market indices endpoint
+        self.run_test("Market Indices", "GET", "/api/market-data/indices")
+
+    def test_strategy_endpoints(self):
+        """Test strategy and autonomous trading endpoints"""
+        print("\n🔍 Testing Strategy & Autonomous Trading Endpoints...")
+        
+        # Test strategies endpoint
+        self.run_test("All Strategies", "GET", "/api/strategies")
+        
+        # Test strategy metrics endpoint
+        self.run_test("Strategy Metrics", "GET", "/api/strategies/metrics")
+        
+        # Test autonomous status endpoint
+        self.run_test("Autonomous Trading Status", "GET", "/api/autonomous/status")
+
+    def run_comprehensive_tests(self):
+        """Run comprehensive tests for all critical endpoints"""
+        print("\n🚀 Starting Comprehensive API Testing...")
+        
+        # Test core system endpoints
+        self.test_core_endpoints()
+        
+        # Test WebSocket connectivity
         self.test_websocket_connectivity()
         
-        # Test ISSUE 3: TrueData Integration
+        # Test TrueData integration
         self.test_truedata_integration()
+        
+        # Test trading and market data endpoints
+        self.test_trading_endpoints()
+        
+        # Test strategy and autonomous trading endpoints
+        self.test_strategy_endpoints()
         
         # Print summary
         return self.print_summary()
@@ -314,15 +349,15 @@ def main():
         sys.exit(1)
     
     # Create tester and run tests
-    tester = CriticalIssuesTester(backend_url)
-    results = tester.run_critical_tests()
+    tester = ComprehensiveAPITester(backend_url)
+    results = tester.run_comprehensive_tests()
     
     # Exit with appropriate code
     if results["tests_passed"] == results["tests_run"]:
-        print("\n✅ All critical issues have been resolved!")
+        print("\n✅ All API tests passed! The system is ready for production.")
         return 0
     else:
-        print(f"\n⚠️ {results['tests_run'] - results['tests_passed']} tests failed. Some critical issues may still exist.")
+        print(f"\n⚠️ {results['tests_run'] - results['tests_passed']} tests failed. Some issues may exist in the production deployment.")
         return 1
 
 if __name__ == "__main__":
