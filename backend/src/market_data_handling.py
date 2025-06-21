@@ -5,7 +5,7 @@ from typing import Dict, Optional, List, Any, Callable, Coroutine # Added Callab
 import copy # For deep copying live market data
 
 # Import the new TrueData client interface functions
-from backend.truedata_client import (
+from truedata_client import (
     initialize_truedata as initialize_truedata_singleton,
     get_truedata_status as get_truedata_status_singleton,
     is_connected as is_truedata_singleton_connected,
